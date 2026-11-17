@@ -31,10 +31,12 @@ Telegram-бот із двома окремими особистими чатам
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `FAMILY_SETUP_CODE`
-4. Встановіть залежності: `npm install`.
-5. Перевірте типи: `npm run typecheck`.
-6. Розгорніть Worker: `npm run deploy`.
-7. Налаштуйте Telegram webhook на URL Worker із secret token.
+4. У GitHub → Settings → Secrets and variables → Actions додайте `CLOUDFLARE_API_TOKEN` та `CLOUDFLARE_ACCOUNT_ID` (для автоматичного деплою).
+5. Встановіть залежності: `npm install`.
+6. Перевірте типи: `npm run typecheck`.
+7. Розгорніть Worker: `npm run deploy` або запустіть GitHub Actions.
+8. У Cloudflare Worker → Settings → Variables and Secrets додайте всі секрети з переліку вище.
+9. Налаштуйте Telegram webhook на URL Worker із secret token.
 
 ### Перший запуск сім'ї
 

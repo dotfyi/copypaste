@@ -28,14 +28,13 @@ Telegram-бот із двома окремими особистими чатам
 3. Додайте Cloudflare Worker secrets:
    - `TELEGRAM_BOT_TOKEN`
    - `TELEGRAM_WEBHOOK_SECRET`
-   - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `FAMILY_SETUP_CODE`
 4. У GitHub → Settings → Secrets and variables → Actions додайте `CLOUDFLARE_API_TOKEN` та `CLOUDFLARE_ACCOUNT_ID` (для автоматичного деплою).
 5. Встановіть залежності: `npm install`.
 6. Перевірте типи: `npm run typecheck`.
 7. Розгорніть Worker: `npm run deploy` або запустіть GitHub Actions.
-8. У Cloudflare Worker → Settings → Variables and Secrets додайте всі секрети з переліку вище.
+8. У Cloudflare Worker → Settings → Variables and Secrets додайте секрети `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` та `FAMILY_SETUP_CODE`. URL Supabase вже вказаний у `wrangler.toml`.
 9. Налаштуйте Telegram webhook на URL Worker із secret token.
 
 ### Перший запуск сім'ї

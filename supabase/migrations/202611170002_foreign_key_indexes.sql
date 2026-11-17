@@ -1,0 +1,19 @@
+-- Add indexes for foreign-key lookup paths identified by Supabase advisors.
+create index if not exists birthdays_family_idx on public.birthdays(family_id);
+create index if not exists birthdays_created_by_idx on public.birthdays(created_by);
+create index if not exists calendar_events_created_by_idx on public.calendar_events(created_by);
+create index if not exists delivery_logs_member_idx on public.delivery_logs(member_id);
+create index if not exists family_invites_family_idx on public.family_invites(family_id);
+create index if not exists family_invites_created_by_idx on public.family_invites(created_by);
+create index if not exists notes_created_by_idx on public.notes(created_by);
+create index if not exists pending_actions_family_idx on public.pending_actions(family_id);
+create index if not exists pending_actions_requested_by_idx on public.pending_actions(requested_by);
+create index if not exists reminder_recipients_member_idx on public.reminder_recipients(member_id);
+create index if not exists reminders_created_by_idx on public.reminders(created_by);
+create index if not exists shopping_items_added_by_idx on public.shopping_items(added_by);
+create index if not exists shopping_items_purchased_by_idx on public.shopping_items(purchased_by);
+create index if not exists shopping_lists_family_idx on public.shopping_lists(family_id);
+create index if not exists shopping_lists_created_by_idx on public.shopping_lists(created_by);
+create index if not exists tasks_assigned_to_idx on public.tasks(assigned_to);
+create index if not exists tasks_created_by_idx on public.tasks(created_by);
+create index if not exists user_settings_family_idx on public.user_settings(family_id);

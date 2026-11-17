@@ -252,7 +252,7 @@ export default {
     if (request.method === "GET") return new Response("Family assistant Worker is running.");
     if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
 
-    if (!env.TELEGRAM_BOT_TOKEN || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY || !env.FAMILY_SETUP_CODE) {
+    if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_WEBHOOK_SECRET || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY || !env.FAMILY_SETUP_CODE) {
       return json({ error: "Worker secrets are not configured." }, 503);
     }
 

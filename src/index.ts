@@ -1,5 +1,5 @@
 interface Env {
-  AI: Ai;
+  AI: { run(model: string, options: { messages: Array<{ role: "system" | "user"; content: string }>; max_tokens: number }): Promise<unknown> };
   TELEGRAM_BOT_TOKEN: string;
   TELEGRAM_WEBHOOK_SECRET: string;
   SUPABASE_URL: string;

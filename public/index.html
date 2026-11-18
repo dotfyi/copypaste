@@ -77,7 +77,7 @@
       </div>
       <div id="feed" aria-live="polite"><div class="empty">Завантажуємо потік…</div></div>
     </section>
-    <footer class="footer">COPypaste · ПИШИ РАЗ НА ДЕНЬ</footer>
+    <footer class="footer">COPYPASTE · ПИШИ РАЗ НА ДЕНЬ</footer>
   </main>
 
   <script type="module">
@@ -99,6 +99,13 @@
     let myHex = null;
     let alreadyPosted = false;
 
+    const kyivToday = () => {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        year:'numeric', month:'2-digit', day:'2-digit', timeZone:'Europe/Kyiv'
+      }).formatToParts(new Date());
+      const part = (type) => parts.find(item => item.type === type).value;
+      return part('year') + '-' + part('month') + '-' + part('day');
+    };
     const kyivDate = (value) => new Intl.DateTimeFormat('uk-UA', {
       day:'2-digit', month:'2-digit', year:'numeric', timeZone:'Europe/Kyiv'
     }).format(new Date(value));
@@ -185,6 +192,7 @@
           .from('copypaste_posts')
           .select('id')
           .eq('author_id', currentUser.id)
+          .eq('post_day', kyivToday())
           .limit(1);
         if (mineError) throw mineError;
         alreadyPosted = (mine || []).length > 0;

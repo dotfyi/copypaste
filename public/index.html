@@ -114,8 +114,9 @@
 
     function updateComposer() {
       counter.textContent = input.value.length + ' / 280';
-      publish.disabled = !currentUser || alreadyPosted || !input.value.trim() || input.value.length > 280;
-      publish.disabled = !currentUser || (!isRegistration && alreadyPosted) || !input.value.trim() || input.value.length > 280;
+      const command = /^\\/(registration|auth)(?:\\s+\\S+)?$/i.test(input.value.trim());
+      publish.textContent = command ? 'Виконати ↗' : 'Опублікувати ↗';
+      publish.disabled = authBusy || (!command && (!currentUser || (!isAdmin && alreadyPosted) || !input.value.trim() || input.value.length > 280));
     }
 
     async function ensureIdentity() {
@@ -200,10 +201,53 @@
       }
     }
 
+    async function runAuthCommand(action, secretKey = '') {
+      authBusy = true;
+      updateComposer();
+      setStatus(action === 'register' ? 'Створюємо постійний акаунт…' : 'Перевіряємо секретний ключ…');
+      try {
+        const { data, error } = await supabase.functions.invoke('copypaste-auth', {
+          body: action === 'register' ? { action: 'register' } : { action: 'login', secretKey }
+        });
+        if (error || data?.error) throw new Error(data?.error || 'Не вдалося виконати команду.');
+        const { error: sessionError } = await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
+        if (sessionError) throw sessionError;
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError || !userData.user) throw userError || new Error('Не вдалося відкрити сесію.');
+        currentUser = userData.user;
+        myHex = data.hexLogin;
+        isAdmin = !!data.isAdmin;
+        alreadyPosted = false;
+        input.value = '';
+        input.placeholder = 'Про що ти думаєш сьогодні?';
+        setStatus('');
+        if (action === 'register') {
+          status.textContent = 'Логін: ' + data.hexLogin + ' · Секретний ключ: ' + data.secretKey + ' — збережи його, він показується лише один раз. ';
+          const copy = document.createElement('button');
+          copy.type = 'button'; copy.textContent = 'Копіювати ключ'; copy.style.marginLeft = '8px';
+          copy.addEventListener('click', async () => {
+            try { await navigator.clipboard.writeText(data.secretKey); copy.textContent = 'Скопійовано'; }
+            catch { copy.textContent = 'Скопіюй ключ вручну'; }
+          });
+          status.append(copy);
+        } else setStatus('Ти увійшов як ' + data.hexLogin + '.');
+        await loadFeed();
+      } catch (error) {
+        setStatus(error.message || 'Помилка авторизації.', true);
+      } finally { authBusy = false; updateComposer(); }
+    }
+
     input.addEventListener('input', updateComposer);
     publish.addEventListener('click', async () => {
       const content = input.value.trim();
-      if (!content || !currentUser || alreadyPosted) return;
+      if (/^\\/registration$/i.test(content)) { await runAuthCommand('register'); return; }
+      if (/^\\/registration/i.test(content)) { setStatus('Команда: /registration (доступна лише один раз).', true); return; }
+      const authMatch = content.match(/^\\/auth\\s+(cp_[a-f0-9]{64})$/i);
+      if (/^\\/auth/i.test(content)) {
+        if (!authMatch) { setStatus('Формат: /auth cp_… (встав повний секретний ключ).', true); return; }
+        await runAuthCommand('login', authMatch[1]); return;
+      }
+      if (!content || !currentUser || (!isAdmin && alreadyPosted)) return;
       publish.disabled = true;
       setStatus('Публікуємо…');
       const { error } = await supabase.from('copypaste_posts').insert({ content });
@@ -212,9 +256,7 @@
           alreadyPosted = true;
           input.placeholder = 'Ти вже залишив повідомлення сьогодні. Побачимось завтра.';
           setStatus('');
-        } else {
-          setStatus('Не вдалося опублікувати. Спробуй ще раз.', true);
-        }
+        } else setStatus('Не вдалося опублікувати. Спробуй ще раз.', true);
         updateComposer();
         return;
       }

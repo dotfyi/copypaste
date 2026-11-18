@@ -216,7 +216,6 @@ export default function App() {
     <header>
       <button className="brand" type="button" onClick={()=>setAdminOpen(false)} style={{color:topic==='general'?'#111':topics.find(t=>t.id===topic)?.color??'#111'}} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
       <nav className="nav" aria-label="Навігація">
-        {profile&&<span className="current-login" style={{color:(profile.is_admin||profile.is_moderator)?profile.hex_login:'#777'}}>{profile.hex_login.toLowerCase()}</span>}
         {profile?.is_admin&&<button className="icon-btn" type="button" aria-label="Панель адміністратора" title="Панель адміністратора" onClick={()=>{setAdminOpen(v=>!v);if(!adminOpen)void loadAdminStats();}}><Shield/></button>}
       </nav>
     </header>

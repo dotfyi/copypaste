@@ -211,9 +211,10 @@ textarea:disabled {
 
 /* Composer expands with line breaks, up to five visible lines */
 .composer textarea {
-  height: 38px;
-  min-height: 38px;
+  height: 32px;
+  min-height: 32px;
   max-height: 132px;
+  padding-bottom: 2px;
   overflow-y: hidden;
   transition: height .12s ease;
 }

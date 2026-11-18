@@ -91,6 +91,7 @@
     let currentUser = null;
     let myHex = null;
     let alreadyPosted = false;
+    let isAdmin = false;
 
     const kyivToday = () => {
       const parts = new Intl.DateTimeFormat('en-CA', {
@@ -113,7 +114,8 @@
 
     function updateComposer() {
       counter.textContent = input.value.length + ' / 280';
-      publish.disabled = !currentUser || alreadyPosted || !input.value.trim() || input.value.length > 280;
+      const isRegistration = /^\\/registration\\s+#[0-9a-fA-F]{6}$/.test(input.value.trim());
+      publish.disabled = !currentUser || (!isRegistration && alreadyPosted) || !input.value.trim() || input.value.length > 280;
     }
 
     async function ensureIdentity() {
@@ -130,7 +132,7 @@
       for (let attempt = 0; attempt < 6; attempt++) {
         const { data, error } = await supabase
           .from('copypaste_profiles')
-          .select('hex_login')
+          .select('hex_login, is_admin')
           .eq('id', currentUser.id)
           .maybeSingle();
         if (!error && data) { profile = data; break; }
@@ -138,6 +140,7 @@
       }
       if (!profile) throw new Error('Не вдалося створити твій HEX-логін. Онови сторінку.');
       myHex = profile.hex_login;
+      isAdmin = !!profile.is_admin;
     }
 
     function renderPosts(posts) {
@@ -188,9 +191,8 @@
           .eq('post_day', kyivToday())
           .limit(1);
         if (mineError) throw mineError;
-        alreadyPosted = (mine || []).length > 0;
+        alreadyPosted = !isAdmin && (mine || []).length > 0;
         if (alreadyPosted) {
-          input.disabled = true;
           input.placeholder = 'Ти вже залишив повідомлення сьогодні. Побачимось завтра.';
           setStatus('');
         }
@@ -229,7 +231,6 @@
       if (error) {
         if (error.code === '23505') {
           alreadyPosted = true;
-          input.disabled = true;
           input.placeholder = 'Ти вже залишив повідомлення сьогодні. Побачимось завтра.';
           setStatus('');
         } else {
@@ -240,9 +241,8 @@
       }
       input.value = '';
       alreadyPosted = true;
-      input.disabled = true;
-      input.placeholder = 'Ти вже залишив повідомлення сьогодні. Побачимось завтра.';
-      setStatus('Опубліковано. До зустрічі завтра.');
+      if (!isAdmin) input.placeholder = 'Ти вже залишив повідомлення сьогодні. Побачимось завтра.';
+      setStatus(isAdmin ? 'Опубліковано.' : 'Опубліковано. До зустрічі завтра.');
       updateComposer();
       await loadFeed();
     });

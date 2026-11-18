@@ -37,8 +37,8 @@ button:disabled { color: #aaa; cursor: default; }
 .message { margin: 0; font-size: 15px; line-height: 1.65; letter-spacing: -.018em; overflow-wrap: anywhere; white-space: pre-wrap; }
 .message strong { font-weight: 700; } .message em { font-style: italic; } .message del { text-decoration: line-through; }
 .green-text { color: #27834b; }
-.spoiler { display: inline-block; appearance: none; -webkit-appearance: none; border: 0; cursor: pointer; background: #e8e8e8; color: transparent; border-radius: 6px; padding: 0 6px; font-size: inherit; font-weight: inherit; line-height: inherit; vertical-align: baseline; box-shadow: none; outline: none; -webkit-tap-highlight-color: transparent; }
-.spoiler:active, .spoiler:focus, .spoiler:focus-visible { background: #e8e8e8; box-shadow: none; outline: none; }
+.spoiler { display: inline-block; appearance: none; -webkit-appearance: none; border: 0; cursor: pointer; background: linear-gradient(#e8e8e8, #e8e8e8) center / 100% 72% no-repeat; color: transparent; border-radius: 6px; padding: 0 6px; font-size: inherit; font-weight: inherit; line-height: inherit; vertical-align: baseline; box-shadow: none; outline: none; -webkit-tap-highlight-color: transparent; }
+.spoiler:active, .spoiler:focus, .spoiler:focus-visible { background: linear-gradient(#e8e8e8, #e8e8e8) center / 100% 72% no-repeat; box-shadow: none; outline: none; }
 .spoiler.revealed { color: inherit; }
 .empty { padding: 24px 0; color: var(--muted); font-size: 13px; border-top: 0; }
 .page-panel { border-top: 1px solid var(--line); padding: 20px 0; font-size: 14px; line-height: 1.7; }

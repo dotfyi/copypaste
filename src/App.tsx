@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type CSSProperties } from 'react';
-import { Cpu, Gamepad2, Globe2, Newspaper, Palette, UserRound } from 'lucide-react';
+import { BookOpen, Cpu, Gamepad2, Globe2, Newspaper, Palette, UserRound } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 

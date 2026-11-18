@@ -161,8 +161,13 @@ export default function App() {
     finally{setBusy(false);}
   }
   async function adminAction(action:string,payload:Record<string,unknown>={}){
-    const {data,error}=await supabase.functions.invoke('copypaste-auth',{body:{action,...payload}});
-    if(error||data?.error)throw new Error(data?.error||'Не вдалося виконати дію.');
+    if(action==='create_account'){
+      const {data,error}=await supabase.functions.invoke('copypaste-auth',{body:{action,...payload}});
+      if(error||data?.error)throw new Error(data?.error||'Створення акаунтів тимчасово недоступне.');
+      return data;
+    }
+    const {data,error}=await supabase.rpc('copypaste_admin_action',{p_action:action,p_args:payload});
+    if(error)throw error;
     return data;
   }
   async function loadAdminStats(){

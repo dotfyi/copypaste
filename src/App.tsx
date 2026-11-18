@@ -85,7 +85,6 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  const [secretKey, setSecretKey] = useState('');
   const [createdKey, setCreatedKey] = useState('');
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -213,12 +212,11 @@ export default function App() {
       setProfile({ hex_login: data.hexLogin, is_admin: !!data.isAdmin, is_registered: true });
       setAlreadyPosted(false); setMessage(''); setAuthInput('');
       if (action === 'register') {
-        setSecretKey(data.secretKey);
         setCreatedKey(data.secretKey);
         setAuthMode('login');
         setNotice('');
       } else {
-        setSecretKey(''); setCreatedKey('');
+        setCreatedKey('');
         setNotice('');
         setAuthOpen(false);
       }
@@ -233,7 +231,7 @@ export default function App() {
       const { error: signOutError } = await supabase.auth.signOut();
       if (signOutError) throw signOutError;
       setUser(null); setProfile(null); setAlreadyPosted(false);
-      setCreatedKey(''); setSecretKey(''); setAuthInput('');
+      setCreatedKey(''); setAuthInput('');
       setAuthOpen(false); setAuthMode('login'); setNotice('');
     } catch (cause) {
       setNotice(cause instanceof Error ? cause.message : 'Не вдалося вийти з акаунта.', true);
@@ -276,7 +274,7 @@ export default function App() {
           <p className="auth-description">Збережи цей ключ зараз. Це єдиний спосіб увійти у свій акаунт. Ми не зможемо відновити його, якщо ти загубиш.</p>
           <code className="secret-key">{createdKey}</code>
           <button className="auth-action" type="button" onClick={() => void navigator.clipboard.writeText(createdKey).then(() => setNotice('Ключ скопійовано.'))}>Копіювати ключ</button>
-          <button className="auth-switch auth-confirm" type="button" onClick={() => { setCreatedKey(''); setSecretKey(''); setAuthOpen(false); }}>Я зберіг ключ</button>
+          <button className="auth-switch auth-confirm" type="button" onClick={() => { setCreatedKey(''); setAuthOpen(false); }}>Я зберіг ключ</button>
         </div> : user && profile?.is_registered ? <div className="auth-content">
           <h2 id="auth-title">Твій профіль</h2>
           <div className="profile-login"><span className="swatch" style={{ backgroundColor: profile.hex_login }} /><strong>{profile.hex_login.toLowerCase()}</strong></div>

@@ -19,5 +19,5 @@ GitHub Actions розгортає статичний сайт у Cloudflare Work
 Потрібні GitHub Actions secrets: `CLOUDFLARE_API_TOKEN` та `CLOUDFLARE_ACCOUNT_ID`.
 
 ## Supabase
-Застосувати SQL із `supabase/migrations/202611180001_copypaste.sql`.
+Застосувати SQL із `supabase/migrations/20261118073646_copypaste_daily_stream.sql`.
 У Supabase Auth потрібно дозволити Anonymous Sign-Ins.

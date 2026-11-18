@@ -216,7 +216,7 @@ textarea:disabled {
   max-height: 132px;
   padding-bottom: 2px;
   overflow-y: hidden;
-  transition: height .12s ease;
+  transition: none;
 }
 
 

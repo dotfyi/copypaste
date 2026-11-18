@@ -83,11 +83,38 @@ export default function App() {
   const ensureIdentity=useCallback(async()=>{
     let {data:sessionData,error:sessionError}=await supabase.auth.getSession();
     if(sessionError)throw sessionError;
+
+    // Supabase session storage is the primary source. If it is missing after a
+    // browser restart, recover the last anonymous session saved separately.
     if(!sessionData.session){
-      const {error:signInError}=await supabase.auth.signInAnonymously();
+      const savedGuest=localStorage.getItem('copypaste_guest_session');
+      if(savedGuest){
+        try{
+          const guest=JSON.parse(savedGuest) as {access_token?:string;refresh_token?:string};
+          if(guest.access_token&&guest.refresh_token){
+            const restored=await supabase.auth.setSession({access_token:guest.access_token,refresh_token:guest.refresh_token});
+            if(!restored.error){
+              ({data:sessionData,error:sessionError}=await supabase.auth.getSession());
+              if(sessionError)throw sessionError;
+            }else{
+              localStorage.removeItem('copypaste_guest_session');
+            }
+          }else{
+            localStorage.removeItem('copypaste_guest_session');
+          }
+        }catch{
+          localStorage.removeItem('copypaste_guest_session');
+        }
+      }
+    }
+
+    if(!sessionData.session){
+      const {data:created,error:signInError}=await supabase.auth.signInAnonymously();
       if(signInError)throw signInError;
-      ({data:sessionData,error:sessionError}=await supabase.auth.getSession());
-      if(sessionError)throw sessionError;
+      sessionData={session:created.session,user:created.user};
+      if(created.session?.user?.is_anonymous){
+        localStorage.setItem('copypaste_guest_session',JSON.stringify({access_token:created.session.access_token,refresh_token:created.session.refresh_token}));
+      }
     }
     const activeUser=sessionData.session?.user;
     if(!activeUser)throw new Error('Не вдалося створити гостьову сесію.');

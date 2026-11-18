@@ -163,12 +163,16 @@ export default function App() {
 
   useEffect(()=>{
     const el=composerRef.current;if(!el)return;
-    const line=Number.parseFloat(getComputedStyle(el).lineHeight)||24;
-    const max=line*5;
-    el.style.height=`${line}px`;
-    const next=Math.max(line,Math.min(el.scrollHeight,max));
+    const style=getComputedStyle(el);
+    const line=Number.parseFloat(style.lineHeight)||24;
+    const verticalPadding=(Number.parseFloat(style.paddingTop)||0)+(Number.parseFloat(style.paddingBottom)||0);
+    const minHeight=line+verticalPadding;
+    const maxHeight=line*5+verticalPadding;
+    el.style.height=`${minHeight}px`;
+    const contentHeight=el.scrollHeight;
+    const next=Math.max(minHeight,Math.min(contentHeight,maxHeight));
     el.style.height=`${next}px`;
-    el.style.overflowY=el.scrollHeight>max?'auto':'hidden';
+    el.style.overflowY=contentHeight>maxHeight?'auto':'hidden';
   },[message]);
 
   function updateTopic(next:string){if(next===topic)return;offsetRef.current=0;moreRef.current=true;setHasMore(false);setPosts([]);setTopic(next);}

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type CSSProperties } from 'react';
-import { BookOpen, Cpu, Gamepad2, Globe2, Newspaper, Palette, UserRound } from 'lucide-react';
+import { BookOpen, Cpu, Gamepad2, Globe2, Newspaper, Palette, Shield, MessageCircle } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 
 type Topic = 'general' | 'games' | 'technology' | 'books' | 'art' | 'news';
-type Profile = { hex_login: string; is_admin: boolean; is_registered: boolean };
+type Profile = { hex_login: string; is_admin: boolean; is_moderator: boolean; is_registered: boolean };
 type Post = {
   id: string; post_number: number; content: string; created_at: string; author_id: string; topic: Topic;
   profile?: { hex_login: string } | null;
@@ -86,9 +86,13 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [createdKey, setCreatedKey] = useState('');
-  const [authOpen, setAuthOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [authInput, setAuthInput] = useState('');
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminCooldown, setAdminCooldown] = useState('1440');
+  const [accountLogin, setAccountLogin] = useState('');
+  const [newAccount, setNewAccount] = useState<{login:string; secretKey:string} | null>(null);
+  const [moderatorLogin, setModeratorLogin] = useState('');
+  const [topicName, setTopicName] = useState('');
+  const [stats, setStats] = useState({posts:0, users:0});
   const sentinelRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const loadingRef = useRef(false);
@@ -108,19 +112,26 @@ export default function App() {
   const setNotice = (value: string, isError = false) => { setStatus(value); setError(isError); };
 
   const ensureIdentity = useCallback(async () => {
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    let { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     if (sessionError) throw sessionError;
+    if (!sessionData.session) {
+      const { error } = await supabase.auth.signInAnonymously();
+      if (error) throw error;
+      ({ data: sessionData, error: sessionError } = await supabase.auth.getSession());
+      if (sessionError) throw sessionError;
+    }
     const activeUser = sessionData.session?.user ?? null;
-    if (!activeUser) {
-      setUser(null); setProfile(null); return;
+    if (!activeUser) throw new Error('Не вдалося створити гостьову сесію.');
+    let data = null;
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const result = await supabase.from('copypaste_profiles')
+        .select('hex_login, is_admin, is_moderator, is_registered').eq('id', activeUser.id).maybeSingle();
+      if (result.error) throw result.error;
+      data = result.data;
+      if (data) break;
+      await new Promise(resolve => setTimeout(resolve, 250));
     }
-    const { data, error: profileError } = await supabase.from('copypaste_profiles')
-      .select('hex_login, is_admin, is_registered').eq('id', activeUser.id).maybeSingle();
-    if (profileError) throw profileError;
-    if (!data?.is_registered) {
-      await supabase.auth.signOut();
-      setUser(null); setProfile(null); return;
-    }
+    if (!data) throw new Error('Не вдалося створити профіль.');
     setUser(activeUser);
     setProfile(data as Profile);
   }, []);
@@ -144,11 +155,11 @@ export default function App() {
       offsetRef.current = nextOffset;
       moreRef.current = nextHasMore;
       setHasMore(nextHasMore);
-      if (reset && user && profile?.is_registered) {
+      if (reset && user && profile) {
         const { data: mine, error: mineError } = await supabase.from('copypaste_posts')
           .select('id').eq('author_id', user.id).eq('post_day', kyivToday()).limit(1);
         if (mineError) throw mineError;
-        setAlreadyPosted(!profile?.is_admin && (mine ?? []).length > 0);
+        setAlreadyPosted(false);
       }
     } catch (cause) {
       console.error(cause);
@@ -206,31 +217,18 @@ export default function App() {
     setHasMore(false); setPosts([]); setTopic(next);
   }
 
-  async function runAuthCommand(action: 'register' | 'login', key = '') {
-    setBusy(true);
-    setNotice(action === 'register' ? 'Створюємо акаунт…' : 'Перевіряємо ключ…');
+  async function runAuthCommand(key: string) {
+    setBusy(true); setNotice('Входимо в акаунт…');
     try {
       const normalizedKey = key.trim().toLowerCase();
       const { data, error: invokeError } = await supabase.functions.invoke('copypaste-auth', {
-        body: action === 'register' ? { action: 'register' } : { action: 'login', secretKey: normalizedKey }
+        body: { action: 'login', secretKey: normalizedKey }
       });
-      if (invokeError || data?.error) throw new Error(data?.error || 'Не вдалося виконати команду.');
+      if (invokeError || data?.error) throw new Error(data?.error || 'Ключ не підійшов.');
       const { error: authError } = await supabase.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
       if (authError) throw authError;
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError || !userData.user) throw userError || new Error('Не вдалося відкрити сесію.');
-      setUser(userData.user);
-      setProfile({ hex_login: data.hexLogin, is_admin: !!data.isAdmin, is_registered: true });
-      setAlreadyPosted(false); setMessage(''); setAuthInput('');
-      if (action === 'register') {
-        setCreatedKey(data.secretKey);
-        setAuthMode('login');
-        setNotice('');
-      } else {
-        setCreatedKey('');
-        setNotice('');
-        setAuthOpen(false);
-      }
+      await ensureIdentity();
+      setMessage(''); setNotice('Увійшли в акаунт.');
     } catch (cause) {
       setNotice(cause instanceof Error ? cause.message : 'Помилка авторизації.', true);
     } finally { setBusy(false); }
@@ -241,45 +239,85 @@ export default function App() {
     try {
       const { error: signOutError } = await supabase.auth.signOut();
       if (signOutError) throw signOutError;
+      const { error: guestError } = await supabase.auth.signInAnonymously();
+      if (guestError) throw guestError;
       setUser(null); setProfile(null); setAlreadyPosted(false);
-      setCreatedKey(''); setAuthInput('');
-      setAuthOpen(false); setAuthMode('login'); setNotice('');
+      await ensureIdentity();
+      setAdminOpen(false); setNotice('Ти вийшов з акаунта.');
     } catch (cause) {
       setNotice(cause instanceof Error ? cause.message : 'Не вдалося вийти з акаунта.', true);
     } finally { setBusy(false); }
   }
 
+  async function adminAction(action: string, payload: Record<string, unknown> = {}) {
+    if (!user) return;
+    const { data, error } = await supabase.functions.invoke('copypaste-auth', { body: { action, ...payload } });
+    if (error || data?.error) throw new Error(data?.error || 'Не вдалося виконати дію.');
+    return data;
+  }
+
+  async function loadAdminStats() {
+    const [postsResult, usersResult, settingsResult] = await Promise.all([
+      supabase.from('copypaste_posts').select('id', {count:'exact',head:true}),
+      supabase.from('copypaste_profiles').select('id', {count:'exact',head:true}),
+      supabase.from('copypaste_settings').select('cooldown_minutes').eq('id',true).single()
+    ]);
+    setStats({posts:postsResult.count ?? 0, users:usersResult.count ?? 0});
+    if (settingsResult.data) setAdminCooldown(String(settingsResult.data.cooldown_minutes));
+  }
+
   async function publishPost(event: FormEvent) {
     event.preventDefault();
     const content = message.trim();
-    if (!content || !user || !profile?.is_registered || (!profile.is_admin && alreadyPosted)) return;
+    if (!content || !user || !profile) return;
+    if (content.startsWith('/auth ')) {
+      const key = content.slice(6).trim();
+      if (!key) { setNotice('Після /auth додай секретний ключ.', true); return; }
+      setMessage('');
+      await runAuthCommand(key);
+      return;
+    }
+    if (content === '/exit') {
+      setMessage('');
+      await logout();
+      return;
+    }
+    if (content.startsWith('/')) { setNotice('Невідома команда. Доступні: /auth ключ та /exit.', true); return; }
     setBusy(true); setNotice('');
     try {
       const { error: insertError } = await supabase.from('copypaste_posts').insert({ content, topic });
-      if (insertError) {
-        if (insertError.code === '23505') { setAlreadyPosted(true); setNotice('Ти вже залишив повідомлення сьогодні.', true); return; }
-        throw insertError;
-      }
+      if (insertError) { if (insertError.code === '42501') throw new Error('Ще зарано публікувати. Спробуй пізніше.'); throw insertError; }
       setMessage('');
-      if (!profile.is_admin) setAlreadyPosted(true);
       await loadPosts(true);
     } catch (cause) {
       console.error(cause); setNotice('Не вдалося опублікувати. Спробуй ще раз.', true);
     } finally { setBusy(false); }
   }
 
-  const canPublish = !busy && !!user && !!profile?.is_registered && !!message.trim()
-    && (profile.is_admin || !alreadyPosted) && message.trim().length <= 180;
+  const canPublish = !busy && !!user && !!profile && !!message.trim() && message.trim().length <= 180;
 
   return (
     <main className="shell">
       <header>
-        <button className="brand" type="button" onClick={() => setAuthOpen(false)} style={{ color: topic === 'general' ? '#111' : topicColor[topic] }} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
+        <button className="brand" type="button" onClick={() => setAdminOpen(false)} style={{ color: topic === 'general' ? '#111' : topicColor[topic] }} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
         <nav className="nav" aria-label="Навігація">
-          <button className="icon-btn" type="button" aria-label="Авторизація" title="Авторизація" aria-expanded={authOpen} onClick={() => { if (!user) setAuthMode('login'); setAuthOpen(value => !value); }}><UserRound /></button>
+          {profile?.is_admin ? <button className="icon-btn" type="button" aria-label="Панель адміністратора" title="Панель адміністратора" onClick={() => { setAdminOpen(v=>!v); if (!adminOpen) void loadAdminStats(); }}><Shield /></button> : <span className="current-login" style={{color:profile?.is_admin||profile?.is_moderator ? profile.hex_login : '#777'}}>{profile?.hex_login?.toLowerCase()}</span>}
         </nav>
       </header>
-      {authOpen ? <section className="auth-page" aria-labelledby="auth-title">
+      {adminOpen && profile?.is_admin ? <section className="admin-panel">
+        <h2>Панель адміністратора</h2>
+        <div className="admin-stats"><span><strong>{stats.posts}</strong> повідомлень</span><span><strong>{stats.users}</strong> акаунтів</span></div>
+        <label>Інтервал між повідомленнями (хв)</label><div className="admin-inline"><input value={adminCooldown} onChange={e=>setAdminCooldown(e.target.value)} inputMode="numeric"/><button onClick={async()=>{try{await adminAction('update_settings',{cooldownMinutes:Number(adminCooldown)});setNotice('Інтервал збережено.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Зберегти</button></div>
+        <label>Створити акаунт</label><div className="admin-inline"><input value={accountLogin} onChange={e=>setAccountLogin(e.target.value)} placeholder="Логін або порожньо для HEX"/><button onClick={async()=>{try{const result=await adminAction('create_account',{login:accountLogin});setNewAccount(result);setAccountLogin('');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Створити</button></div>
+        {newAccount && <div className="new-account"><strong>{newAccount.login}</strong><code>{newAccount.secretKey}</code><button onClick={()=>void navigator.clipboard.writeText(newAccount.secretKey)}>Копіювати ключ</button></div>}
+        <label>Надати / забрати права модератора</label><div className="admin-inline"><input value={moderatorLogin} onChange={e=>setModeratorLogin(e.target.value)} placeholder="HEX-логін користувача"/><button onClick={async()=>{try{await adminAction('set_role',{login:moderatorLogin,role:'moderator'});setNotice('Права модератора оновлено.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Надати</button></div>
+        <label>Додати розділ</label><div className="admin-inline"><input value={topicName} onChange={e=>setTopicName(e.target.value)} placeholder="Назва розділу"/><button onClick={async()=>{try{await adminAction('create_topic',{id:topicName.toLowerCase().replace(/[^a-z0-9_-]/g,'-'),label:topicName});setTopicName('');setNotice('Розділ додано.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Додати</button></div>
+      </section> : <>
+      <form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
+        <textarea ref={composerRef} value={message} onChange={event => setMessage(event.target.value)} maxLength={180}
+          disabled={!user || busy}
+          placeholder={!user ? 'Підключаємо анонімний профіль…' : 'Поділись думкою або введи /auth ключ чи /exit'}
+          aria-label="Твоє повідомлення" />
         {createdKey ? <div className="auth-content">
           <h2 id="auth-title">Твій ключ для входу</h2>
           <p className="auth-description">Збережи цей ключ зараз. Це єдиний спосіб увійти у свій акаунт. Ми не зможемо відновити його, якщо ти загубиш.</p>
@@ -318,7 +356,7 @@ export default function App() {
           placeholder={!user || !profile?.is_registered ? 'Щоб писати, увійди або створи акаунт.' : alreadyPosted && !profile.is_admin ? 'Ти вже залишив повідомлення сьогодні. Побачимось завтра.' : 'Про що ти думаєш сьогодні?'}
           aria-label="Твоє повідомлення" />
         <div className="compose-row"><span className="counter">{message.length} / 180</span><button type="submit" disabled={!canPublish}>Опублікувати ↗</button></div>
-        {status && !authOpen && <div className={`status${error ? ' error' : ''}`} role="status" aria-live="polite">{status}</div>}
+        {status && <div className={`status${error ? ' error' : ''}`} role="status" aria-live="polite">{status}</div>}
       </form>
       <section aria-label="Усі повідомлення">
         <div className="topics">
@@ -329,7 +367,7 @@ export default function App() {
           </button>)}
         </div>
         <div id="feed" aria-live="polite">
-          {posts.length === 0 && !loading ? <div className="empty">Тут поки тихо. Залиш першу думку.</div> : posts.map(post => (
+          {posts.length === 0 && !loading ? <div className="empty-state"><MessageCircle /><p>Тут поки тихо</p><span>Залиш першу думку в цьому розділі</span></div> : posts.map(post => (
             <article className="post" key={post.id}>
               <div className="meta">
                 <div className="identity"><span className="swatch" style={{ backgroundColor: post.profile?.hex_login || '#aaa' }} /><span className="hex">{post.profile?.hex_login?.toLowerCase() || '#??????'}</span></div>

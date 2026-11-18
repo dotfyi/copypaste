@@ -274,7 +274,7 @@ export default function App() {
     setBusy(true);setNotice('Готуємо Passkey…');
     try{
       const {data:options,error}=await supabase.functions.invoke('copypaste-passkey',{body:{action:'register_options'}});
-      if(error||data?.error)throw new Error(data?.error||'Не вдалося почати налаштування Passkey.');
+      if(error||options?.error)throw new Error(options?.error||'Не вдалося почати налаштування Passkey.');
       const publicKey={...options,challenge:decodeB64url(options.challenge),user:{...options.user,id:decodeB64url(options.user.id)},excludeCredentials:(options.excludeCredentials??[]).map((item:any)=>({...item,id:decodeB64url(item.id)}))} as PublicKeyCredentialCreationOptions;
       const credential=await navigator.credentials.create({publicKey}) as PublicKeyCredential|null;
       if(!credential)throw new Error('Створення Passkey скасовано.');
@@ -290,7 +290,7 @@ export default function App() {
     setBusy(true);setNotice('Шукаємо Passkey…');
     try{
       const {data:options,error}=await supabase.functions.invoke('copypaste-passkey',{body:{action:'login_options'}});
-      if(error||data?.error)throw new Error(data?.error||'Не вдалося почати вхід.');
+      if(error||options?.error)throw new Error(options?.error||'Не вдалося почати вхід.');
       const publicKey={...options,challenge:decodeB64url(options.challenge),allowCredentials:(options.allowCredentials??[]).map((item:any)=>({...item,id:decodeB64url(item.id)}))} as PublicKeyCredentialRequestOptions;
       const credential=await navigator.credentials.get({publicKey}) as PublicKeyCredential|null;
       if(!credential)throw new Error('Вхід скасовано.');

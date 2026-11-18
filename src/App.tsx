@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type CSSProperties } from 'react';
-import { BookOpen, Cpu, Gamepad2, Globe2, Newspaper, Palette, Shield, MessageCircle, Trash2 } from 'lucide-react';
+import { Activity, Aperture, Atom, AudioLines, Bike, Bird, Book, BookOpen, Bookmark, BriefcaseBusiness, Camera, Cat, ChartNoAxesCombined, CircleHelp, Code, Coffee, Compass, Cpu, Dice5, Dumbbell, Earth, Film, Flame, FlaskConical, Flower2, Gamepad2, Gem, Ghost, Globe2, Hammer, Heart, House, Lightbulb, Map, MessageCircle, Music, Palette, PawPrint, Rocket, School, Search, Shield, ShoppingBag, Smile, Sparkles, Star, Sun, Terminal, Trophy, Users, Video, Wallet, WandSparkles, Wrench, Zap, Newspaper, Trash2 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 
@@ -18,7 +18,8 @@ const DEFAULT_TOPICS: Topic[] = [
   {id:'art',label:'Мистецтво',icon:'Palette',color:'#8eae88'},
   {id:'news',label:'Новини',icon:'Newspaper',color:'#c99b82'}
 ];
-const ICONS: Record<string, typeof Globe2> = {Globe2,Gamepad2,Cpu,BookOpen,Palette,Newspaper,MessageCircle};
+const ICONS: Record<string, typeof Globe2> = {Activity,Aperture,Atom,AudioLines,Bike,Bird,Book,BookOpen,Bookmark,BriefcaseBusiness,Camera,Cat,ChartNoAxesCombined,CircleHelp,Code,Coffee,Compass,Cpu,Dice5,Dumbbell,Earth,Film,Flame,FlaskConical,Flower2,Gamepad2,Gem,Ghost,Globe2,Hammer,Heart,House,Lightbulb,Map,MessageCircle,Music,Palette,PawPrint,Rocket,School,Search,Shield,ShoppingBag,Smile,Sparkles,Star,Sun,Terminal,Trophy,Users,Video,Wallet,WandSparkles,Wrench,Zap,Newspaper};
+const ICON_OPTIONS = Object.keys(ICONS).sort();
 function kyivInfo(value: string, postNumber: number) {
   const date = new Date(value);
   const day = new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit',timeZone:'Europe/Kyiv'}).format(date);
@@ -64,7 +65,7 @@ export default function App() {
   const [loginAvailability,setLoginAvailability]=useState<'idle'|'checking'|'free'|'taken'|'invalid'>('idle');
   const [newAccount,setNewAccount]=useState<{login:string;secretKey:string}|null>(null);
   const [moderatorLogin,setModeratorLogin]=useState('');
-  const [topicName,setTopicName]=useState('');
+  const [topicName,setTopicName]=useState('');\n  const [topicIcon,setTopicIcon]=useState('MessageCircle');\n  const [topicColor,setTopicColor]=useState('#aaa0cf');\n  const [cooldownMinutes,setCooldownMinutes]=useState(1440);\n  const [cooldownUntil,setCooldownUntil]=useState<number|null>(null);\n  const [clockNow,setClockNow]=useState(Date.now());
   const [stats,setStats]=useState({posts:0,users:0});
   const sentinelRef=useRef<HTMLDivElement>(null);
   const composerRef=useRef<HTMLTextAreaElement>(null);
@@ -123,6 +124,34 @@ export default function App() {
   useEffect(()=>{void (async()=>{try{await ensureIdentity();setNotice('');}catch(e){console.error(e);setNotice('Не вдалося створити гостьовий профіль. Перевір, чи ввімкнений анонімний вхід.',true);}})();void loadTopics();},[ensureIdentity,loadTopics]);
   useEffect(()=>{if(user)void loadPosts(true);},[user,topic,loadPosts]);
   useEffect(()=>{
+    const {data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{
+      if(session?.user?.is_anonymous) localStorage.setItem('copypaste_guest_session',JSON.stringify(session));
+    });
+    return()=>listener.subscription.unsubscribe();
+  },[]);
+  useEffect(()=>{
+    let cancelled=false;
+    async function refresh(){
+      if(!user||!profile)return;
+      if(profile.is_admin){setCooldownUntil(null);return;}
+      const [{data:setting},{data:lastPost}] = await Promise.all([
+        supabase.from('copypaste_settings').select('cooldown_minutes').eq('id',true).maybeSingle(),
+        supabase.from('copypaste_posts').select('created_at').eq('author_id',user.id).order('created_at',{ascending:false}).limit(1).maybeSingle()
+      ]);
+      if(cancelled)return;
+      const mins=Number(setting?.cooldown_minutes??1440);setCooldownMinutes(mins);
+      const until=lastPost?new Date(lastPost.created_at).getTime()+mins*60000:0;
+      setCooldownUntil(until>Date.now()?until:null);
+    }
+    void refresh();return()=>{cancelled=true;};
+  },[user,profile]);
+  useEffect(()=>{
+    if(cooldownUntil===null)return;
+    const timer=window.setInterval(()=>setClockNow(Date.now()),1000);
+    return()=>window.clearInterval(timer);
+  },[cooldownUntil]);
+
+  useEffect(()=>{
     const channel=supabase.channel('copypaste-live-feed').on('postgres_changes',{event:'INSERT',schema:'public',table:'copypaste_posts'},payload=>{
       if((payload.new as {topic?:string}).topic===topic)void loadPosts(true);
     }).subscribe();
@@ -167,9 +196,20 @@ export default function App() {
   async function logout(){
     setBusy(true);
     try{
-      const {error}=await supabase.auth.signOut();if(error)throw error;
-      const {error:guestError}=await supabase.auth.signInAnonymously();if(guestError)throw guestError;
-      setUser(null);setProfile(null);await ensureIdentity();setAdminOpen(false);setNotice('Ти вийшов з акаунта.');
+      const saved=localStorage.getItem('copypaste_guest_session');
+      let restored=false;
+      if(saved){
+        try{
+          const guest=JSON.parse(saved) as {access_token:string;refresh_token:string};
+          const {error}=await supabase.auth.setSession({access_token:guest.access_token,refresh_token:guest.refresh_token});
+          if(!error)restored=true;
+        }catch{restored=false;}
+      }
+      if(!restored){
+        await supabase.auth.signOut();
+        const {error}=await supabase.auth.signInAnonymously();if(error)throw error;
+      }
+      await ensureIdentity();setAdminOpen(false);setNotice('Ти вийшов з акаунта.');
     }catch(e){setNotice(e instanceof Error?e.message:'Не вдалося вийти.',true);}
     finally{setBusy(false);}
   }
@@ -210,7 +250,7 @@ export default function App() {
     finally{setBusy(false);}
   }
 
-  const canPublish=!!user&&!!profile&&!busy&&!!message.trim()&&message.trim().length<=180;
+  const cooldownSeconds=cooldownUntil===null?0:Math.max(0,Math.ceil((cooldownUntil-clockNow)/1000));\n  const timerText=`${String(Math.floor(cooldownSeconds/3600)).padStart(2,'0')}:${String(Math.floor((cooldownSeconds%3600)/60)).padStart(2,'0')}:${String(cooldownSeconds%60).padStart(2,'0')}`;\n  const cooldownActive=cooldownSeconds>0&&!profile?.is_admin;\n  const canPublish=!!user&&!!profile&&!busy&&!cooldownActive&&!!message.trim()&&message.trim().length<=180;
 
   return <main className="shell">
     <header>
@@ -224,9 +264,9 @@ export default function App() {
       <div className="admin-stats"><div><strong>{stats.posts}</strong><span>повідомлень</span></div><div><strong>{stats.users}</strong><span>профілів</span></div><div><strong>{topics.length}</strong><span>розділів</span></div></div>
       <div className="admin-grid">
         <section className="admin-card"><div className="admin-card-title"><span>01</span><h3>Публікації</h3></div><p>Проміжок між повідомленнями для звичайних користувачів. Для адміна обмеження вимкнені.</p><div className="admin-inline"><input aria-label="Інтервал у хвилинах" value={adminCooldown} onChange={e=>setAdminCooldown(e.target.value)} inputMode="numeric"/><button type="button" onClick={async()=>{try{await adminAction('update_settings',{cooldownMinutes:Number(adminCooldown)});setNotice('Інтервал збережено.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Зберегти</button></div><small>0 — без ліміту для всіх</small></section>
-        <section className="admin-card"><div className="admin-card-title"><span>02</span><h3>Новий акаунт</h3></div><p>Введи логін без #. Якщо залишити порожнім — створимо випадковий.</p><div className="admin-inline"><input value={accountLogin} onChange={e=>setAccountLogin(e.target.value.replace(/^#/,''))} placeholder="наприклад, nightowl"/><button type="button" disabled={loginAvailability==='checking'||loginAvailability==='taken'||loginAvailability==='invalid'} onClick={async()=>{try{const result=await adminAction('create_account',{login:accountLogin.trim()});setNewAccount(result);setAccountLogin('');setLoginAvailability('idle');setNotice('Акаунт створено. Збережи секретний ключ.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Створити</button></div><div className={`availability ${loginAvailability}`}>{loginAvailability==='checking'?'Перевіряємо доступність…':loginAvailability==='free'?'✓ Логін вільний':loginAvailability==='taken'?'✕ Логін уже зайнятий':loginAvailability==='invalid'?'Лише латиниця, цифри, _ та -':'Автоматичний логін буде згенеровано'}</div>{newAccount&&<div className="new-account"><strong>{newAccount.login}</strong><code>{newAccount.secretKey}</code><button type="button" onClick={()=>void navigator.clipboard.writeText(`Логін: ${newAccount.login}\\nКлюч: ${newAccount.secretKey}`)}>Скопіювати логін і ключ</button></div>}</section>
-        <section className="admin-card"><div className="admin-card-title"><span>03</span><h3>Модератори</h3></div><p>Надай права користувачу з уже створеним акаунтом.</p><div className="admin-inline"><input value={moderatorLogin} onChange={e=>setModeratorLogin(e.target.value.replace(/^#/,''))} placeholder="Логін користувача"/><button type="button" onClick={async()=>{try{await adminAction('set_role',{login:moderatorLogin,role:'moderator'});setModeratorLogin('');setNotice('Права модератора оновлено.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Надати</button></div></section>
-        <section className="admin-card"><div className="admin-card-title"><span>04</span><h3>Розділи</h3></div><p>Створи нову тему для загальної стрічки.</p><div className="admin-inline"><input value={topicName} onChange={e=>setTopicName(e.target.value)} placeholder="Назва розділу"/><button type="button" onClick={async()=>{try{await adminAction('create_topic',{id:topicName.toLowerCase().replace(/[^a-z0-9_-]/g,'-'),label:topicName});setTopicName('');await loadTopics();setNotice('Розділ додано.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Додати</button></div></section>
+        <section className="admin-card"><div className="admin-card-title"><span>02</span><h3>Новий акаунт</h3></div><p>Введи логін без #. Якщо залишити порожнім — створимо випадковий.</p><div className="admin-inline"><div className="hex-login-field"><span>#</span><input value={accountLogin} maxLength={6} onChange={e=>setAccountLogin(e.target.value.replace(/[^a-fA-F0-9]/g,'').slice(0,6).toUpperCase())} placeholder="A1B2C3"/></div><button type="button" disabled={loginAvailability==='checking'||loginAvailability==='taken'||loginAvailability==='invalid'} onClick={async()=>{try{const result=await adminAction('create_account',{login:accountLogin.trim()});setNewAccount(result);setAccountLogin('');setLoginAvailability('idle');setNotice('Акаунт створено. Збережи секретний ключ.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Створити</button></div><div className={`availability ${loginAvailability}`}>{loginAvailability==='checking'?'Перевіряємо доступність…':loginAvailability==='free'?'✓ Логін вільний':loginAvailability==='taken'?'✕ Логін уже зайнятий':loginAvailability==='invalid'?'Лише латиниця, цифри, _ та -':'Автоматичний логін буде згенеровано'}</div>{newAccount&&<div className="new-account"><strong>{newAccount.login}</strong><code>{newAccount.secretKey}</code><button type="button" onClick={()=>void navigator.clipboard.writeText(`Логін: ${newAccount.login}\\nКлюч: ${newAccount.secretKey}`)}>Скопіювати логін і ключ</button></div>}</section>
+        <section className="admin-card"><div className="admin-card-title"><span>03</span><h3>Модератори</h3></div><p>Надай права користувачу з уже створеним акаунтом.</p><div className="admin-inline"><input value={moderatorLogin} onChange={e=>setModeratorLogin('#'+e.target.value.replace(/[^a-fA-F0-9]/g,'').slice(0,6).toUpperCase())} placeholder="#A1B2C3"/><button type="button" onClick={async()=>{try{await adminAction('set_role',{login:moderatorLogin,role:'moderator'});setModeratorLogin('');setNotice('Права модератора оновлено.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Надати</button></div></section>
+        <section className="admin-card"><div className="admin-card-title"><span>04</span><h3>Розділи</h3></div><p>Створи нову тему для загальної стрічки.</p><div className="admin-inline"><input value={topicName} onChange={e=>setTopicName(e.target.value)} placeholder="Назва розділу"/><button type="button" disabled={!topicName.trim()} onClick={async()=>{try{await adminAction('create_topic',{id:topicName.toLowerCase().replace(/[^a-z0-9_-]/g,'-'),label:topicName,icon:topicIcon,color:topicColor});setTopicName('');setTopicIcon('MessageCircle');setTopicColor('#aaa0cf');await loadTopics();setNotice('Розділ додано.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Додати</button></div><div className="topic-options"><label>Lucide icon<select value={topicIcon} onChange={e=>setTopicIcon(e.target.value)}>{ICON_OPTIONS.map(name=><option key={name} value={name}>{name}</option>)}</select></label><label>Колір<input type="color" value={topicColor} onChange={e=>setTopicColor(e.target.value)}/></label><span className="topic-preview" style={{color:topicColor}}>{(()=>{const Preview=ICONS[topicIcon]??MessageCircle;return <Preview/>})()}<b>{topicName||'Новий розділ'}</b></span></div></section>
       </div>
       {status&&<p className={error?'status error':'status'}>{status}</p>}
     </section>:<>

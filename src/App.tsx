@@ -237,7 +237,6 @@ export default function App() {
       setMessage('');await runAuthCommand(key);return;
     }
 
-    if(content.length>180)return;
     setBusy(true);setNotice('');
     try{
       const {error}=await supabase.from('copypaste_posts').insert({content,topic});
@@ -247,7 +246,7 @@ export default function App() {
     finally{setBusy(false);}
   }
 
-  const canPublish=!!user&&!!profile?.is_registered&&!busy&&!!message.trim()&&message.trim().length<=180;
+  const canPublish=!!user&&!!profile?.is_registered&&!busy&&!!message.trim();
 
   return <main className="shell">
     <header>
@@ -298,8 +297,8 @@ export default function App() {
         {authStep==='idle'?<form className="composer" onSubmit={publishPost}><textarea ref={composerRef} value={message} onChange={e=>setMessage(e.target.value)} placeholder="Авторизуйся, щоб почати спілкування" aria-label="Команда авторизації"/><div className="compose-row"><span className="auth-hint">/registration · /auth ключ</span><button type="submit" disabled={busy||!message.trim()}>Продовжити ↗</button></div></form>:authStep==='registration'?<div className="auth-inline-panel"><h3>Створення акаунта</h3><p>Отримай свій HEX-логін і секретний ключ для наступних входів.</p><button className="auth-action" type="button" disabled={busy} onClick={()=>void beginRegistration()}>{busy?'Створюємо…':'Створити акаунт'}</button><button className="auth-switch" type="button" onClick={()=>setAuthStep('idle')}>Назад</button></div>:<div className="auth-inline-panel"><h3>Твій акаунт готовий</h3><p>Логін: <strong>{registration?.hexLogin}</strong></p><div className="secret-key">{registration?.secretKey}</div><button className="auth-action" type="button" onClick={()=>void navigator.clipboard.writeText(registration?.secretKey??'')}><Copy/> Скопіювати секретний ключ</button><p className="auth-warning">Збережи ключ — його неможливо відновити.</p><button className="auth-action" type="button" disabled={busy} onClick={()=>void continueRegistration()}>Продовжити</button></div>}
         {status&&<div className={`status${error?' error':''}`}>{status}</div>}
       </div>:<form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
-        <textarea ref={composerRef} value={message} onChange={e=>setMessage(e.target.value)} maxLength={180} disabled={busy} placeholder="Поділись думкою…" aria-label="Твоє повідомлення"/>
-        <div className="compose-row"><span className="counter">{message.length} / 180</span><button type="submit" disabled={!canPublish}>Опублікувати ↗</button></div>
+        <textarea ref={composerRef} value={message} onChange={e=>setMessage(e.target.value)} disabled={busy} placeholder="Поділись думкою…" aria-label="Твоє повідомлення"/>
+        <div className="compose-row"><span className="counter"/><button type="submit" disabled={!canPublish}>Опублікувати ↗</button></div>
         {status&&<div className={`status${error?' error':''}`} role="status" aria-live="polite">{status}</div>}
       </form>}
       <section aria-label="Усі повідомлення">

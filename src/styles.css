@@ -274,3 +274,19 @@ textarea:disabled {
  .admin-stats { gap:8px; }
  .admin-stats > div { padding:12px 10px; }
 }
+
+
+/* Topic controls */
+.topic-options { display:flex; align-items:flex-end; flex-wrap:wrap; gap:14px; margin-top:14px; }
+.topic-options label { display:flex; flex-direction:column; gap:6px; color:#888; font-size:10px; }
+.topic-options select { min-width:130px; padding:7px 9px; border:1px solid #e8e8e8; border-radius:7px; background:#fff; color:#222; font:inherit; font-size:11px; }
+.topic-options input[type="color"] { width:42px; height:30px; padding:2px; border:1px solid #e8e8e8; border-radius:7px; background:#fff; cursor:pointer; }
+.topic-preview { display:flex; align-items:center; gap:7px; min-height:30px; font-size:11px; }
+.topic-preview svg { width:16px; height:16px; stroke-width:1.8; }
+.hex-login-field { display:flex; align-items:center; gap:5px; flex:1; min-width:0; border-bottom:1px solid var(--line); }
+.hex-login-field > span { color:#999; font-size:12px; }
+.hex-login-field input { flex:1; min-width:0; padding:8px 0; border:0; outline:none; background:transparent; color:var(--ink); font:inherit; font-size:12px; letter-spacing:.12em; }
+.hex-login-field:focus-within { border-bottom-color:#111; }
+.composer textarea { padding:0 0 1px !important; min-height:25px; height:25px; line-height:1.5; }
+.composer textarea:disabled { color:#aaa; opacity:1; cursor:not-allowed; }
+.composer textarea:disabled::placeholder { color:#999; }

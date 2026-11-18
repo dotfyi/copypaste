@@ -128,8 +128,8 @@ export default function App() {
     finally{loadingRef.current=false;setLoading(false);}
   },[topic]);
 
-  useEffect(()=>{void (async()=>{try{await ensureIdentity();setNotice('');}catch(e){console.error(e);setNotice('Не вдалося створити гостьовий профіль. Перевір, чи ввімкнений анонімний вхід.',true);}})();void loadTopics();},[ensureIdentity,loadTopics]);
-  useEffect(()=>{if(user){void loadPosts(true);}},[user,topic,loadPosts]);
+  useEffect(()=>{void (async()=>{try{await ensureIdentity();setNotice('');}catch(e){console.error(e);setNotice('Не вдалося перевірити авторизацію. Онови сторінку та спробуй ще раз.',true);}})();void loadTopics();},[ensureIdentity,loadTopics]);
+  useEffect(()=>{void loadPosts(true);},[user,topic,loadPosts]);
   useEffect(()=>{
     const {data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{
       if(!session){setUser(null);setProfile(null);}

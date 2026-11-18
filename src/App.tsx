@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type CSSProperties } from 'react';
-import { Activity, Aperture, Atom, AudioLines, Bike, Bird, Book, BookOpen, Bookmark, BriefcaseBusiness, Camera, Cat, ChartNoAxesCombined, CircleHelp, Code, Coffee, Compass, Cpu, Dice5, Dumbbell, Earth, Film, Flame, FlaskConical, Flower2, Gamepad2, Gem, Ghost, Globe2, Hammer, Heart, House, Lightbulb, Map, MessageCircle, Music, Palette, PawPrint, Rocket, School, Search, Shield, ShoppingBag, Smile, Sparkles, Star, Sun, Terminal, Trophy, Users, Video, Wallet, WandSparkles, Wrench, Zap, Newspaper, Trash2 } from 'lucide-react';
+import { Activity, Aperture, Atom, AudioLines, Bike, Bird, Book, BookOpen, Bookmark, BriefcaseBusiness, Camera, Cat, ChartNoAxesCombined, CircleHelp, Code, Coffee, Compass, Cpu, Dice5, Dumbbell, Earth, Film, Flame, FlaskConical, Flower2, Gamepad2, Gem, Ghost, Globe2, Hammer, Heart, House, Lightbulb, Map, MessageCircle, Music, Palette, PawPrint, Rocket, School, Search, Shield, ShoppingBag, Smile, Sparkles, Star, Sun, Terminal, Trophy, Users, Video, Wallet, WandSparkles, Wrench, Zap, Newspaper, Trash2, Info, UserRound, LogOut, Copy, X } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 
@@ -28,18 +28,6 @@ function kyivInfo(value: string, postNumber: number) {
   return `${day} ${weekday.charAt(0).toLocaleUpperCase('uk-UA')}${weekday.slice(1)} ${time} №${postNumber}`;
 }
 
-const decodeB64url=(value:string)=>Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4)),c=>c.charCodeAt(0));
-const encodeB64url=(value:ArrayBuffer)=>btoa(String.fromCharCode(...new Uint8Array(value))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
-function passkeyCredentialJSON(credential:PublicKeyCredential,kind:'registration'|'authentication'){
-  const response=credential.response as AuthenticatorAttestationResponse & AuthenticatorAssertionResponse;
-  const common={id:credential.id,rawId:encodeB64url(credential.rawId),type:credential.type,clientExtensionResults:credential.getClientExtensionResults()};
-  if(kind==='registration'){
-    const att=response as AuthenticatorAttestationResponse;
-    return {...common,response:{attestationObject:encodeB64url(att.attestationObject),clientDataJSON:encodeB64url(att.clientDataJSON),transports:att.getTransports?.()??[]}};
-  }
-  const assertion=response as AuthenticatorAssertionResponse;
-  return {...common,response:{authenticatorData:encodeB64url(assertion.authenticatorData),clientDataJSON:encodeB64url(assertion.clientDataJSON),signature:encodeB64url(assertion.signature),userHandle:assertion.userHandle?encodeB64url(assertion.userHandle):null}};
-}
 function Spoiler({children}:{children:string}) {
   const [revealed,setRevealed]=useState(false);
   const ref=useRef<HTMLButtonElement>(null);
@@ -84,7 +72,13 @@ export default function App() {
   const [cooldownMinutes,setCooldownMinutes]=useState(1440);
   const [cooldownUntil,setCooldownUntil]=useState<number|null>(null);
   const [clockNow,setClockNow]=useState(Date.now());
-  const [passkeyCount,setPasskeyCount]=useState(0);
+  const [infoOpen,setInfoOpen]=useState(false);
+  const [infoTab,setInfoTab]=useState<'faq'|'rules'>('faq');
+  const [profileOpen,setProfileOpen]=useState(false);
+  const [authStep,setAuthStep]=useState<'idle'|'registration'|'key-ready'>('idle');
+  const [registration,setRegistration]=useState<{secretKey:string;access_token:string;refresh_token:string;hexLogin:string}|null>(null);
+  const [moderatorTopic,setModeratorTopic]=useState('general');
+  const [moderatorTopics,setModeratorTopics]=useState<string[]>([]);
   const [stats,setStats]=useState({posts:0,users:0});
   const sentinelRef=useRef<HTMLDivElement>(null);
   const composerRef=useRef<HTMLTextAreaElement>(null);
@@ -95,52 +89,16 @@ export default function App() {
   const setNotice=(value:string,isError=false)=>{setStatus(value);setError(isError);};
 
   const ensureIdentity=useCallback(async()=>{
-    let {data:sessionData,error:sessionError}=await supabase.auth.getSession();
-    if(sessionError)throw sessionError;
-
-    // Supabase session storage is the primary source. If it is missing after a
-    // browser restart, recover the last anonymous session saved separately.
-    if(!sessionData.session){
-      const savedGuest=localStorage.getItem('copypaste_guest_session');
-      if(savedGuest){
-        try{
-          const guest=JSON.parse(savedGuest) as {access_token?:string;refresh_token?:string};
-          if(guest.access_token&&guest.refresh_token){
-            const restored=await supabase.auth.setSession({access_token:guest.access_token,refresh_token:guest.refresh_token});
-            if(!restored.error){
-              ({data:sessionData,error:sessionError}=await supabase.auth.getSession());
-              if(sessionError)throw sessionError;
-            }else{
-              localStorage.removeItem('copypaste_guest_session');
-            }
-          }else{
-            localStorage.removeItem('copypaste_guest_session');
-          }
-        }catch{
-          localStorage.removeItem('copypaste_guest_session');
-        }
-      }
-    }
-
-    if(!sessionData.session){
-      const {data:created,error:signInError}=await supabase.auth.signInAnonymously();
-      if(signInError)throw signInError;
-      sessionData={session:created.session};
-      if(created.session?.user?.is_anonymous){
-        localStorage.setItem('copypaste_guest_session',JSON.stringify({access_token:created.session.access_token,refresh_token:created.session.refresh_token}));
-      }
-    }
-    const activeUser=sessionData.session?.user;
-    if(!activeUser)throw new Error('Не вдалося створити гостьову сесію.');
-    let found:Profile|null=null;
-    for(let i=0;i<12;i++){
-      const result=await supabase.from('copypaste_profiles').select('hex_login,is_admin,is_moderator,is_registered').eq('id',activeUser.id).maybeSingle();
-      if(result.error)throw result.error;
-      if(result.data){found=result.data as Profile;break;}
-      await new Promise(resolve=>setTimeout(resolve,250));
-    }
-    if(!found)throw new Error('Не вдалося створити профіль.');
-    setUser(activeUser);setProfile(found);
+    const {data,error}=await supabase.auth.getSession();
+    if(error)throw error;
+    const activeUser=data.session?.user??null;
+    if(!activeUser){setUser(null);setProfile(null);return;}
+    const {data:found,error:profileError}=await supabase.from('copypaste_profiles').select('hex_login,is_admin,is_moderator,is_registered').eq('id',activeUser.id).maybeSingle();
+    if(profileError)throw profileError;
+    if(!found||!found.is_registered){setUser(null);setProfile(null);await supabase.auth.signOut();return;}
+    setUser(activeUser);setProfile(found as Profile);
+    const {data:scopes}=await supabase.from('copypaste_moderator_topics').select('topic_id').eq('user_id',activeUser.id);
+    setModeratorTopics((scopes??[]).map((row:any)=>row.topic_id));
   },[]);
 
   const loadTopics=useCallback(async()=>{
@@ -168,10 +126,10 @@ export default function App() {
   },[topic]);
 
   useEffect(()=>{void (async()=>{try{await ensureIdentity();setNotice('');}catch(e){console.error(e);setNotice('Не вдалося створити гостьовий профіль. Перевір, чи ввімкнений анонімний вхід.',true);}})();void loadTopics();},[ensureIdentity,loadTopics]);
-  useEffect(()=>{if(user){void loadPosts(true);void refreshPasskeyStatus();}},[user,topic,loadPosts]);
+  useEffect(()=>{if(user){void loadPosts(true);}},[user,topic,loadPosts]);
   useEffect(()=>{
     const {data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{
-      if(session?.user?.is_anonymous) localStorage.setItem('copypaste_guest_session',JSON.stringify(session));
+      if(!session){setUser(null);setProfile(null);}
     });
     return()=>listener.subscription.unsubscribe();
   },[]);
@@ -244,63 +202,29 @@ export default function App() {
   }
   async function logout(){
     setBusy(true);
-    try{
-      const saved=localStorage.getItem('copypaste_guest_session');
-      let restored=false;
-      if(saved){
-        try{
-          const guest=JSON.parse(saved) as {access_token:string;refresh_token:string};
-          const {error}=await supabase.auth.setSession({access_token:guest.access_token,refresh_token:guest.refresh_token});
-          if(!error)restored=true;
-        }catch{restored=false;}
-      }
-      if(!restored){
-        await supabase.auth.signOut();
-        const {error}=await supabase.auth.signInAnonymously();if(error)throw error;
-      }
-      await ensureIdentity();setAdminOpen(false);setNotice('Ти вийшов з акаунта.');
-    }catch(e){setNotice(e instanceof Error?e.message:'Не вдалося вийти.',true);}
+    try{await supabase.auth.signOut();setUser(null);setProfile(null);setModeratorTopics([]);setProfileOpen(false);setAdminOpen(false);setNotice('Ти вийшов з акаунта.');}
+    catch(e){setNotice(e instanceof Error?e.message:'Не вдалося вийти.',true);}
     finally{setBusy(false);}
   }
 
-  async function refreshPasskeyStatus(){
-    if(!user)return;
-    const {data,error}=await supabase.functions.invoke('copypaste-passkey',{body:{action:'status'}});
-    if(!error&&typeof data?.count==='number')setPasskeyCount(data.count);
-  }
-  async function registerPasskey(){
-    if(!user||!profile)return;
-    if(!window.PublicKeyCredential||!navigator.credentials){setNotice('Цей браузер не підтримує Passkey.',true);return;}
-    setBusy(true);setNotice('Готуємо Passkey…');
+  async function beginRegistration(){
+    setBusy(true);setNotice('Створюємо акаунт…');
     try{
-      const {data:options,error}=await supabase.functions.invoke('copypaste-passkey',{body:{action:'register_options'}});
-      if(error||options?.error)throw new Error(options?.error||'Не вдалося почати налаштування Passkey.');
-      const publicKey={...options,challenge:decodeB64url(options.challenge),user:{...options.user,id:decodeB64url(options.user.id)},excludeCredentials:(options.excludeCredentials??[]).map((item:any)=>({...item,id:decodeB64url(item.id)}))} as PublicKeyCredentialCreationOptions;
-      const credential=await navigator.credentials.create({publicKey}) as PublicKeyCredential|null;
-      if(!credential)throw new Error('Створення Passkey скасовано.');
-      const response=passkeyCredentialJSON(credential,'registration');
-      const {data:verified,error:verifyError}=await supabase.functions.invoke('copypaste-passkey',{body:{action:'register_verify',challenge:options.challenge,response}});
-      if(verifyError||verified?.error)throw new Error(verified?.error||'Не вдалося зберегти Passkey.');
-      setPasskeyCount(v=>v+1);setNotice('Passkey додано. Тепер можна відновити цей HEX-профіль на іншому сеансі браузера.');
-    }catch(e){setNotice(e instanceof Error?e.message:'Помилка Passkey.',true);}
+      const {data,error}=await supabase.functions.invoke('copypaste-auth',{body:{action:'register'}});
+      if(error||data?.error)throw new Error(data?.error||'Не вдалося створити акаунт.');
+      setRegistration({secretKey:data.secretKey,access_token:data.access_token,refresh_token:data.refresh_token,hexLogin:data.hexLogin});
+      setAuthStep('key-ready');setNotice('');
+    }catch(e){setNotice(e instanceof Error?e.message:'Помилка реєстрації.',true);}
     finally{setBusy(false);}
   }
-  async function loginWithPasskey(){
-    if(!window.PublicKeyCredential||!navigator.credentials){setNotice('Цей браузер не підтримує Passkey.',true);return;}
-    setBusy(true);setNotice('Шукаємо Passkey…');
+  async function continueRegistration(){
+    if(!registration)return;
+    setBusy(true);
     try{
-      const {data:options,error}=await supabase.functions.invoke('copypaste-passkey',{body:{action:'login_options'}});
-      if(error||options?.error)throw new Error(options?.error||'Не вдалося почати вхід.');
-      const publicKey={...options,challenge:decodeB64url(options.challenge),allowCredentials:(options.allowCredentials??[]).map((item:any)=>({...item,id:decodeB64url(item.id)}))} as PublicKeyCredentialRequestOptions;
-      const credential=await navigator.credentials.get({publicKey}) as PublicKeyCredential|null;
-      if(!credential)throw new Error('Вхід скасовано.');
-      const response=passkeyCredentialJSON(credential,'authentication');
-      const {data:session,error:verifyError}=await supabase.functions.invoke('copypaste-passkey',{body:{action:'login_verify',challenge:options.challenge,response}});
-      if(verifyError||session?.error)throw new Error(session?.error||'Passkey не підтверджено.');
-      const {error:setError}=await supabase.auth.setSession({access_token:session.access_token,refresh_token:session.refresh_token});
-      if(setError)throw setError;
-      await ensureIdentity();await refreshPasskeyStatus();setNotice('Повернули твій HEX-профіль.');
-    }catch(e){setNotice(e instanceof Error?e.message:'Не вдалося увійти з Passkey.',true);}
+      const {error}=await supabase.auth.setSession({access_token:registration.access_token,refresh_token:registration.refresh_token});
+      if(error)throw error;
+      await ensureIdentity();setAuthStep('idle');setRegistration(null);setNotice('Акаунт створено. Ти увійшов.');setMessage('');
+    }catch(e){setNotice(e instanceof Error?e.message:'Не вдалося увійти.',true);}
     finally{setBusy(false);}
   }
 

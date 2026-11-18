@@ -111,7 +111,7 @@ export default function App() {
     if(!sessionData.session){
       const {data:created,error:signInError}=await supabase.auth.signInAnonymously();
       if(signInError)throw signInError;
-      sessionData={session:created.session,user:created.user};
+      sessionData={session:created.session};
       if(created.session?.user?.is_anonymous){
         localStorage.setItem('copypaste_guest_session',JSON.stringify({access_token:created.session.access_token,refresh_token:created.session.refresh_token}));
       }

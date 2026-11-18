@@ -1,63 +1,23 @@
-# Сімейний AI-помічник
+# copypaste
 
-Telegram-бот із двома окремими особистими чатами та спільним сімейним простором.
+Одна думка. Один день. Спільний потік коротких повідомлень.
 
-## Архітектура
+## Як це працює
+- Відвідувач отримує анонімний Supabase Auth акаунт.
+- Сервер автоматично призначає постійний HEX-псевдонім.
+- Один акаунт може опублікувати одне повідомлення до 280 символів на день за київським часом.
+- Усі повідомлення доступні в одній стрічці, нові — зверху.
+- Немає імен, профілів, лайків, коментарів чи категорій.
 
-- Cloudflare Workers — Telegram webhook та серверна логіка.
-- Workers AI — відповіді українською та подальше розпізнавання команд.
-- Supabase — сім'ї, учасники, спільні й особисті записи.
-- Cloudflare Cron — основа для планувальника нагадувань (наступний етап).
+## Технології
+- Статичний сайт на Cloudflare Workers Static Assets.
+- Supabase Auth (anonymous) та Postgres з RLS.
+- У браузері використовується лише publishable key. Service role key не потрібен.
 
 ## Розгортання
+GitHub Actions розгортає статичний сайт у Cloudflare Worker після push у `main`.
+Потрібні GitHub Actions secrets: `CLOUDFLARE_API_TOKEN` та `CLOUDFLARE_ACCOUNT_ID`.
 
-GitHub Actions автоматично перевіряє TypeScript і розгортає Worker після кожного push у `main`, якщо задані `CLOUDFLARE_API_TOKEN` та `CLOUDFLARE_ACCOUNT_ID`.
-
-## Поточний стан
-
-Перший каркас містить:
-- захищений Telegram webhook;
-- створення сімейного простору першим учасником;
-- одноразове запрошення другого учасника;
-- перевірку членства сім'ї;
-- AI-відповіді в окремому приватному чаті;
-- SQL-схему з RLS для сімейних даних.
-
-Створення нагадувань, списків і календарних подій буде додано наступними етапами. Не використовуйте бота для реальних нагадувань, доки ці модулі не реалізовані та не протестовані.
-
-## Налаштування
-
-1. Створіть Supabase migration з `supabase/migrations/202611170001_initial_schema.sql` (SQL вже застосовується до підключеного проєкту окремо).
-2. Увімкніть Workers AI binding `AI`.
-3. Додайте Cloudflare Worker secrets:
-   - `TELEGRAM_BOT_TOKEN`
-   - `TELEGRAM_WEBHOOK_SECRET`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `FAMILY_SETUP_CODE`
-4. У GitHub → Settings → Secrets and variables → Actions додайте `CLOUDFLARE_API_TOKEN` та `CLOUDFLARE_ACCOUNT_ID` (для автоматичного деплою).
-5. Встановіть залежності: `npm install`.
-6. Перевірте типи: `npm run typecheck`.
-7. Розгорніть Worker: `npm run deploy` або запустіть GitHub Actions.
-8. У Cloudflare Worker → Settings → Variables and Secrets додайте секрети `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` та `FAMILY_SETUP_CODE`. URL Supabase вже вказаний у `wrangler.toml`.
-9. Налаштуйте Telegram webhook на URL Worker із secret token.
-
-### Перший запуск сім'ї
-
-- Власник надсилає боту `/start ВАШ_SETUP_CODE`.
-- Бот створює сімейний простір і додає власника.
-- Власник надсилає `/invite` та отримує одноразовий код.
-- Дружина надсилає `/start КОД_ЗАПРОШЕННЯ` у своєму особистому чаті.
-
-Коди не слід публікувати в репозиторії або надсилати в групові чати.
-
-## Приватність
-
-- Бот не пересилає звичайні повідомлення між учасниками.
-- AI-діалог обробляється в межах конкретного приватного Telegram-чату.
-- Спільними стають лише записи, які користувач явно створює як спільні.
-- Service Role Key використовується тільки на сервері та обходить RLS; ніколи не додавайте його у клієнтський код чи Git.
-- Усі таблиці public-схеми мають RLS без публічних політик. Доступ до БД здійснює лише Worker.
-
-## Модель AI
-
-За замовчуванням використовується `@cf/zai-org/glm-4.7-flash`. Її можна змінити через змінну `AI_MODEL`.
+## Supabase
+Застосувати SQL із `supabase/migrations/202611180001_copypaste.sql`.
+У Supabase Auth потрібно дозволити Anonymous Sign-Ins.

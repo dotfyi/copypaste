@@ -185,3 +185,26 @@ textarea:disabled {
   cursor: not-allowed;
   opacity: 1;
 }
+
+/* Remove tap/focus fills from header controls */
+.brand,
+.icon-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.brand:hover,
+.brand:active,
+.brand:focus,
+.brand:focus-visible,
+.icon-btn:hover,
+.icon-btn:active,
+.icon-btn:focus,
+.icon-btn:focus-visible {
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+}

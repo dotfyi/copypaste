@@ -54,16 +54,16 @@ button:disabled { color: #aaa; cursor: default; }
   .post { padding: 16px 0 18px; } .message { font-size: 15px; }
 }
 
-.auth-panel { position: relative; width: 100%; max-width: 390px; margin: -22px 0 34px auto; padding: 18px 0 20px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #fff; }
+.auth-page { position: relative; width: 100%; max-width: 390px; min-height: 55vh; margin: 0 auto; padding: 12px 0 20px; background: #fff; }
 .auth-panel h2 { margin: 0 36px 9px 0; font-size: 19px; font-weight: 650; letter-spacing: -.035em; }
 .auth-description { margin: 0 28px 22px 0; color: #777; font-size: 12px; line-height: 1.6; }
-.auth-close { position: absolute; top: 24px; right: 0; display: inline-flex; padding: 4px; border: 0; background: transparent; color: #777; cursor: pointer; }
-.auth-close svg { width: 18px; height: 18px; }
+.auth-close { display: inline-block; margin: 0 0 34px; padding: 0; border: 0; background: transparent; color: #777; font-size: 11px; cursor: pointer; }
 .auth-form { display: flex; flex-direction: column; gap: 12px; }
 .auth-input { width: 100%; padding: 11px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; outline: none; background: transparent; color: var(--ink); font: inherit; font-size: 14px; }
 .auth-input:focus { border-bottom-color: #111; }
-.auth-action { display: inline-flex; justify-content: center; align-items: center; min-height: 40px; padding: 0 20px; border: 1px solid #111; border-radius: 999px; background: #111; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity .15s ease; }
-.auth-action:hover:not(:disabled) { opacity: .82; }
-.auth-action:disabled { opacity: .45; cursor: default; }
-.auth-switch { display: block; margin-top: 18px; padding: 0; border: 0; background: transparent; color: #777; font-size: 11px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.auth-action { display: inline-flex; justify-content: center; align-items: center; min-height: 34px; padding: 0 14px; border: 1px solid #111; border-radius: 999px; background: transparent; color: #111; font-size: 12px; font-weight: 600; cursor: pointer; transition: color .15s ease, background .15s ease; }
+.auth-action:hover:not(:disabled) { background: #111; color: #fff; }
+.auth-action:disabled { opacity: .4; cursor: default; }
+.auth-switch { display: block; margin-top: 18px; padding: 0; border: 0; background: transparent; color: #777; font-size: 11px; cursor: pointer; text-decoration: none; }
+.auth-switch:hover { color: #111; text-decoration: underline; text-underline-offset: 3px; }
 .auth-progress { margin: 12px 0 0; color: #888; font-size: 11px; }

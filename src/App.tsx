@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type CSSProperties } from 'react';
-import { BookOpen, Cpu, Gamepad2, Globe2, Newspaper, Palette, UserRound } from 'lucide-react';
+import { BookOpen, Cpu, Gamepad2, Globe2, Newspaper, Palette, UserRound, X } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 
@@ -86,6 +86,9 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [secretKey, setSecretKey] = useState('');
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authInput, setAuthInput] = useState('');
   const sentinelRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
   const offsetRef = useRef(0);
@@ -215,7 +218,8 @@ export default function App() {
       if (action === 'register') {
         setSecretKey(data.secretKey);
         setNotice(`Логін: ${data.hexLogin} · Секретний ключ: ${data.secretKey} — збережи його, він показується лише один раз.`);
-      } else { setSecretKey(''); setNotice('Ти увійшов як ' + data.hexLogin + '.'); }
+      } else { setSecretKey(''); setAuthInput(''); setNotice('Ти увійшов як ' + data.hexLogin + '.'); }
+      setAuthOpen(false);
     } catch (cause) {
       setNotice(cause instanceof Error ? cause.message : 'Помилка авторизації.', true);
     } finally { setBusy(false); }
@@ -255,9 +259,25 @@ export default function App() {
       <header>
         <button className="brand" type="button" style={{ color: topic === 'general' ? '#111' : topicColor[topic] }} aria-label="copypaste"><strong>copy</strong><span>paste</span></button>
         <nav className="nav" aria-label="Навігація">
-          <button className="icon-btn" type="button" disabled aria-label="Авторизація" title="Авторизація"><UserRound /></button>
+          <button className="icon-btn" type="button" aria-label="Авторизація" title="Авторизація" aria-expanded={authOpen} onClick={() => setAuthOpen(value => !value)}><UserRound /></button>
         </nav>
       </header>
+      {authOpen && <div className="auth-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) setAuthOpen(false); }}>
+        <section className="auth-panel" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+          <button className="auth-close" type="button" aria-label="Закрити" onClick={() => setAuthOpen(false)}><X /></button>
+          <h2 id="auth-title">{authMode === 'register' ? 'Створити акаунт' : 'Увійти в акаунт'}</h2>
+          <p className="auth-description">{authMode === 'register' ? 'Збережи свій HEX-логін і секретний ключ — вони знадобляться для входу з іншого пристрою.' : 'Введи секретний ключ, який отримав під час реєстрації.'}</p>
+          {authMode === 'login' && <form className="auth-form" onSubmit={event => { event.preventDefault(); void runAuthCommand('login', authInput.trim()); }}>
+            <input className="auth-input" type="password" autoComplete="off" value={authInput} onChange={event => setAuthInput(event.target.value)} placeholder="Секретний ключ" aria-label="Секретний ключ" />
+            <button className="auth-action" type="submit" disabled={busy || !authInput.trim()}>Увійти</button>
+          </form>}
+          {authMode === 'register' && <button className="auth-action" type="button" disabled={busy} onClick={() => void runAuthCommand('register')}>Створити акаунт</button>}
+          <button className="auth-switch" type="button" onClick={() => setAuthMode(mode => mode === 'login' ? 'register' : 'login')}>
+            {authMode === 'login' ? 'Ще немає акаунта? Зареєструватися' : 'Вже маєш акаунт? Увійти'}
+          </button>
+          {busy && <p className="auth-progress">Зачекай…</p>}
+        </section>
+      </div>}
       <>
         <form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
           <textarea value={message} onChange={event => setMessage(event.target.value)} maxLength={180}

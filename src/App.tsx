@@ -134,6 +134,18 @@ export default function App() {
     observer.observe(target);return()=>observer.disconnect();
   },[loadPosts]);
   useEffect(()=>{
+    const login=accountLogin.trim().replace(/^#/, '');
+    if(!login){setLoginAvailability('idle');return;}
+    if(login.length>32||! /^[a-zA-Z0-9_-]+$/.test(login)){setLoginAvailability('invalid');return;}
+    setLoginAvailability('checking');
+    const timer=window.setTimeout(async()=>{
+      const {data,error}=await supabase.from('copypaste_profiles').select('id').eq('hex_login',login.toLowerCase()).maybeSingle();
+      setLoginAvailability(error?'idle':data?'taken':'free');
+    },250);
+    return()=>window.clearTimeout(timer);
+  },[accountLogin]);
+
+  useEffect(()=>{
     const el=composerRef.current;if(!el)return;el.style.height='auto';
     const line=Number.parseFloat(getComputedStyle(el).lineHeight)||24;const max=line*5+12;
     el.style.height=`${Math.min(el.scrollHeight,max)}px`;el.style.overflowY=el.scrollHeight>max?'auto':'hidden';

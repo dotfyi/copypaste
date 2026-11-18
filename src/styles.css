@@ -290,3 +290,9 @@ textarea:disabled {
 .composer textarea { padding:0 0 1px !important; min-height:25px; height:25px; line-height:1.5; }
 .composer textarea:disabled { color:#aaa; opacity:1; cursor:not-allowed; }
 .composer textarea:disabled::placeholder { color:#999; }
+
+.passkey-tools { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 18px; color:#888; font-size:11px; }
+.passkey-tools > div { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.passkey-tools button { padding:0; border:0; background:transparent; color:#555; font:inherit; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.passkey-tools button:disabled { opacity:.45; cursor:not-allowed; }
+@media (max-width:560px) { .passkey-tools { align-items:flex-start; flex-direction:column; gap:7px; } }

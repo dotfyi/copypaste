@@ -65,7 +65,12 @@ export default function App() {
   const [loginAvailability,setLoginAvailability]=useState<'idle'|'checking'|'free'|'taken'|'invalid'>('idle');
   const [newAccount,setNewAccount]=useState<{login:string;secretKey:string}|null>(null);
   const [moderatorLogin,setModeratorLogin]=useState('');
-  const [topicName,setTopicName]=useState('');\n  const [topicIcon,setTopicIcon]=useState('MessageCircle');\n  const [topicColor,setTopicColor]=useState('#aaa0cf');\n  const [cooldownMinutes,setCooldownMinutes]=useState(1440);\n  const [cooldownUntil,setCooldownUntil]=useState<number|null>(null);\n  const [clockNow,setClockNow]=useState(Date.now());
+  const [topicName,setTopicName]=useState('');
+  const [topicIcon,setTopicIcon]=useState('MessageCircle');
+  const [topicColor,setTopicColor]=useState('#aaa0cf');
+  const [cooldownMinutes,setCooldownMinutes]=useState(1440);
+  const [cooldownUntil,setCooldownUntil]=useState<number|null>(null);
+  const [clockNow,setClockNow]=useState(Date.now());
   const [stats,setStats]=useState({posts:0,users:0});
   const sentinelRef=useRef<HTMLDivElement>(null);
   const composerRef=useRef<HTMLTextAreaElement>(null);

@@ -303,8 +303,9 @@
       document.querySelector('#rules-nav').classList.remove('active');
       document.querySelector('#faq-nav').classList.remove('active');
     }
-    document.querySelector('#rules-nav').addEventListener('click', () => infoView.hidden ? showInfo('rules') : showMain());
-    document.querySelector('#faq-nav').addEventListener('click', () => infoView.hidden ? showInfo('faq') : showMain());
+    document.querySelector('#rules-nav').addEventListener('click', () => showInfo('rules'));
+    document.querySelector('#faq-nav').addEventListener('click', () => showInfo('faq'));
+    document.querySelector('.brand').addEventListener('click', showMain);
     document.querySelectorAll('[data-topic]').forEach(button => button.addEventListener('click', async () => {
       activeTopic = button.dataset.topic;
       document.querySelectorAll('[data-topic]').forEach(b => b.classList.toggle('active', b === button));

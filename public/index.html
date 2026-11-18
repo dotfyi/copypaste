@@ -114,7 +114,7 @@
 
     function updateComposer() {
       counter.textContent = input.value.length + ' / 280';
-      const command = /^\\/(registration|auth)(?:\\s+\\S+)?$/i.test(input.value.trim());
+      const command = /^\/(registration|auth)(?:\s+\S+)?$/i.test(input.value.trim());
       publish.textContent = command ? 'Виконати ↗' : 'Опублікувати ↗';
       publish.disabled = authBusy || (!command && (!currentUser || (!isAdmin && alreadyPosted) || !input.value.trim() || input.value.length > 280));
     }
@@ -240,10 +240,10 @@
     input.addEventListener('input', updateComposer);
     publish.addEventListener('click', async () => {
       const content = input.value.trim();
-      if (/^\\/registration$/i.test(content)) { await runAuthCommand('register'); return; }
-      if (/^\\/registration/i.test(content)) { setStatus('Команда: /registration (доступна лише один раз).', true); return; }
-      const authMatch = content.match(/^\\/auth\\s+(cp_[a-f0-9]{64})$/i);
-      if (/^\\/auth/i.test(content)) {
+      if (/^\/registration$/i.test(content)) { await runAuthCommand('register'); return; }
+      if (/^\/registration/i.test(content)) { setStatus('Команда: /registration (доступна лише один раз).', true); return; }
+      const authMatch = content.match(/^\/auth\s+(cp_[a-f0-9]{64})$/i);
+      if (/^\/auth/i.test(content)) {
         if (!authMatch) { setStatus('Формат: /auth cp_… (встав повний секретний ключ).', true); return; }
         await runAuthCommand('login', authMatch[1]); return;
       }

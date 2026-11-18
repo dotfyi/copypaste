@@ -27,7 +27,20 @@ function kyivInfo(value: string, postNumber: number) {
   const time = new Intl.DateTimeFormat('uk-UA',{hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23',timeZone:'Europe/Kyiv'}).format(date);
   return `${day} ${weekday.charAt(0).toLocaleUpperCase('uk-UA')}${weekday.slice(1)} ${time} №${postNumber}`;
 }
-function Spoiler({children}:{children:string}) {
+
+const decodeB64url=(value:string)=>Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4)),c=>c.charCodeAt(0));
+const encodeB64url=(value:ArrayBuffer)=>btoa(String.fromCharCode(...new Uint8Array(value))).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');
+function passkeyCredentialJSON(credential:PublicKeyCredential,kind:'registration'|'authentication'){
+  const response=credential.response as AuthenticatorAttestationResponse & AuthenticatorAssertionResponse;
+  const common={id:credential.id,rawId:encodeB64url(credential.rawId),type:credential.type,clientExtensionResults:credential.getClientExtensionResults()};
+  if(kind==='registration'){
+    const att=response as AuthenticatorAttestationResponse;
+    return {...common,response:{attestationObject:encodeB64url(att.attestationObject),clientDataJSON:encodeB64url(att.clientDataJSON),transports:att.getTransports?.()??[]}};
+  }
+  const assertion=response as AuthenticatorAssertionResponse;
+  return {...common,response:{authenticatorData:encodeB64url(assertion.authenticatorData),clientDataJSON:encodeB64url(assertion.clientDataJSON),signature:encodeB64url(assertion.signature),userHandle:assertion.userHandle?encodeB64url(assertion.userHandle):null}};
+}
+\nfunction Spoiler({children}:{children:string}) {
   const [revealed,setRevealed]=useState(false);
   const ref=useRef<HTMLButtonElement>(null);
   useEffect(()=>{const close=(event:MouseEvent)=>{if(event.target instanceof Node&&!ref.current?.contains(event.target))setRevealed(false);};document.addEventListener('click',close);return()=>document.removeEventListener('click',close);},[]);
@@ -70,7 +83,7 @@ export default function App() {
   const [topicColor,setTopicColor]=useState('#aaa0cf');
   const [cooldownMinutes,setCooldownMinutes]=useState(1440);
   const [cooldownUntil,setCooldownUntil]=useState<number|null>(null);
-  const [clockNow,setClockNow]=useState(Date.now());
+  const [clockNow,setClockNow]=useState(Date.now());\n  const [passkeyCount,setPasskeyCount]=useState(0);
   const [stats,setStats]=useState({posts:0,users:0});
   const sentinelRef=useRef<HTMLDivElement>(null);
   const composerRef=useRef<HTMLTextAreaElement>(null);
@@ -154,7 +167,7 @@ export default function App() {
   },[topic]);
 
   useEffect(()=>{void (async()=>{try{await ensureIdentity();setNotice('');}catch(e){console.error(e);setNotice('Не вдалося створити гостьовий профіль. Перевір, чи ввімкнений анонімний вхід.',true);}})();void loadTopics();},[ensureIdentity,loadTopics]);
-  useEffect(()=>{if(user)void loadPosts(true);},[user,topic,loadPosts]);
+  useEffect(()=>{if(user){void loadPosts(true);void refreshPasskeyStatus();}},[user,topic,loadPosts]);
   useEffect(()=>{
     const {data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{
       if(session?.user?.is_anonymous) localStorage.setItem('copypaste_guest_session',JSON.stringify(session));
@@ -248,7 +261,48 @@ export default function App() {
     }catch(e){setNotice(e instanceof Error?e.message:'Не вдалося вийти.',true);}
     finally{setBusy(false);}
   }
-  async function adminAction(action:string,payload:Record<string,unknown>={}){
+
+  async function refreshPasskeyStatus(){
+    if(!user)return;
+    const {data,error}=await supabase.functions.invoke('copypaste-passkey',{body:{action:'status'}});
+    if(!error&&typeof data?.count==='number')setPasskeyCount(data.count);
+  }
+  async function registerPasskey(){
+    if(!user||!profile)return;
+    if(!window.PublicKeyCredential||!navigator.credentials){setNotice('Цей браузер не підтримує Passkey.',true);return;}
+    setBusy(true);setNotice('Готуємо Passkey…');
+    try{
+      const {data:options,error}=await supabase.functions.invoke('copypaste-passkey',{body:{action:'register_options'}});
+      if(error||data?.error)throw new Error(data?.error||'Не вдалося почати налаштування Passkey.');
+      const publicKey={...options,challenge:decodeB64url(options.challenge),user:{...options.user,id:decodeB64url(options.user.id)},excludeCredentials:(options.excludeCredentials??[]).map((item:any)=>({...item,id:decodeB64url(item.id)}))} as PublicKeyCredentialCreationOptions;
+      const credential=await navigator.credentials.create({publicKey}) as PublicKeyCredential|null;
+      if(!credential)throw new Error('Створення Passkey скасовано.');
+      const response=passkeyCredentialJSON(credential,'registration');
+      const {data:verified,error:verifyError}=await supabase.functions.invoke('copypaste-passkey',{body:{action:'register_verify',challenge:options.challenge,response}});
+      if(verifyError||verified?.error)throw new Error(verified?.error||'Не вдалося зберегти Passkey.');
+      setPasskeyCount(v=>v+1);setNotice('Passkey додано. Тепер можна відновити цей HEX-профіль на іншому сеансі браузера.');
+    }catch(e){setNotice(e instanceof Error?e.message:'Помилка Passkey.',true);}
+    finally{setBusy(false);}
+  }
+  async function loginWithPasskey(){
+    if(!window.PublicKeyCredential||!navigator.credentials){setNotice('Цей браузер не підтримує Passkey.',true);return;}
+    setBusy(true);setNotice('Шукаємо Passkey…');
+    try{
+      const {data:options,error}=await supabase.functions.invoke('copypaste-passkey',{body:{action:'login_options'}});
+      if(error||data?.error)throw new Error(data?.error||'Не вдалося почати вхід.');
+      const publicKey={...options,challenge:decodeB64url(options.challenge),allowCredentials:(options.allowCredentials??[]).map((item:any)=>({...item,id:decodeB64url(item.id)}))} as PublicKeyCredentialRequestOptions;
+      const credential=await navigator.credentials.get({publicKey}) as PublicKeyCredential|null;
+      if(!credential)throw new Error('Вхід скасовано.');
+      const response=passkeyCredentialJSON(credential,'authentication');
+      const {data:session,error:verifyError}=await supabase.functions.invoke('copypaste-passkey',{body:{action:'login_verify',challenge:options.challenge,response}});
+      if(verifyError||session?.error)throw new Error(session?.error||'Passkey не підтверджено.');
+      const {error:setError}=await supabase.auth.setSession({access_token:session.access_token,refresh_token:session.refresh_token});
+      if(setError)throw setError;
+      await ensureIdentity();await refreshPasskeyStatus();setNotice('Повернули твій HEX-профіль.');
+    }catch(e){setNotice(e instanceof Error?e.message:'Не вдалося увійти з Passkey.',true);}
+    finally{setBusy(false);}
+  }
+\n  async function adminAction(action:string,payload:Record<string,unknown>={}){
     if(action==='create_account'){
       const {data,error}=await supabase.functions.invoke('copypaste-auth',{body:{action,...payload}});
       if(error||data?.error)throw new Error(data?.error||'Створення акаунтів тимчасово недоступне.');
@@ -310,6 +364,13 @@ export default function App() {
       </div>
       {status&&<p className={error?'status error':'status'}>{status}</p>}
     </section>:<>
+      <div className="passkey-tools" aria-label="Захист гостьового профілю">
+        {passkeyCount>0?<span>Passkey підключено · {passkeyCount}</span>:<span>Закріпи свій HEX, щоб не втратити його</span>}
+        <div>
+          {passkeyCount===0&&<button type="button" disabled={!user||busy} onClick={()=>void registerPasskey()}>Додати Passkey</button>}
+          <button type="button" disabled={busy} onClick={()=>void loginWithPasskey()}>Відновити HEX через Passkey</button>
+        </div>
+      </div>
       <form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
         <textarea ref={composerRef} value={message} onChange={e=>setMessage(e.target.value)} maxLength={180} disabled={!user||!profile||busy||cooldownActive}
           placeholder={!user?'Підключаємо анонімний профіль…':cooldownActive?`Наступне повідомлення через ${timerText}`:'Поділись думкою…'} aria-label="Твоє повідомлення"/>

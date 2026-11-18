@@ -293,7 +293,7 @@ export default function App() {
               <article className="post" key={post.id}>
                 <div className="meta">
                   <div className="identity"><span className="swatch" style={{ backgroundColor: post.profile?.hex_login || '#aaa' }} /><span className="hex">{post.profile?.hex_login?.toLowerCase() || '#??????'}</span></div>
-                  <time dateTime={post.created_at}>{kyivTime(post.created_at)} • {kyivDate(post.created_at)}</time>
+                  <time dateTime={post.created_at}>{kyivTime(post.created_at)} · {kyivDate(post.created_at)}</time>
                 </div>
                 <p className="message"><FormattedText value={post.content} /></p>
               </article>

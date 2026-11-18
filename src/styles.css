@@ -33,7 +33,7 @@ button:disabled { color: #aaa; cursor: default; }
 .meta { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 8px; color: var(--muted); font-size: 11px; }
 .identity { display: flex; align-items: center; min-width: 0; }
 .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 8px; flex: 0 0 auto; }
-.hex { letter-spacing: .015em; color: #111; } time { white-space: nowrap; }
+.hex { letter-spacing: .015em; color: #111; font-weight: 700; } time { white-space: nowrap; }
 .message { margin: 0; font-size: 15px; line-height: 1.65; letter-spacing: -.018em; overflow-wrap: anywhere; white-space: pre-wrap; }
 .message strong { font-weight: 700; } .message em { font-style: italic; } .message del { text-decoration: line-through; }
 .green-text { color: #27834b; }

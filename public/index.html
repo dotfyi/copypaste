@@ -18,7 +18,7 @@
     header { margin-bottom:54px; }
     .brand { font-size:25px; font-weight:700; letter-spacing:-.075em; line-height:1; }
     .composer { margin-bottom:48px; }
-    textarea { display:block; width:100%; min-height:90px; resize:vertical; border:0; border-bottom:1px solid var(--line); border-radius:0; padding:12px 0 16px; color:var(--ink); background:transparent; font-family:inherit; font-size:17px; line-height:1.55; outline:none; }
+    textarea { display:block; width:100%; min-height:54px; height:54px; resize:vertical; border:0; border-bottom:1px solid var(--line); border-radius:0; padding:7px 0 9px; color:var(--ink); background:transparent; font-family:inherit; font-size:17px; line-height:1.55; outline:none; }
     textarea::placeholder { color:#aaa; }
     textarea:focus { border-bottom-color:#111; }
     textarea:disabled { color:#999; resize:none; }
@@ -45,7 +45,7 @@
       header { margin-bottom:43px; }
       .brand { font-size:23px; }
       .composer { margin-bottom:40px; }
-      textarea { min-height:84px; font-size:16px; }
+      textarea { min-height:50px; height:50px; padding:6px 0 8px; font-size:16px; }
       .post { padding:17px 0 19px; }
       .message { font-size:16px; }
     }
@@ -114,7 +114,7 @@
 
     function updateComposer() {
       counter.textContent = input.value.length + ' / 280';
-      const isRegistration = /^\\/registration\\s+#[0-9a-fA-F]{6}$/.test(input.value.trim());
+      publish.disabled = !currentUser || alreadyPosted || !input.value.trim() || input.value.length > 280;
       publish.disabled = !currentUser || (!isRegistration && alreadyPosted) || !input.value.trim() || input.value.length > 280;
     }
 
@@ -202,27 +202,6 @@
 
     input.addEventListener('input', updateComposer);
     publish.addEventListener('click', async () => {
-      const command = input.value.trim().match(/^\/registration\s+(#[0-9a-fA-F]{6})$/);
-      if (command && currentUser) {
-        publish.disabled = true;
-        setStatus('Реєструємо HEX-логін…');
-        const chosen = command[1].toUpperCase();
-        const { error } = await supabase.from('copypaste_profiles').update({ hex_login: chosen }).eq('id', currentUser.id);
-        if (error) {
-          setStatus(error.code === '23505' ? 'Цей HEX-логін уже зайнятий.' : 'Не вдалося зареєструвати логін.', true);
-        } else {
-          myHex = chosen;
-          input.value = '';
-          setStatus('Зареєстровано: ' + chosen.toLowerCase());
-          await loadFeed();
-        }
-        updateComposer();
-        return;
-      }
-      if (input.value.trim().startsWith('/registration')) {
-        setStatus('Формат команди: /registration #abcdef', true);
-        return;
-      }
       const content = input.value.trim();
       if (!content || !currentUser || alreadyPosted) return;
       publish.disabled = true;
@@ -249,7 +228,7 @@
 
     try {
       await ensureIdentity();
-      setStatus('Твій сьогоднішній голос: ' + myHex.toLowerCase());
+      setStatus('');
       await loadFeed();
       updateComposer();
       window.setInterval(() => loadFeed().catch(() => {}), 30000);

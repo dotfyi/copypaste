@@ -7,7 +7,7 @@ type Topic = { id: string; label: string; icon: string; color: string };
 type Profile = { hex_login: string; is_admin: boolean; is_moderator: boolean; is_registered: boolean };
 type Post = {
   id: string; post_number: number; content: string; created_at: string; author_id: string; topic: string;
-  profile?: { hex_login: string; is_admin?: boolean; is_moderator?: boolean } | null;
+  profile?: { hex_login: string; is_admin?: boolean; is_moderator?: boolean; moderator_topics?: string[] } | null;
 };
 const PAGE_SIZE = 30;
 const DEFAULT_TOPICS: Topic[] = [
@@ -31,7 +31,7 @@ function kyivInfo(value: string, postNumber: number) {
 function Spoiler({children}:{children:string}) {
   const [revealed,setRevealed]=useState(false);
   const ref=useRef<HTMLButtonElement>(null);
-  useEffect(()=>{const close=(event:MouseEvent)=>{if(event.target instanceof Node&&!ref.current?.contains(event.target))setRevealed(false);};document.addEventListener('click',close);return()=>document.removeEventListener('click',close);},[]);
+  useEffect(()=>{const close=(event:MouseEvent)=>{if(!(event.target instanceof Element&&event.target.closest('.spoiler')))setRevealed(false);};document.addEventListener('click',close);return()=>document.removeEventListener('click',close);},[]);
   return <button ref={ref} type="button" className={`spoiler${revealed?' revealed':''}`} onClick={()=>setRevealed(true)}>{children}</button>;
 }
 function FormattedText({value}:{value:string}) {
@@ -116,7 +116,14 @@ export default function App() {
         .select('id,post_number,content,created_at,author_id,topic,profile:copypaste_profiles!copypaste_posts_author_id_fkey(hex_login,is_admin,is_moderator)',{count:'exact'})
         .eq('topic',topic).order('created_at',{ascending:false}).range(start,start+PAGE_SIZE-1);
       if(error)throw error;
-      const rows=(data??[]) as unknown as Post[];
+      let rows=(data??[]) as unknown as Post[];
+      const authorIds=[...new Set(rows.map(row=>row.author_id))];
+      if(authorIds.length){
+        const {data:scopes}=await supabase.from('copypaste_moderator_topics').select('user_id,topic_id').in('user_id',authorIds);
+        const byUser=new Map<string,string[]>();
+        for(const scope of scopes??[])byUser.set(scope.user_id,[...(byUser.get(scope.user_id)??[]),scope.topic_id]);
+        rows=rows.map(row=>({...row,profile:row.profile?{...row.profile,moderator_topics:byUser.get(row.author_id)??[]}:row.profile}));
+      }
       setPosts(current=>reset?rows:[...current,...rows]);
       offsetRef.current=start+rows.length;
       moreRef.current=rows.length===PAGE_SIZE&&offsetRef.current<(count??0);
@@ -326,7 +333,7 @@ export default function App() {
         <div className="topics">{topics.map(item=>{const Icon=ICONS[item.icon]??MessageCircle;return <button key={item.id} type="button" className={`topic-btn${topic===item.id?' active':''}`} style={{'--topic-color':item.color} as CSSProperties} onClick={()=>updateTopic(item.id)}><Icon/>{item.label}</button>;})}</div>
         <div id="feed" aria-live="polite">
           {posts.length===0&&!loading?<div className="empty-state"><MessageCircle/><p>Тут поки тихо</p><span>Залиш першу думку в цьому розділі</span></div>:posts.map(post=><article className="post" key={post.id}>
-            <div className="meta"><div className="identity"><span className="swatch" style={{backgroundColor:post.profile?.hex_login??'#aaa'}}/><span className="hex" style={{color:'#111'}}>{post.profile?.hex_login?.toLowerCase()??'#??????'}</span></div><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time>
+            <div className="meta"><div className="identity"><span className="swatch" style={{backgroundColor:post.profile?.hex_login??'#aaa'}}/><span className="hex" style={{color:'#111'}}>{post.profile?.hex_login?.toLowerCase()??'#??????'}</span>{post.profile?.is_moderator&&post.profile.moderator_topics?.includes(post.topic)&&(()=>{const TopicIcon=ICONS[topics.find(t=>t.id===post.topic)?.icon??'']??MessageCircle;return <TopicIcon className="moderator-topic-icon" style={{color:topics.find(t=>t.id===post.topic)?.color??'#777'}} aria-label="Модератор розділу"/>})()}</div><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time>
               {(profile?.is_admin||(profile?.is_moderator&&moderatorTopics.includes(post.topic)))&&<button className="moderate-delete" type="button" aria-label="Видалити повідомлення" onClick={async()=>{try{await adminAction('delete_post',{postId:post.id});await loadPosts(true);}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}><Trash2/></button>}
             </div><p className="message"><FormattedText value={post.content}/></p>
           </article>)}

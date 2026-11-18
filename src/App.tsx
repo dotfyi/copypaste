@@ -61,6 +61,7 @@ export default function App() {
   const [adminOpen,setAdminOpen]=useState(false);
   const [adminCooldown,setAdminCooldown]=useState('1440');
   const [accountLogin,setAccountLogin]=useState('');
+  const [loginAvailability,setLoginAvailability]=useState<'idle'|'checking'|'free'|'taken'|'invalid'>('idle');
   const [newAccount,setNewAccount]=useState<{login:string;secretKey:string}|null>(null);
   const [moderatorLogin,setModeratorLogin]=useState('');
   const [topicName,setTopicName]=useState('');
@@ -181,12 +182,12 @@ export default function App() {
 
   async function publishPost(event:FormEvent){
     event.preventDefault();const content=message.trim();if(!content||!user||!profile)return;
-    if(content==='/exit'){setMessage('');await logout();return;}
+    if(content==='/exit'&&profile.is_registered){setMessage('');await logout();return;}
     if(content==='/auth'||content.startsWith('/auth ')){
       const key=content.slice(5).trim();if(!key){setNotice('Після /auth додай секретний ключ.',true);return;}
       setMessage('');await runAuthCommand(key);return;
     }
-    if(content.startsWith('/')){setNotice('Невідома команда. Доступні: /auth ключ та /exit.',true);return;}
+
     if(content.length>180)return;
     setBusy(true);setNotice('');
     try{
@@ -223,7 +224,7 @@ export default function App() {
     </section>:<>
       <form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
         <textarea ref={composerRef} value={message} onChange={e=>setMessage(e.target.value)} maxLength={180} disabled={!user||!profile||busy}
-          placeholder={!user?'Підключаємо анонімний профіль…':'Поділись думкою або введи /auth ключ чи /exit'} aria-label="Твоє повідомлення"/>
+          placeholder={!user?'Підключаємо анонімний профіль…':'Поділись думкою…'} aria-label="Твоє повідомлення"/>
         <div className="compose-row"><span className="counter">{message.length} / 180</span><button type="submit" disabled={!canPublish}>Опублікувати ↗</button></div>
         {status&&<div className={`status${error?' error':''}`} role="status" aria-live="polite">{status}</div>}
       </form>

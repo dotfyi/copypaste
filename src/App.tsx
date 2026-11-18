@@ -262,8 +262,7 @@ export default function App() {
           <button className="icon-btn" type="button" aria-label="Авторизація" title="Авторизація" aria-expanded={authOpen} onClick={() => setAuthOpen(value => !value)}><UserRound /></button>
         </nav>
       </header>
-      {authOpen && <div className="auth-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) setAuthOpen(false); }}>
-        <section className="auth-panel" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+      {authOpen && <section className="auth-panel" aria-labelledby="auth-title">
           <button className="auth-close" type="button" aria-label="Закрити" onClick={() => setAuthOpen(false)}><X /></button>
           <h2 id="auth-title">{authMode === 'register' ? 'Створити акаунт' : 'Увійти в акаунт'}</h2>
           <p className="auth-description">{authMode === 'register' ? 'Збережи свій HEX-логін і секретний ключ — вони знадобляться для входу з іншого пристрою.' : 'Введи секретний ключ, який отримав під час реєстрації.'}</p>
@@ -276,8 +275,7 @@ export default function App() {
             {authMode === 'login' ? 'Ще немає акаунта? Зареєструватися' : 'Вже маєш акаунт? Увійти'}
           </button>
           {busy && <p className="auth-progress">Зачекай…</p>}
-        </section>
-      </div>}
+      </section>}
       <>
         <form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
           <textarea value={message} onChange={event => setMessage(event.target.value)} maxLength={180}

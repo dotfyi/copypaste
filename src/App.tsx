@@ -263,7 +263,7 @@ export default function App() {
   return (
     <main className="shell">
       <header>
-        <button className="brand" type="button" style={{ color: topic === 'general' ? '#111' : topicColor[topic] }} aria-label="copypaste"><strong>copy</strong><span>paste</span></button>
+        <button className="brand" type="button" onClick={() => setAuthOpen(false)} style={{ color: topic === 'general' ? '#111' : topicColor[topic] }} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
         <nav className="nav" aria-label="Навігація">
           <button className="icon-btn" type="button" aria-label="Авторизація" title="Авторизація" aria-expanded={authOpen} onClick={() => { if (!user) setAuthMode('login'); setAuthOpen(value => !value); }}><UserRound /></button>
         </nav>

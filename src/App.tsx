@@ -174,7 +174,7 @@ export default function App() {
       })
       .subscribe(state => {
         if (state === 'SUBSCRIBED') setNotice('');
-        if (state === 'CHANNEL_ERROR' || state === 'TIMED_OUT') setNotice('Зʼєднання зі стрічкою перервано. Перепідключаємося…', true);
+        // Realtime reconnects automatically; keep transient disconnects out of the UI.
       });
     return () => { void supabase.removeChannel(channel); };
   }, [user, topic, loadPosts]);

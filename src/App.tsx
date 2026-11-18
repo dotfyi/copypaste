@@ -246,10 +246,12 @@ export default function App() {
     }
 
     if(content.length>180)return;
+    if(cooldownUntil!==null&&cooldownUntil>Date.now()&&!profile.is_admin)return;
     setBusy(true);setNotice('');
     try{
       const {error}=await supabase.from('copypaste_posts').insert({content,topic});
-      if(error){if(error.code==='42501')throw new Error('Ще зарано публікувати. Спробуй пізніше.');throw error;}
+      if(error){if(error.code==='42501'){if(cooldownMinutes>0)setCooldownUntil(Date.now()+cooldownMinutes*60000);setStatus('');return;}throw error;}
+      if(!profile.is_admin&&cooldownMinutes>0)setCooldownUntil(Date.now()+cooldownMinutes*60000);
       setMessage('');await loadPosts(true);
     }catch(e){console.error(e);setNotice(e instanceof Error?e.message:'Не вдалося опублікувати.',true);}
     finally{setBusy(false);}

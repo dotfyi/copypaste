@@ -200,7 +200,7 @@ export default function App() {
     setBusy(true);
     setNotice(action === 'register' ? 'Створюємо акаунт…' : 'Перевіряємо ключ…');
     try {
-      const normalizedKey = key.trim().replace(/^cp_/i, '').toLowerCase();
+      const normalizedKey = key.trim().toLowerCase();
       const { data, error: invokeError } = await supabase.functions.invoke('copypaste-auth', {
         body: action === 'register' ? { action: 'register' } : { action: 'login', secretKey: normalizedKey }
       });

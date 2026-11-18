@@ -1,111 +1,240 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type CSSProperties } from 'react';
-import { BookOpen, Cpu, Gamepad2, Globe2, Newspaper, Palette, Shield, MessageCircle } from 'lucide-react';
+import { BookOpen, Cpu, Gamepad2, Globe2, Newspaper, Palette, Shield, MessageCircle, Trash2 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 
-type Topic = 'general' | 'games' | 'technology' | 'books' | 'art' | 'news';
+type Topic = { id: string; label: string; icon: string; color: string };
 type Profile = { hex_login: string; is_admin: boolean; is_moderator: boolean; is_registered: boolean };
 type Post = {
-  id: string; post_number: number; content: string; created_at: string; author_id: string; topic: Topic;
+  id: string; post_number: number; content: string; created_at: string; author_id: string; topic: string;
   profile?: { hex_login: string; is_admin?: boolean; is_moderator?: boolean } | null;
 };
 const PAGE_SIZE = 30;
-const TOPICS: { id: Topic; label: string; Icon: typeof Globe2 }[] = [
-  { id: 'general', label: 'Загальне', Icon: Globe2 },
-  { id: 'games', label: 'Ігри', Icon: Gamepad2 },
-  { id: 'technology', label: 'Технології', Icon: Cpu },
-  { id: 'books', label: 'Книги', Icon: BookOpen },
-  { id: 'art', label: 'Мистецтво', Icon: Palette },
-  { id: 'news', label: 'Новини', Icon: Newspaper }
+const DEFAULT_TOPICS: Topic[] = [
+  {id:'general',label:'Загальне',icon:'Globe2',color:'#aaa0cf'},
+  {id:'games',label:'Ігри',icon:'Gamepad2',color:'#d99a94'},
+  {id:'technology',label:'Технології',icon:'Cpu',color:'#83b5c7'},
+  {id:'books',label:'Книги',icon:'BookOpen',color:'#c5a77d'},
+  {id:'art',label:'Мистецтво',icon:'Palette',color:'#8eae88'},
+  {id:'news',label:'Новини',icon:'Newspaper',color:'#c99b82'}
 ];
-const topicColor: Record<Topic, string> = {
-  general: '#aaa0cf', games: '#d99a94', technology: '#83b5c7', books: '#c5a77d', art: '#8eae88', news: '#c99b82'
-};
-
-function kyivToday() {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Europe/Kyiv'
-  }).formatToParts(new Date());
-  const get = (type: string) => parts.find(part => part.type === type)!.value;
-  return get('year') + '-' + get('month') + '-' + get('day');
-}
+const ICONS: Record<string, typeof Globe2> = {Globe2,Gamepad2,Cpu,BookOpen,Palette,Newspaper,MessageCircle};
 function kyivInfo(value: string, postNumber: number) {
   const date = new Date(value);
-  const day = new Intl.DateTimeFormat('en-GB', {
-    day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Kyiv'
-  }).format(date);
-  const weekday = new Intl.DateTimeFormat('uk-UA', {
-    weekday: 'short', timeZone: 'Europe/Kyiv'
-  }).format(date);
-  const time = new Intl.DateTimeFormat('uk-UA', {
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-    hourCycle: 'h23', timeZone: 'Europe/Kyiv'
-  }).format(date);
+  const day = new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit',timeZone:'Europe/Kyiv'}).format(date);
+  const weekday = new Intl.DateTimeFormat('uk-UA',{weekday:'short',timeZone:'Europe/Kyiv'}).format(date);
+  const time = new Intl.DateTimeFormat('uk-UA',{hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23',timeZone:'Europe/Kyiv'}).format(date);
   return `${day} ${weekday.charAt(0).toLocaleUpperCase('uk-UA')}${weekday.slice(1)} ${time} №${postNumber}`;
 }
-function Spoiler({ children }: { children: string }) {
-  const [revealed, setRevealed] = useState(false);
-  const spoilerRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    const closeOnOutsideClick = (event: MouseEvent) => {
-      if (event.target instanceof Node && !spoilerRef.current?.contains(event.target)) setRevealed(false);
-    };
-    document.addEventListener('click', closeOnOutsideClick);
-    return (
-    <main className="shell">
-      <header>
-        <button className="brand" type="button" onClick={() => setAdminOpen(false)} style={{ color: topic === 'general' ? '#111' : topicColor[topic] }} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
-        <nav className="nav" aria-label="Навігація">
-          <span className="current-login" style={{color:(profile?.is_admin||profile?.is_moderator)?profile.hex_login:'#777'}}>{profile?.hex_login?.toLowerCase()}</span>
-          {profile?.is_admin && <button className="icon-btn" type="button" aria-label="Панель адміністратора" title="Панель адміністратора" onClick={() => { setAdminOpen(v=>!v); if (!adminOpen) void loadAdminStats(); }}><Shield /></button>}
-        </nav>
-      </header>
-      {adminOpen && profile?.is_admin ? <section className="admin-panel">
-        <h2>Панель адміністратора</h2>
-        <div className="admin-stats"><span><strong>{stats.posts}</strong> повідомлень</span><span><strong>{stats.users}</strong> акаунтів</span></div>
-        <label>Інтервал між повідомленнями (хв)</label>
-        <div className="admin-inline"><input value={adminCooldown} onChange={e=>setAdminCooldown(e.target.value)} inputMode="numeric"/><button type="button" onClick={async()=>{try{await adminAction('update_settings',{cooldownMinutes:Number(adminCooldown)});setNotice('Інтервал збережено.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Зберегти</button></div>
-        <label>Створити акаунт</label>
-        <div className="admin-inline"><input value={accountLogin} onChange={e=>setAccountLogin(e.target.value)} placeholder="Логін або порожньо для HEX"/><button type="button" onClick={async()=>{try{const result=await adminAction('create_account',{login:accountLogin});setNewAccount(result);setAccountLogin('');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Створити</button></div>
-        {newAccount && <div className="new-account"><strong>{newAccount.login}</strong><code>{newAccount.secretKey}</code><button type="button" onClick={()=>void navigator.clipboard.writeText(newAccount.secretKey)}>Копіювати ключ</button></div>}
-        <label>Права модератора за логіном</label>
-        <div className="admin-inline"><input value={moderatorLogin} onChange={e=>setModeratorLogin(e.target.value)} placeholder="HEX-логін користувача"/><button type="button" onClick={async()=>{try{await adminAction('set_role',{login:moderatorLogin,role:'moderator'});setNotice('Права модератора оновлено.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Надати</button></div>
-        <label>Додати розділ</label>
-        <div className="admin-inline"><input value={topicName} onChange={e=>setTopicName(e.target.value)} placeholder="Назва розділу"/><button type="button" onClick={async()=>{try{await adminAction('create_topic',{id:topicName.toLowerCase().replace(/[^a-z0-9_-]/g,'-'),label:topicName});setTopicName('');setNotice('Розділ додано.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Додати</button></div>
-        {status && <p className={error?'status error':'status'}>{status}</p>}
-      </section> : <>
-        <form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
-          <textarea ref={composerRef} value={message} onChange={event => setMessage(event.target.value)} maxLength={180}
-            disabled={!user || !profile || busy}
-            placeholder={!user ? 'Підключаємо анонімний профіль…' : 'Поділись думкою або введи /auth ключ чи /exit'}
-            aria-label="Твоє повідомлення" />
-          <div className="compose-row"><span className="counter">{message.length} / 180</span><button type="submit" disabled={!canPublish}>Опублікувати ↗</button></div>
-          {status && <div className={`status${error ? ' error' : ''}`} role="status" aria-live="polite">{status}</div>}
-        </form>
-        <section aria-label="Усі повідомлення">
-          <div className="topics">
-            {TOPICS.map(({ id, label, Icon }) => <button key={id} type="button"
-              className={`topic-btn${topic === id ? ' active' : ''}`}
-              style={{ '--topic-color': topicColor[id] } as CSSProperties} onClick={() => updateTopic(id)}>
-              <Icon /> {label}
-            </button>)}
-          </div>
-          <div id="feed" aria-live="polite">
-            {posts.length === 0 && !loading ? <div className="empty-state"><MessageCircle /><p>Тут поки тихо</p><span>Залиш першу думку в цьому розділі</span></div> : posts.map(post => (
-              <article className="post" key={post.id}>
-                <div className="meta">
-                  <div className="identity"><span className="swatch" style={{ backgroundColor: post.profile?.hex_login || '#aaa' }} /><span className="hex" style={{color:(post.profile?.is_admin||post.profile?.is_moderator)?post.profile.hex_login:'#111'}}>{post.profile?.hex_login?.toLowerCase() || '#??????'}</span></div>
-                  <time dateTime={post.created_at}>{kyivInfo(post.created_at, post.post_number)}</time>
-                </div>
-                <p className="message"><FormattedText value={post.content} /></p>
-              </article>
-            ))}
-            {loading && posts.length === 0 && <div className="empty">Завантажуємо потік…</div>}
-          </div>
-          <div ref={sentinelRef} id="sentinel" />
-          {hasMore && posts.length > 0 && <button className="load-more" type="button" disabled={loading} onClick={() => void loadPosts(false)}>{loading ? 'Завантажуємо…' : 'Завантажити ще'}</button>}
-        </section>
-      </>}
-    </main>
-  );
+function Spoiler({children}:{children:string}) {
+  const [revealed,setRevealed]=useState(false);
+  const ref=useRef<HTMLButtonElement>(null);
+  useEffect(()=>{const close=(event:MouseEvent)=>{if(event.target instanceof Node&&!ref.current?.contains(event.target))setRevealed(false);};document.addEventListener('click',close);return()=>document.removeEventListener('click',close);},[]);
+  return <button ref={ref} type="button" className={`spoiler${revealed?' revealed':''}`} onClick={()=>setRevealed(true)}>{children}</button>;
+}
+function FormattedText({value}:{value:string}) {
+  const pattern=/(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|\|\|[^|]+\|\||>[^\n]+)/gm;
+  const nodes=[];let last=0;
+  for(const match of value.matchAll(pattern)){const token=match[0],index=match.index??0;if(index>last)nodes.push(value.slice(last,index));
+    if(token.startsWith('**'))nodes.push(<strong key={index}>{token.slice(2,-2)}</strong>);
+    else if(token.startsWith('~~'))nodes.push(<del key={index}>{token.slice(2,-2)}</del>);
+    else if(token.startsWith('||'))nodes.push(<Spoiler key={index}>{token.slice(2,-2)}</Spoiler>);
+    else if(token.startsWith('*'))nodes.push(<em key={index}>{token.slice(1,-1)}</em>);
+    else nodes.push(<span className="green-text" key={index}>{token.slice(1)}</span>);
+    last=index+token.length;
+  }
+  if(last<value.length)nodes.push(value.slice(last));return <>{nodes}</>;
+}
+
+export default function App() {
+  const [user,setUser]=useState<User|null>(null);
+  const [profile,setProfile]=useState<Profile|null>(null);
+  const [posts,setPosts]=useState<Post[]>([]);
+  const [topics,setTopics]=useState<Topic[]>(DEFAULT_TOPICS);
+  const [topic,setTopic]=useState('general');
+  const [message,setMessage]=useState('');
+  const [status,setStatus]=useState('');
+  const [error,setError]=useState(false);
+  const [busy,setBusy]=useState(false);
+  const [loading,setLoading]=useState(false);
+  const [hasMore,setHasMore]=useState(false);
+  const [adminOpen,setAdminOpen]=useState(false);
+  const [adminCooldown,setAdminCooldown]=useState('1440');
+  const [accountLogin,setAccountLogin]=useState('');
+  const [newAccount,setNewAccount]=useState<{login:string;secretKey:string}|null>(null);
+  const [moderatorLogin,setModeratorLogin]=useState('');
+  const [topicName,setTopicName]=useState('');
+  const [stats,setStats]=useState({posts:0,users:0});
+  const sentinelRef=useRef<HTMLDivElement>(null);
+  const composerRef=useRef<HTMLTextAreaElement>(null);
+  const loadingRef=useRef(false);
+  const offsetRef=useRef(0);
+  const moreRef=useRef(true);
+
+  const setNotice=(value:string,isError=false)=>{setStatus(value);setError(isError);};
+
+  const ensureIdentity=useCallback(async()=>{
+    let {data:sessionData,error:sessionError}=await supabase.auth.getSession();
+    if(sessionError)throw sessionError;
+    if(!sessionData.session){
+      const {error:signInError}=await supabase.auth.signInAnonymously();
+      if(signInError)throw signInError;
+      ({data:sessionData,error:sessionError}=await supabase.auth.getSession());
+      if(sessionError)throw sessionError;
+    }
+    const activeUser=sessionData.session?.user;
+    if(!activeUser)throw new Error('Не вдалося створити гостьову сесію.');
+    let found:Profile|null=null;
+    for(let i=0;i<12;i++){
+      const result=await supabase.from('copypaste_profiles').select('hex_login,is_admin,is_moderator,is_registered').eq('id',activeUser.id).maybeSingle();
+      if(result.error)throw result.error;
+      if(result.data){found=result.data as Profile;break;}
+      await new Promise(resolve=>setTimeout(resolve,250));
+    }
+    if(!found)throw new Error('Не вдалося створити профіль.');
+    setUser(activeUser);setProfile(found);
+  },[]);
+
+  const loadTopics=useCallback(async()=>{
+    const {data,error}=await supabase.from('copypaste_topics').select('id,label,icon,color').order('sort_order');
+    if(!error&&data?.length){setTopics(data as Topic[]);}
+  },[]);
+
+  const loadPosts=useCallback(async(reset=false)=>{
+    if(loadingRef.current)return;
+    const start=reset?0:offsetRef.current;
+    if(!reset&&!moreRef.current)return;
+    loadingRef.current=true;setLoading(true);
+    try{
+      const {data,error,count}=await supabase.from('copypaste_posts')
+        .select('id,post_number,content,created_at,author_id,topic,profile:copypaste_profiles!copypaste_posts_author_id_fkey(hex_login,is_admin,is_moderator)',{count:'exact'})
+        .eq('topic',topic).order('created_at',{ascending:false}).range(start,start+PAGE_SIZE-1);
+      if(error)throw error;
+      const rows=(data??[]) as unknown as Post[];
+      setPosts(current=>reset?rows:[...current,...rows]);
+      offsetRef.current=start+rows.length;
+      moreRef.current=rows.length===PAGE_SIZE&&offsetRef.current<(count??0);
+      setHasMore(moreRef.current);
+    }catch(cause){console.error(cause);setNotice('Не вдалося завантажити стрічку. Спробуй ще раз.',true);}
+    finally{loadingRef.current=false;setLoading(false);}
+  },[topic]);
+
+  useEffect(()=>{void (async()=>{try{await ensureIdentity();setNotice('');}catch(e){console.error(e);setNotice('Не вдалося створити гостьовий профіль. Перевір, чи ввімкнений анонімний вхід.',true);}})();void loadTopics();},[ensureIdentity,loadTopics]);
+  useEffect(()=>{if(user)void loadPosts(true);},[user,topic,loadPosts]);
+  useEffect(()=>{
+    const channel=supabase.channel('copypaste-live-feed').on('postgres_changes',{event:'INSERT',schema:'public',table:'copypaste_posts'},payload=>{
+      if((payload.new as {topic?:string}).topic===topic)void loadPosts(true);
+    }).subscribe();
+    return()=>{void supabase.removeChannel(channel);};
+  },[topic,loadPosts]);
+  useEffect(()=>{
+    const target=sentinelRef.current;if(!target)return;
+    const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)&&moreRef.current&&!loadingRef.current)void loadPosts(false);},{rootMargin:'500px'});
+    observer.observe(target);return()=>observer.disconnect();
+  },[loadPosts]);
+  useEffect(()=>{
+    const el=composerRef.current;if(!el)return;el.style.height='auto';
+    const line=Number.parseFloat(getComputedStyle(el).lineHeight)||24;const max=line*5+12;
+    el.style.height=`${Math.min(el.scrollHeight,max)}px`;el.style.overflowY=el.scrollHeight>max?'auto':'hidden';
+  },[message]);
+
+  function updateTopic(next:string){if(next===topic)return;offsetRef.current=0;moreRef.current=true;setHasMore(false);setPosts([]);setTopic(next);}
+
+  async function runAuthCommand(key:string){
+    setBusy(true);setNotice('Перевіряємо ключ…');
+    try{
+      const {data,error}=await supabase.functions.invoke('copypaste-auth',{body:{action:'login',secretKey:key.trim().toLowerCase()}});
+      if(error||data?.error)throw new Error(data?.error||'Ключ не підійшов.');
+      const {error:sessionError}=await supabase.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});
+      if(sessionError)throw sessionError;
+      await ensureIdentity();setNotice('Увійшли в акаунт.');
+    }catch(e){setNotice(e instanceof Error?e.message:'Помилка авторизації.',true);}
+    finally{setBusy(false);}
+  }
+  async function logout(){
+    setBusy(true);
+    try{
+      const {error}=await supabase.auth.signOut();if(error)throw error;
+      const {error:guestError}=await supabase.auth.signInAnonymously();if(guestError)throw guestError;
+      setUser(null);setProfile(null);await ensureIdentity();setAdminOpen(false);setNotice('Ти вийшов з акаунта.');
+    }catch(e){setNotice(e instanceof Error?e.message:'Не вдалося вийти.',true);}
+    finally{setBusy(false);}
+  }
+  async function adminAction(action:string,payload:Record<string,unknown>={}){
+    const {data,error}=await supabase.functions.invoke('copypaste-auth',{body:{action,...payload}});
+    if(error||data?.error)throw new Error(data?.error||'Не вдалося виконати дію.');
+    return data;
+  }
+  async function loadAdminStats(){
+    const [p,u,s]=await Promise.all([
+      supabase.from('copypaste_posts').select('id',{count:'exact',head:true}),
+      supabase.from('copypaste_profiles').select('id',{count:'exact',head:true}),
+      supabase.from('copypaste_settings').select('cooldown_minutes').eq('id',true).single()
+    ]);
+    setStats({posts:p.count??0,users:u.count??0});if(s.data)setAdminCooldown(String(s.data.cooldown_minutes));
+  }
+
+  async function publishPost(event:FormEvent){
+    event.preventDefault();const content=message.trim();if(!content||!user||!profile)return;
+    if(content==='/exit'){setMessage('');await logout();return;}
+    if(content==='/auth'||content.startsWith('/auth ')){
+      const key=content.slice(5).trim();if(!key){setNotice('Після /auth додай секретний ключ.',true);return;}
+      setMessage('');await runAuthCommand(key);return;
+    }
+    if(content.startsWith('/')){setNotice('Невідома команда. Доступні: /auth ключ та /exit.',true);return;}
+    if(content.length>180)return;
+    setBusy(true);setNotice('');
+    try{
+      const {error}=await supabase.from('copypaste_posts').insert({content,topic});
+      if(error){if(error.code==='42501')throw new Error('Ще зарано публікувати. Спробуй пізніше.');throw error;}
+      setMessage('');await loadPosts(true);
+    }catch(e){console.error(e);setNotice(e instanceof Error?e.message:'Не вдалося опублікувати.',true);}
+    finally{setBusy(false);}
+  }
+
+  const canPublish=!!user&&!!profile&&!busy&&!!message.trim()&&message.trim().length<=180;
+
+  return <main className="shell">
+    <header>
+      <button className="brand" type="button" onClick={()=>setAdminOpen(false)} style={{color:topic==='general'?'#111':topics.find(t=>t.id===topic)?.color??'#111'}} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
+      <nav className="nav" aria-label="Навігація">
+        {profile&&<span className="current-login" style={{color:(profile.is_admin||profile.is_moderator)?profile.hex_login:'#777'}}>{profile.hex_login.toLowerCase()}</span>}
+        {profile?.is_admin&&<button className="icon-btn" type="button" aria-label="Панель адміністратора" title="Панель адміністратора" onClick={()=>{setAdminOpen(v=>!v);if(!adminOpen)void loadAdminStats();}}><Shield/></button>}
+      </nav>
+    </header>
+    {adminOpen&&profile?.is_admin?<section className="admin-panel">
+      <h2>Панель адміністратора</h2>
+      <div className="admin-stats"><span><strong>{stats.posts}</strong> повідомлень</span><span><strong>{stats.users}</strong> профілів</span></div>
+      <label>Інтервал між повідомленнями (хв)</label>
+      <div className="admin-inline"><input value={adminCooldown} onChange={e=>setAdminCooldown(e.target.value)} inputMode="numeric"/><button type="button" onClick={async()=>{try{await adminAction('update_settings',{cooldownMinutes:Number(adminCooldown)});setNotice('Інтервал збережено.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Зберегти</button></div>
+      <label>Створити акаунт (логін необов’язковий)</label>
+      <div className="admin-inline"><input value={accountLogin} onChange={e=>setAccountLogin(e.target.value)} placeholder="Власний логін або HEX автоматично"/><button type="button" onClick={async()=>{try{const result=await adminAction('create_account',{login:accountLogin});setNewAccount(result);setAccountLogin('');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Створити</button></div>
+      {newAccount&&<div className="new-account"><strong>{newAccount.login}</strong><code>{newAccount.secretKey}</code><button type="button" onClick={()=>void navigator.clipboard.writeText(newAccount.secretKey)}>Копіювати ключ</button></div>}
+      <label>Права модератора за логіном</label>
+      <div className="admin-inline"><input value={moderatorLogin} onChange={e=>setModeratorLogin(e.target.value)} placeholder="Логін акаунта"/><button type="button" onClick={async()=>{try{await adminAction('set_role',{login:moderatorLogin,role:'moderator'});setNotice('Права модератора оновлено.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Надати</button></div>
+      <label>Додати розділ</label>
+      <div className="admin-inline"><input value={topicName} onChange={e=>setTopicName(e.target.value)} placeholder="Назва розділу"/><button type="button" onClick={async()=>{try{await adminAction('create_topic',{id:topicName.toLowerCase().replace(/[^a-z0-9_-]/g,'-'),label:topicName});setTopicName('');await loadTopics();setNotice('Розділ додано.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Додати</button></div>
+      {status&&<p className={error?'status error':'status'}>{status}</p>}
+    </section>:<>
+      <form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
+        <textarea ref={composerRef} value={message} onChange={e=>setMessage(e.target.value)} maxLength={180} disabled={!user||!profile||busy}
+          placeholder={!user?'Підключаємо анонімний профіль…':'Поділись думкою або введи /auth ключ чи /exit'} aria-label="Твоє повідомлення"/>
+        <div className="compose-row"><span className="counter">{message.length} / 180</span><button type="submit" disabled={!canPublish}>Опублікувати ↗</button></div>
+        {status&&<div className={`status${error?' error':''}`} role="status" aria-live="polite">{status}</div>}
+      </form>
+      <section aria-label="Усі повідомлення">
+        <div className="topics">{topics.map(item=>{const Icon=ICONS[item.icon]??MessageCircle;return <button key={item.id} type="button" className={`topic-btn${topic===item.id?' active':''}`} style={{'--topic-color':item.color} as CSSProperties} onClick={()=>updateTopic(item.id)}><Icon/>{item.label}</button>;})}</div>
+        <div id="feed" aria-live="polite">
+          {posts.length===0&&!loading?<div className="empty-state"><MessageCircle/><p>Тут поки тихо</p><span>Залиш першу думку в цьому розділі</span></div>:posts.map(post=><article className="post" key={post.id}>
+            <div className="meta"><div className="identity"><span className="swatch" style={{backgroundColor:post.profile?.hex_login??'#aaa'}}/><span className="hex" style={{color:(post.profile?.is_admin||post.profile?.is_moderator)?post.profile.hex_login:'#111'}}>{post.profile?.hex_login?.toLowerCase()??'#??????'}</span></div><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time>
+              {(profile?.is_admin||profile?.is_moderator)&&<button className="moderate-delete" type="button" aria-label="Видалити повідомлення" onClick={async()=>{try{await adminAction('delete_post',{postId:post.id});await loadPosts(true);}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}><Trash2/></button>}
+            </div><p className="message"><FormattedText value={post.content}/></p>
+          </article>)}
+          {loading&&posts.length===0&&<div className="empty">Завантажуємо потік…</div>}
+        </div>
+        <div ref={sentinelRef} id="sentinel"/>
+        {hasMore&&posts.length>0&&<button className="load-more" type="button" disabled={loading} onClick={()=>void loadPosts(false)}>{loading?'Завантажуємо…':'Завантажити ще'}</button>}
+      </section>
+    </>}
+  </main>;
 }

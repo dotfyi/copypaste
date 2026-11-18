@@ -28,7 +28,7 @@ button:disabled { color: #aaa; cursor: default; }
 .topic-btn:hover { text-decoration: none; color: var(--topic-color); }
 .topic-btn.active { color: var(--topic-color); background: transparent; }
 .topic-btn:active, .topic-btn:focus, .topic-btn:focus-visible { background: transparent; outline: none; box-shadow: none; }
-.post { padding: 18px 0 20px; border-top: 1px solid var(--line); }
+.post { padding: 18px 0 24px; border-top: 1px solid var(--line); }
 #feed > .post:first-child { border-top: 0; }
 .meta { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 8px; margin-bottom: 8px; color: var(--muted); font-size: 11px; }
 .identity { display: flex; align-items: center; min-width: 0; }
@@ -51,7 +51,7 @@ button:disabled { color: #aaa; cursor: default; }
   .shell { width: calc(100% - 36px); padding: 28px 0 48px; }
   header { margin-bottom: 38px; } .brand { font-size: 23px; }
   .nav { gap: 22px; } .topics { gap: 10px 16px; }
-  .post { padding: 16px 0 18px; } .message { font-size: 15px; }
+  .post { padding: 16px 0 22px; } .message { font-size: 15px; }
 }
 
 .auth-page { position: relative; width: 100%; max-width: 390px; min-height: 55vh; margin: 0 auto; padding: 12px 0 20px; background: #fff; }

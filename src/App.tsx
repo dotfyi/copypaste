@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type CSSProperties } from 'react';
-import { BookOpen, Cpu, Gamepad2, Globe2, Newspaper, Palette, UserRound, X } from 'lucide-react';
+import { BookOpen, Cpu, Gamepad2, Globe2, Newspaper, Palette, UserRound } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 
@@ -259,11 +259,11 @@ export default function App() {
       <header>
         <button className="brand" type="button" style={{ color: topic === 'general' ? '#111' : topicColor[topic] }} aria-label="copypaste"><strong>copy</strong><span>paste</span></button>
         <nav className="nav" aria-label="Навігація">
-          <button className="icon-btn" type="button" aria-label="Авторизація" title="Авторизація" aria-expanded={authOpen} onClick={() => setAuthOpen(value => !value)}><UserRound /></button>
+          <button className="icon-btn" type="button" aria-label="Авторизація" title="Авторизація" aria-expanded={authOpen} onClick={() => { setAuthMode(user?.is_anonymous ? 'register' : 'login'); setAuthOpen(value => !value); }}><UserRound /></button>
         </nav>
       </header>
-      {authOpen && <section className="auth-panel" aria-labelledby="auth-title">
-          <button className="auth-close" type="button" aria-label="Закрити" onClick={() => setAuthOpen(false)}><X /></button>
+      {authOpen ? <section className="auth-page" aria-labelledby="auth-title">
+          <button className="auth-close" type="button" onClick={() => setAuthOpen(false)}>← Назад</button>
           <h2 id="auth-title">{authMode === 'register' ? 'Створити акаунт' : 'Увійти в акаунт'}</h2>
           <p className="auth-description">{authMode === 'register' ? 'Збережи свій HEX-логін і секретний ключ — вони знадобляться для входу з іншого пристрою.' : 'Введи секретний ключ, який отримав під час реєстрації.'}</p>
           {authMode === 'login' && <form className="auth-form" onSubmit={event => { event.preventDefault(); void runAuthCommand('login', authInput.trim()); }}>
@@ -275,8 +275,7 @@ export default function App() {
             {authMode === 'login' ? 'Ще немає акаунта? Зареєструватися' : 'Вже маєш акаунт? Увійти'}
           </button>
           {busy && <p className="auth-progress">Зачекай…</p>}
-      </section>}
-      <>
+      </section> : <>
         <form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
           <textarea value={message} onChange={event => setMessage(event.target.value)} maxLength={180}
             placeholder={alreadyPosted && !profile?.is_admin ? 'Ти вже залишив повідомлення сьогодні. Побачимось завтра.' : 'Про що ти думаєш сьогодні?'}
@@ -309,7 +308,7 @@ export default function App() {
           <div ref={sentinelRef} id="sentinel" />
           {hasMore && posts.length > 0 && <button className="load-more" type="button" disabled={loading} onClick={() => void loadPosts(false)}>{loading ? 'Завантажуємо…' : 'Завантажити ще'}</button>}
         </section>
-      </>
+      </>}
     </main>
   );
 }

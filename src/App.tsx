@@ -41,7 +41,7 @@ function kyivTime(value: string) {
 }
 function Spoiler({ children }: { children: string }) {
   const [revealed, setRevealed] = useState(false);
-  return <button type="button" className={`spoiler${revealed ? ' revealed' : ''}`} onClick={() => setRevealed(v => !v)}>{children}</button>;
+  return <button type="button" className={`spoiler${revealed ? ' revealed' : ''}`} onClick={() => setRevealed(true)}>{children}</button>;
 }
 function FormattedText({ value }: { value: string }) {
   const pattern = /(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|\|\|[^|]+\|\||>[^\n]+)/gm;
@@ -81,6 +81,17 @@ export default function App() {
   const moreRef = useRef(true);
 
   const setNotice = (value: string, isError = false) => { setStatus(value); setError(isError); };
+
+  useEffect(() => {
+    const closeSpoilers = (event: MouseEvent) => {
+      const clicked = event.target instanceof Element ? event.target.closest('.spoiler') : null;
+      document.querySelectorAll<HTMLButtonElement>('.spoiler.revealed').forEach(item => {
+        if (item !== clicked) item.classList.remove('revealed');
+      });
+    };
+    document.addEventListener('click', closeSpoilers);
+    return () => document.removeEventListener('click', closeSpoilers);
+  }, []);
 
   const ensureIdentity = useCallback(async () => {
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -242,7 +253,7 @@ export default function App() {
   return (
     <main className="shell">
       <header>
-        <button className="brand" type="button" onClick={() => setInfoPage(null)} aria-label="copypaste"><strong>copy</strong><span>paste</span></button>
+        <button className="brand" type="button" style={{ color: topicColor[topic] }} onClick={() => setInfoPage(null)} aria-label="copypaste"><strong>copy</strong><span>paste</span></button>
         <nav className="nav" aria-label="Навігація">
           <button className="icon-btn" type="button" disabled aria-label="Авторизація" title="Авторизація"><UserRound /></button>
           <button className={`icon-btn${infoPage === 'rules' ? ' active' : ''}`} type="button" onClick={() => setInfoPage(infoPage === 'rules' ? null : 'rules')} aria-label="Правила" title="Правила"><BookOpen /></button>

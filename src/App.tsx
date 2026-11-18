@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type CSSProperties } from 'react';
-import { Activity, Aperture, Atom, AudioLines, Bike, Bird, Book, BookOpen, Bookmark, BriefcaseBusiness, Camera, Cat, ChartNoAxesCombined, CircleHelp, Code, Coffee, Compass, Cpu, Dice5, Dumbbell, Earth, Film, Flame, FlaskConical, Flower2, Gamepad2, Gem, Ghost, Globe2, Hammer, Heart, House, Lightbulb, Map, MessageCircle, Music, Palette, PawPrint, Rocket, School, Search, Shield, ShoppingBag, Smile, Sparkles, Star, Sun, Terminal, Trophy, Users, Video, Wallet, WandSparkles, Wrench, Zap, Newspaper, Trash2, Info, UserRound, LogOut, Copy, X } from 'lucide-react';
+import { Activity, Aperture, Atom, AudioLines, Bike, Bird, Book, BookOpen, Bookmark, BriefcaseBusiness, Camera, Cat, ChartNoAxesCombined, CircleHelp, Code, Coffee, Compass, Cpu, Dice5, Dumbbell, Earth, Film, Flame, FlaskConical, Flower2, Gamepad2, Gem, Ghost, Globe2, Hammer, Heart, House, Lightbulb, Map as MapIcon, MessageCircle, Music, Palette, PawPrint, Rocket, School, Search, Shield, ShoppingBag, Smile, Sparkles, Star, Sun, Terminal, Trophy, Users, Video, Wallet, WandSparkles, Wrench, Zap, Newspaper, Trash2, Info, UserRound, LogOut, Copy } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 
@@ -18,7 +18,7 @@ const DEFAULT_TOPICS: Topic[] = [
   {id:'art',label:'Мистецтво',icon:'Palette',color:'#8eae88'},
   {id:'news',label:'Новини',icon:'Newspaper',color:'#c99b82'}
 ];
-const ICONS: Record<string, typeof Globe2> = {Activity,Aperture,Atom,AudioLines,Bike,Bird,Book,BookOpen,Bookmark,BriefcaseBusiness,Camera,Cat,ChartNoAxesCombined,CircleHelp,Code,Coffee,Compass,Cpu,Dice5,Dumbbell,Earth,Film,Flame,FlaskConical,Flower2,Gamepad2,Gem,Ghost,Globe2,Hammer,Heart,House,Lightbulb,Map,MessageCircle,Music,Palette,PawPrint,Rocket,School,Search,Shield,ShoppingBag,Smile,Sparkles,Star,Sun,Terminal,Trophy,Users,Video,Wallet,WandSparkles,Wrench,Zap,Newspaper};
+const ICONS: Record<string, typeof Globe2> = {Activity,Aperture,Atom,AudioLines,Bike,Bird,Book,BookOpen,Bookmark,BriefcaseBusiness,Camera,Cat,ChartNoAxesCombined,CircleHelp,Code,Coffee,Compass,Cpu,Dice5,Dumbbell,Earth,Film,Flame,FlaskConical,Flower2,Gamepad2,Gem,Ghost,Globe2,Hammer,Heart,House,Lightbulb,Map:MapIcon,MessageCircle,Music,Palette,PawPrint,Rocket,School,Search,Shield,ShoppingBag,Smile,Sparkles,Star,Sun,Terminal,Trophy,Users,Video,Wallet,WandSparkles,Wrench,Zap,Newspaper};
 const ICON_OPTIONS = Object.keys(ICONS).sort();
 function kyivInfo(value: string, postNumber: number) {
   const date = new Date(value);
@@ -61,7 +61,6 @@ export default function App() {
   const [loading,setLoading]=useState(false);
   const [hasMore,setHasMore]=useState(false);
   const [adminOpen,setAdminOpen]=useState(false);
-  const [adminCooldown,setAdminCooldown]=useState('1440');
   const [accountLogin,setAccountLogin]=useState('');
   const [loginAvailability,setLoginAvailability]=useState<'idle'|'checking'|'free'|'taken'|'invalid'>('idle');
   const [newAccount,setNewAccount]=useState<{login:string;secretKey:string}|null>(null);
@@ -69,9 +68,6 @@ export default function App() {
   const [topicName,setTopicName]=useState('');
   const [topicIcon,setTopicIcon]=useState('MessageCircle');
   const [topicColor,setTopicColor]=useState('#aaa0cf');
-  const [cooldownMinutes,setCooldownMinutes]=useState(1440);
-  const [cooldownUntil,setCooldownUntil]=useState<number|null>(null);
-  const [clockNow,setClockNow]=useState(Date.now());
   const [infoOpen,setInfoOpen]=useState(false);
   const [infoTab,setInfoTab]=useState<'faq'|'rules'>('faq');
   const [profileOpen,setProfileOpen]=useState(false);
@@ -140,30 +136,7 @@ export default function App() {
     });
     return()=>listener.subscription.unsubscribe();
   },[]);
-  useEffect(()=>{
-    let cancelled=false;
-    async function refresh(){
-      if(!user||!profile)return;
-      if(profile.is_admin){setCooldownUntil(null);return;}
-      const [{data:setting},{data:lastPost}] = await Promise.all([
-        supabase.from('copypaste_settings').select('cooldown_minutes').eq('id',true).maybeSingle(),
-        supabase.from('copypaste_posts').select('created_at').eq('author_id',user.id).order('created_at',{ascending:false}).limit(1).maybeSingle()
-      ]);
-      if(cancelled)return;
-      const mins=Number(setting?.cooldown_minutes??1440);setCooldownMinutes(mins);
-      const until=lastPost?new Date(lastPost.created_at).getTime()+mins*60000:0;
-      setCooldownUntil(until>Date.now()?until:null);
-    }
-    void refresh();return()=>{cancelled=true;};
-  },[user,profile]);
-  useEffect(()=>{
-    if(cooldownUntil===null||cooldownUntil<=Date.now())return;
-    const timer=window.setInterval(()=>{
-      const now=Date.now();setClockNow(now);
-      if(now>=cooldownUntil)setCooldownUntil(null);
-    },1000);
-    return()=>window.clearInterval(timer);
-  },[cooldownUntil]);
+
 
   useEffect(()=>{
     const channel=supabase.channel('copypaste-live-feed').on('postgres_changes',{event:'INSERT',schema:'public',table:'copypaste_posts'},payload=>{
@@ -246,12 +219,11 @@ export default function App() {
     return data;
   }
   async function loadAdminStats(){
-    const [p,u,s]=await Promise.all([
+    const [p,u]=await Promise.all([
       supabase.from('copypaste_posts').select('id',{count:'exact',head:true}),
-      supabase.from('copypaste_profiles').select('id',{count:'exact',head:true}),
-      supabase.from('copypaste_settings').select('cooldown_minutes').eq('id',true).single()
+      supabase.from('copypaste_profiles').select('id',{count:'exact',head:true})
     ]);
-    setStats({posts:p.count??0,users:u.count??0});if(s.data)setAdminCooldown(String(s.data.cooldown_minutes));
+    setStats({posts:p.count??0,users:u.count??0});
   }
 
   async function publishPost(event:FormEvent){

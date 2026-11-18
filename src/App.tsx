@@ -90,9 +90,20 @@ export default function App() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [authInput, setAuthInput] = useState('');
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
   const loadingRef = useRef(false);
   const offsetRef = useRef(0);
   const moreRef = useRef(true);
+
+  useEffect(() => {
+    const textarea = composerRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    const lineHeight = Number.parseFloat(getComputedStyle(textarea).lineHeight) || 24;
+    const maxHeight = lineHeight * 5 + 12;
+    textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
+  }, [message]);
 
   const setNotice = (value: string, isError = false) => { setStatus(value); setError(isError); };
 
@@ -302,7 +313,7 @@ export default function App() {
         </div>}
       </section> : <>
       <form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
-        <textarea value={message} onChange={event => setMessage(event.target.value)} maxLength={180}
+        <textarea ref={composerRef} value={message} onChange={event => setMessage(event.target.value)} maxLength={180}
           disabled={!user || !profile?.is_registered || busy || (!profile.is_admin && alreadyPosted)}
           placeholder={!user || !profile?.is_registered ? 'Щоб писати, увійди або створи акаунт.' : alreadyPosted && !profile?.is_admin ? 'Ти вже залишив повідомлення сьогодні. Побачимось завтра.' : 'Про що ти думаєш сьогодні?'}
           aria-label="Твоє повідомлення" />

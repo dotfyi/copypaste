@@ -151,8 +151,11 @@ export default function App() {
     void refresh();return()=>{cancelled=true;};
   },[user,profile]);
   useEffect(()=>{
-    if(cooldownUntil===null)return;
-    const timer=window.setInterval(()=>setClockNow(Date.now()),1000);
+    if(cooldownUntil===null||cooldownUntil<=Date.now())return;
+    const timer=window.setInterval(()=>{
+      const now=Date.now();setClockNow(now);
+      if(now>=cooldownUntil)setCooldownUntil(null);
+    },1000);
     return()=>window.clearInterval(timer);
   },[cooldownUntil]);
 

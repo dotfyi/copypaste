@@ -250,7 +250,10 @@ export default function App() {
     finally{setBusy(false);}
   }
 
-  const cooldownSeconds=cooldownUntil===null?0:Math.max(0,Math.ceil((cooldownUntil-clockNow)/1000));\n  const timerText=`${String(Math.floor(cooldownSeconds/3600)).padStart(2,'0')}:${String(Math.floor((cooldownSeconds%3600)/60)).padStart(2,'0')}:${String(cooldownSeconds%60).padStart(2,'0')}`;\n  const cooldownActive=cooldownSeconds>0&&!profile?.is_admin;\n  const canPublish=!!user&&!!profile&&!busy&&!cooldownActive&&!!message.trim()&&message.trim().length<=180;
+  const cooldownSeconds=cooldownUntil===null?0:Math.max(0,Math.ceil((cooldownUntil-clockNow)/1000));
+  const timerText=`${String(Math.floor(cooldownSeconds/3600)).padStart(2,'0')}:${String(Math.floor((cooldownSeconds%3600)/60)).padStart(2,'0')}:${String(cooldownSeconds%60).padStart(2,'0')}`;
+  const cooldownActive=cooldownSeconds>0&&!profile?.is_admin;
+  const canPublish=!!user&&!!profile&&!busy&&!cooldownActive&&!!message.trim()&&message.trim().length<=180;
 
   return <main className="shell">
     <header>

@@ -29,7 +29,7 @@ function kyivInfo(value: string, postNumber: number) {
 }
 
 const decodeB64url=(value:string)=>Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4)),c=>c.charCodeAt(0));
-const encodeB64url=(value:ArrayBuffer)=>btoa(String.fromCharCode(...new Uint8Array(value))).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');
+const encodeB64url=(value:ArrayBuffer)=>btoa(String.fromCharCode(...new Uint8Array(value))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
 function passkeyCredentialJSON(credential:PublicKeyCredential,kind:'registration'|'authentication'){
   const response=credential.response as AuthenticatorAttestationResponse & AuthenticatorAssertionResponse;
   const common={id:credential.id,rawId:encodeB64url(credential.rawId),type:credential.type,clientExtensionResults:credential.getClientExtensionResults()};

@@ -22,11 +22,12 @@ button[type="submit"]:hover:not(:disabled) { text-decoration: underline; text-un
 button:disabled { color: #aaa; cursor: default; }
 .status { margin-top: 7px; line-height: 1.6; overflow-wrap: anywhere; } .status.error { color: #b42318; }
 .copy-key { margin-left: 8px; border: 0; background: transparent; color: #111; font-size: 11px; text-decoration: underline; cursor: pointer; }
-.topics { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 0 14px; margin: 0; border: 0; }
-.topic-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; border: 0; border-radius: 999px; padding: 7px 10px; min-height: 30px; color: #555; background: transparent; font-size: 11px; font-weight: 600; cursor: pointer; transition: color .15s; }
+.topics { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 18px; padding: 0 0 14px; margin: 0; border: 0; }
+.topic-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; border: 0; border-radius: 0; padding: 4px 0; min-height: 0; color: #555; background: transparent; font-size: 11px; font-weight: 600; cursor: pointer; transition: color .15s; -webkit-tap-highlight-color: transparent; outline: none; }
 .topic-btn svg { width: 15px; height: 15px; stroke-width: 1.8; }
 .topic-btn:hover { text-decoration: none; color: var(--topic-color); }
 .topic-btn.active { color: var(--topic-color); background: transparent; }
+.topic-btn:active, .topic-btn:focus, .topic-btn:focus-visible { background: transparent; outline: none; box-shadow: none; }
 .post { padding: 18px 0 20px; border-top: 1px solid var(--line); }
 #feed > .post:first-child { border-top: 0; }
 .meta { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 8px; color: var(--muted); font-size: 11px; }
@@ -36,7 +37,8 @@ button:disabled { color: #aaa; cursor: default; }
 .message { margin: 0; font-size: 15px; line-height: 1.65; letter-spacing: -.018em; overflow-wrap: anywhere; white-space: pre-wrap; }
 .message strong { font-weight: 700; } .message em { font-style: italic; } .message del { text-decoration: line-through; }
 .green-text { color: #27834b; }
-.spoiler { display: inline-block; border: 0; cursor: pointer; background: #e8e8e8; color: transparent; border-radius: 6px; padding: 0 6px; font-size: inherit; font-weight: inherit; }
+.spoiler { display: inline-block; appearance: none; -webkit-appearance: none; border: 0; cursor: pointer; background: #e8e8e8; color: transparent; border-radius: 6px; padding: 0 6px; font-size: inherit; font-weight: inherit; box-shadow: none; outline: none; -webkit-tap-highlight-color: transparent; }
+.spoiler:active, .spoiler:focus, .spoiler:focus-visible { background: #e8e8e8; box-shadow: none; outline: none; }
 .spoiler.revealed { color: inherit; }
 .empty { padding: 24px 0; color: var(--muted); font-size: 13px; border-top: 0; }
 .page-panel { border-top: 1px solid var(--line); padding: 20px 0; font-size: 14px; line-height: 1.7; }
@@ -48,6 +50,6 @@ button:disabled { color: #aaa; cursor: default; }
 @media (max-width: 560px) {
   .shell { width: calc(100% - 36px); padding: 28px 0 48px; }
   header { margin-bottom: 38px; } .brand { font-size: 23px; }
-  .nav { gap: 22px; } .topics { gap: 10px; }
+  .nav { gap: 22px; } .topics { gap: 10px 16px; }
   .post { padding: 16px 0 18px; } .message { font-size: 15px; }
 }

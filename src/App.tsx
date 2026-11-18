@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type CSSProperties } from 'react';
-import { BookOpen, CircleHelp, Cpu, Gamepad2, Globe2, Newspaper, Palette, UserRound } from 'lucide-react';
+import { Cpu, Gamepad2, Globe2, Newspaper, Palette, UserRound } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 
@@ -9,7 +9,6 @@ type Post = {
   id: string; post_number: number; content: string; created_at: string; author_id: string; topic: Topic;
   profile?: { hex_login: string } | null;
 };
-type InfoPage = 'rules' | 'faq' | null;
 const PAGE_SIZE = 30;
 const TOPICS: { id: Topic; label: string; Icon: typeof Globe2 }[] = [
   { id: 'general', label: 'Загальне', Icon: Globe2 },
@@ -86,7 +85,6 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  const [infoPage, setInfoPage] = useState<InfoPage>(null);
   const [secretKey, setSecretKey] = useState('');
   const sentinelRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
@@ -255,26 +253,12 @@ export default function App() {
   return (
     <main className="shell">
       <header>
-        <button className="brand" type="button" style={{ color: topic === 'general' ? '#111' : topicColor[topic] }} onClick={() => setInfoPage(null)} aria-label="copypaste"><strong>copy</strong><span>paste</span></button>
+        <button className="brand" type="button" style={{ color: topic === 'general' ? '#111' : topicColor[topic] }} aria-label="copypaste"><strong>copy</strong><span>paste</span></button>
         <nav className="nav" aria-label="Навігація">
           <button className="icon-btn" type="button" disabled aria-label="Авторизація" title="Авторизація"><UserRound /></button>
-          <button className={`icon-btn${infoPage === 'rules' ? ' active' : ''}`} type="button" onClick={() => setInfoPage(infoPage === 'rules' ? null : 'rules')} aria-label="Правила" title="Правила"><BookOpen /></button>
-          <button className={`icon-btn${infoPage === 'faq' ? ' active' : ''}`} type="button" onClick={() => setInfoPage(infoPage === 'faq' ? null : 'faq')} aria-label="FAQ" title="FAQ"><CircleHelp /></button>
         </nav>
       </header>
-      {infoPage ? <section className="page-panel">
-        {infoPage === 'rules' ? <>
-          <h2>Правила</h2><h3>Будь людиною</h3><p>Поважай інших. Без образ, погроз, мови ненависті та переслідування.</p>
-          <h3>Пиши по суті</h3><p>Одна думка — одне повідомлення. До 180 символів. Не публікуй приватні дані.</p>
-          <h3>Форматування</h3><p>Використовуй виділення, але не зловживай ним. Спойлери позначай окремо.</p>
-          <h3>Модерація</h3><p>Шкідливий або незаконний контент може бути видалений.</p>
-        </> : <>
-          <h2>FAQ</h2><h3>Скільки можна публікувати?</h3><p>Звичайний акаунт — одне повідомлення на день.</p>
-          <h3>Як відформатувати текст?</h3><p>**жирний**, *курсив*, ~~закреслений~~, &gt;зелений текст, ||спойлер||.</p>
-          <h3>Як працюють теми?</h3><p>Обери тему над стрічкою. Нові повідомлення потраплять саме до неї.</p>
-          <h3>Чи можна повернутися до акаунта?</h3><p>Так, за допомогою секретного ключа авторизації.</p>
-        </>}
-      </section> : <>
+      <>
         <form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
           <textarea value={message} onChange={event => setMessage(event.target.value)} maxLength={180}
             placeholder={alreadyPosted && !profile?.is_admin ? 'Ти вже залишив повідомлення сьогодні. Побачимось завтра.' : 'Про що ти думаєш сьогодні?'}
@@ -307,7 +291,7 @@ export default function App() {
           <div ref={sentinelRef} id="sentinel" />
           {hasMore && posts.length > 0 && <button className="load-more" type="button" disabled={loading} onClick={() => void loadPosts(false)}>{loading ? 'Завантажуємо…' : 'Завантажити ще'}</button>}
         </section>
-      </>}
+      </>
     </main>
   );
 }

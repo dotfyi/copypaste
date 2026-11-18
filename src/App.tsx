@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type CSSProperties } from 'react';
-import { BookOpen, CircleHelp, Cpu, Gamepad2, Globe2, Palette, UserRound } from 'lucide-react';
+import { BookOpen, CircleHelp, Cpu, Gamepad2, Globe2, Newspaper, Palette, UserRound } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 
-type Topic = 'general' | 'games' | 'technology' | 'books' | 'art';
+type Topic = 'general' | 'games' | 'technology' | 'books' | 'art' | 'news';
 type Profile = { hex_login: string; is_admin: boolean };
 type Post = {
   id: number; content: string; created_at: string; author_id: string; topic: Topic;
@@ -16,10 +16,11 @@ const TOPICS: { id: Topic; label: string; Icon: typeof Globe2 }[] = [
   { id: 'games', label: 'Ігри', Icon: Gamepad2 },
   { id: 'technology', label: 'Технології', Icon: Cpu },
   { id: 'books', label: 'Книги', Icon: BookOpen },
-  { id: 'art', label: 'Мистецтво', Icon: Palette }
+  { id: 'art', label: 'Мистецтво', Icon: Palette },
+  { id: 'news', label: 'Новини', Icon: Newspaper }
 ];
 const topicColor: Record<Topic, string> = {
-  general: '#aaa0cf', games: '#d99a94', technology: '#83b5c7', books: '#c5a77d', art: '#8eae88'
+  general: '#aaa0cf', games: '#d99a94', technology: '#83b5c7', books: '#c5a77d', art: '#8eae88', news: '#c99b82'
 };
 
 function kyivToday() {

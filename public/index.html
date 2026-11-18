@@ -205,7 +205,7 @@
     }
 
     function appendFormattedText(parent, raw) {
-      const token = /(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|\|\|[^|]+\|\||^>[^\n]+)/gm;
+      const token = /(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|\|\|[^|]+\|\||>[^\n]+)/gm;
       let last = 0, match;
       while ((match = token.exec(raw)) !== null) {
         if (match.index > last) parent.append(document.createTextNode(raw.slice(last, match.index)));
@@ -355,7 +355,7 @@
           });
           status.append(copy);
         } else setStatus('Ти увійшов як ' + data.hexLogin + '.');
-        await loadFeed();
+        await loadFeed(true);
       } catch (error) {
         setStatus(error.message || 'Помилка авторизації.', true);
       } finally { authBusy = false; updateComposer(); }

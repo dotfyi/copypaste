@@ -6,7 +6,7 @@ import { supabase } from './lib/supabase';
 type Topic = 'general' | 'games' | 'technology' | 'books' | 'art' | 'news';
 type Profile = { hex_login: string; is_admin: boolean };
 type Post = {
-  id: number; content: string; created_at: string; author_id: string; topic: Topic;
+  id: string; post_number: number; content: string; created_at: string; author_id: string; topic: Topic;
   profile?: { hex_login: string } | null;
 };
 type InfoPage = 'rules' | 'faq' | null;
@@ -30,15 +30,19 @@ function kyivToday() {
   const get = (type: string) => parts.find(part => part.type === type)!.value;
   return get('year') + '-' + get('month') + '-' + get('day');
 }
-function kyivDate(value: string) {
-  return new Intl.DateTimeFormat('en-GB', {
+function kyivInfo(value: string, postNumber: number) {
+  const date = new Date(value);
+  const day = new Intl.DateTimeFormat('en-GB', {
     day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Kyiv'
-  }).format(new Date(value));
-}
-function kyivTime(value: string) {
-  return new Intl.DateTimeFormat('uk-UA', {
-    hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Kyiv'
-  }).format(new Date(value));
+  }).format(date);
+  const weekday = new Intl.DateTimeFormat('uk-UA', {
+    weekday: 'short', timeZone: 'Europe/Kyiv'
+  }).format(date);
+  const time = new Intl.DateTimeFormat('uk-UA', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hourCycle: 'h23', timeZone: 'Europe/Kyiv'
+  }).format(date);
+  return `${day} ${weekday.charAt(0).toLocaleUpperCase('uk-UA')}${weekday.slice(1)} ${time} №${postNumber}`;
 }
 function Spoiler({ children }: { children: string }) {
   const [revealed, setRevealed] = useState(false);
@@ -121,7 +125,7 @@ export default function App() {
     setLoading(true);
     try {
       const { data, error: queryError, count } = await supabase.from('copypaste_posts')
-        .select('id, content, created_at, author_id, topic, profile:copypaste_profiles!copypaste_posts_author_id_fkey(hex_login)', { count: 'exact' })
+        .select('id, post_number, content, created_at, author_id, topic, profile:copypaste_profiles!copypaste_posts_author_id_fkey(hex_login)', { count: 'exact' })
         .eq('topic', topic).order('created_at', { ascending: false })
         .range(start, start + PAGE_SIZE - 1);
       if (queryError) throw queryError;
@@ -293,7 +297,7 @@ export default function App() {
               <article className="post" key={post.id}>
                 <div className="meta">
                   <div className="identity"><span className="swatch" style={{ backgroundColor: post.profile?.hex_login || '#aaa' }} /><span className="hex">{post.profile?.hex_login?.toLowerCase() || '#??????'}</span></div>
-                  <time dateTime={post.created_at}>{kyivTime(post.created_at)} · {kyivDate(post.created_at)}</time>
+                  <time dateTime={post.created_at}>{kyivInfo(post.created_at, post.post_number)}</time>
                 </div>
                 <p className="message"><FormattedText value={post.content} /></p>
               </article>

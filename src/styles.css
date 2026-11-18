@@ -14,7 +14,7 @@ header { display: flex; align-items: center; justify-content: space-between; mar
 .icon-btn.active { color: #111; }
 .composer { margin-bottom: 24px; }
 textarea { display: block; width: 100%; min-height: 38px; height: 38px; resize: none; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 5px 0 7px; color: var(--ink); background: transparent; font-size: 16px; line-height: 1.5; outline: none; }
-textarea::placeholder { color: #aaa; } textarea:focus { border-bottom-color: #111; }
+textarea::placeholder { color: #aaa; } textarea:focus, textarea:active { border-bottom-color: #111; background: transparent; box-shadow: none; outline: none; -webkit-tap-highlight-color: transparent; }
 .compose-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 10px; }
 .counter, .status { color: var(--muted); font-size: 11px; }
 button[type="submit"] { border: 0; border-radius: 0; padding: 0; min-height: 0; background: transparent; color: #111; font-size: 12px; font-weight: 600; cursor: pointer; }
@@ -37,7 +37,7 @@ button:disabled { color: #aaa; cursor: default; }
 .message { margin: 0; font-size: 15px; line-height: 1.65; letter-spacing: -.018em; overflow-wrap: anywhere; white-space: pre-wrap; }
 .message strong { font-weight: 700; } .message em { font-style: italic; } .message del { text-decoration: line-through; }
 .green-text { color: #27834b; }
-.spoiler { display: inline-block; appearance: none; -webkit-appearance: none; border: 0; cursor: pointer; background: #e8e8e8; color: transparent; border-radius: 6px; padding: 0 6px; font-size: inherit; font-weight: inherit; box-shadow: none; outline: none; -webkit-tap-highlight-color: transparent; }
+.spoiler { display: inline-block; appearance: none; -webkit-appearance: none; border: 0; cursor: pointer; background: #e8e8e8; color: transparent; border-radius: 6px; padding: 1px 6px; font-size: inherit; font-weight: inherit; line-height: 1.2; vertical-align: middle; box-shadow: none; outline: none; -webkit-tap-highlight-color: transparent; }
 .spoiler:active, .spoiler:focus, .spoiler:focus-visible { background: #e8e8e8; box-shadow: none; outline: none; }
 .spoiler.revealed { color: inherit; }
 .empty { padding: 24px 0; color: var(--muted); font-size: 13px; border-top: 0; }

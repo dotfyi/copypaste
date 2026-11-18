@@ -35,8 +35,8 @@
     .post { padding:19px 0 21px; border-top:1px solid var(--line); }
     .meta { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:9px; color:var(--muted); font-size:11px; }
     .identity { display:flex; align-items:center; min-width:0; }
-    .swatch { display:none; }
-    .hex { letter-spacing:.015em; }
+    .swatch { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:8px; flex:0 0 auto; }
+    .hex { letter-spacing:.015em; color:#111 !important; }
     time { white-space:nowrap; }
     .message { margin:0; font-size:16px; line-height:1.6; letter-spacing:-.018em; overflow-wrap:anywhere; white-space:pre-wrap; }
     .empty { padding:24px 0; color:var(--muted); font-size:13px; border-top:1px solid var(--line); }
@@ -156,8 +156,10 @@
         const hex = document.createElement('span');
         hex.className = 'hex';
         hex.textContent = post.profile.hex_login.toLowerCase();
-        hex.style.color = post.profile.hex_login;
-        identity.append(hex);
+        const swatch = document.createElement('span');
+        swatch.className = 'swatch';
+        swatch.style.backgroundColor = post.profile.hex_login;
+        identity.append(swatch, hex);
         const time = document.createElement('time');
         time.dateTime = post.created_at;
         time.textContent = kyivTime(post.created_at) + ' · ' + kyivDate(post.created_at);
@@ -190,7 +192,7 @@
         if (alreadyPosted) {
           input.disabled = true;
           input.placeholder = 'Ти вже залишив повідомлення сьогодні. Побачимось завтра.';
-          setStatus('Твоє повідомлення на сьогодні вже опубліковане.');
+          setStatus('');
         }
         updateComposer();
       }
@@ -198,6 +200,27 @@
 
     input.addEventListener('input', updateComposer);
     publish.addEventListener('click', async () => {
+      const command = input.value.trim().match(/^\/registration\s+(#[0-9a-fA-F]{6})$/);
+      if (command && currentUser) {
+        publish.disabled = true;
+        setStatus('Реєструємо HEX-логін…');
+        const chosen = command[1].toUpperCase();
+        const { error } = await supabase.from('copypaste_profiles').update({ hex_login: chosen }).eq('id', currentUser.id);
+        if (error) {
+          setStatus(error.code === '23505' ? 'Цей HEX-логін уже зайнятий.' : 'Не вдалося зареєструвати логін.', true);
+        } else {
+          myHex = chosen;
+          input.value = '';
+          setStatus('Зареєстровано: ' + chosen.toLowerCase());
+          await loadFeed();
+        }
+        updateComposer();
+        return;
+      }
+      if (input.value.trim().startsWith('/registration')) {
+        setStatus('Формат команди: /registration #abcdef', true);
+        return;
+      }
       const content = input.value.trim();
       if (!content || !currentUser || alreadyPosted) return;
       publish.disabled = true;
@@ -208,7 +231,7 @@
           alreadyPosted = true;
           input.disabled = true;
           input.placeholder = 'Ти вже залишив повідомлення сьогодні. Побачимось завтра.';
-          setStatus('На сьогодні ти вже опублікував повідомлення.');
+          setStatus('');
         } else {
           setStatus('Не вдалося опублікувати. Спробуй ще раз.', true);
         }

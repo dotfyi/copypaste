@@ -18,9 +18,9 @@
     header { display:flex; align-items:center; justify-content:space-between; margin-bottom:48px; }
     .brand { font-size:25px; letter-spacing:-.075em; line-height:1; }
     .brand strong { font-weight:800; } .brand span { font-weight:400; }
-    .nav { display:flex; align-items:center; gap:18px; }
+    .nav { display:flex; align-items:center; gap:28px; }
     .icon-btn,.topic-btn,.format-btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; color:#555; }
-    .icon-btn svg,.topic-btn svg,.format-btn svg { width:16px; height:16px; stroke-width:1.7; }
+    .icon-btn svg,.topic-btn svg,.format-btn svg { width:18px; height:18px; stroke-width:1.7; }
     .icon-btn:disabled { opacity:.35; }
     .composer { margin-bottom:42px; }
     textarea { display:block; width:100%; min-height:38px; height:38px; resize:none; border:0; border-bottom:1px solid var(--line); border-radius:0; padding:5px 0 7px; color:var(--ink); background:transparent; font-family:inherit; font-size:16px; line-height:1.5; outline:none; }
@@ -34,13 +34,12 @@
     .error { color:#b42318; }
     .formatbar { display:flex; gap:16px; align-items:center; padding:12px 0 2px; }
     .format-btn { font-size:12px; }
-    .topics { display:flex; gap:19px; overflow-x:auto; padding:0 0 16px; margin-bottom:4px; border-bottom:1px solid var(--line); scrollbar-width:none; }
-    .topics::-webkit-scrollbar { display:none; }
-    .topic-btn { white-space:nowrap; font-size:12px; color:#888; }
-    .topic-btn.active { color:#111; font-weight:600; }
-    .feed-head { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:0 0 14px; }
-    .feed-title { font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
-    .feed-count { color:var(--muted); font-size:11px; }
+    .topics { display:flex; flex-wrap:wrap; gap:10px; padding:0 0 20px; margin-bottom:4px; border-bottom:1px solid var(--line); }
+    .topic-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; white-space:nowrap; border-radius:999px; padding:10px 14px; min-height:38px; background:#111; color:#fff; font-size:12px; font-weight:600; }
+    .topic-btn svg { width:15px; height:15px; stroke-width:1.8; }
+    .topic-btn:hover:not(:disabled) { background:#333; text-decoration:none; }
+    .topic-btn.active { background:#111; color:#fff; outline:2px solid #111; outline-offset:2px; }
+    
     .post { padding:18px 0 20px; border-top:1px solid var(--line); }
     .meta { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:8px; color:var(--muted); font-size:11px; }
     .identity { display:flex; align-items:center; min-width:0; }
@@ -49,8 +48,7 @@
     .message { margin:0; font-size:15px; line-height:1.65; letter-spacing:-.018em; overflow-wrap:anywhere; white-space:pre-wrap; }
     .message strong { font-weight:700; } .message em { font-style:italic; } .message del { text-decoration:line-through; }
     .green-text { color:#27834b; }
-    .spoiler { filter:blur(5px); cursor:pointer; transition:filter .15s; background:#eee; border-radius:2px; }
-    .spoiler.revealed { filter:none; background:transparent; }
+    .spoiler { display:inline-block; cursor:pointer; background:#e8e8e8; border-radius:6px; padding:0 6px; }
     .empty { padding:24px 0; color:var(--muted); font-size:13px; border-top:1px solid var(--line); }
     .page-panel { border-top:1px solid var(--line); padding:20px 0; font-size:14px; line-height:1.7; }
     .page-panel h2 { font-size:16px; font-weight:600; margin:0 0 16px; }
@@ -62,7 +60,7 @@
     @media (max-width:560px) {
       .shell { width:calc(100% - 36px); padding:28px 0 48px; }
       header { margin-bottom:38px; } .brand { font-size:23px; }
-      .nav { gap:14px; } .topics { gap:16px; }
+      .nav { gap:22px; } .topics { gap:10px; }
       .post { padding:16px 0 18px; } .message { font-size:15px; }
     }
   </style>
@@ -70,7 +68,7 @@
 <body>
   <main class="shell">
     <header>
-      <div class="brand"><strong>copy</strong><span>paste</span></div>
+      <div class="brand"><strong>Copy</strong><span>Paste</span></div>
       <nav class="nav" aria-label="Навігація">
         <button class="icon-btn" id="auth-nav" type="button" disabled aria-label="Авторизація" title="Авторизація скоро"><i data-lucide="user-round"></i></button>
         <button class="icon-btn" id="rules-nav" type="button" aria-label="Правила" title="Правила"><i data-lucide="book-open"></i></button>
@@ -81,13 +79,6 @@
     <section id="main-view">
       <section class="composer" aria-label="Нове повідомлення">
         <textarea id="message" maxlength="180" placeholder="Про що ти думаєш сьогодні?" aria-label="Твоє повідомлення"></textarea>
-        <div class="formatbar" aria-label="Форматування">
-          <button class="format-btn" type="button" data-wrap="**" title="Жирний"><i data-lucide="bold"></i></button>
-          <button class="format-btn" type="button" data-wrap="*" title="Курсив"><i data-lucide="italic"></i></button>
-          <button class="format-btn" type="button" data-wrap="~~" title="Закреслений"><i data-lucide="strikethrough"></i></button>
-          <button class="format-btn" type="button" data-wrap=">" title="Зелений текст"><i data-lucide="text-cursor"></i></button>
-          <button class="format-btn" type="button" data-wrap="||" title="Спойлер"><i data-lucide="eye-off"></i></button>
-        </div>
         <div class="compose-row">
           <span class="counter" id="counter">0 / 180</span>
           <button id="publish" type="button" disabled>Опублікувати ↗</button>
@@ -101,10 +92,6 @@
           <button class="topic-btn" type="button" data-topic="games"><i data-lucide="gamepad-2"></i> Ігри</button>
           <button class="topic-btn" type="button" data-topic="technology"><i data-lucide="cpu"></i> Технології</button>
           <button class="topic-btn" type="button" data-topic="books-art"><i data-lucide="book-open"></i> Книги й мистецтво</button>
-        </div>
-        <div class="feed-head">
-          <span class="feed-title">Потік</span>
-          <span class="feed-count" id="feed-count">—</span>
         </div>
         <div id="feed" aria-live="polite"><div class="empty">Завантажуємо потік…</div></div>
         <div id="sentinel"></div>
@@ -128,7 +115,6 @@
     const publish = document.querySelector('#publish');
     const status = document.querySelector('#status');
     const feed = document.querySelector('#feed');
-    const feedCount = document.querySelector('#feed-count');
     const infoView = document.querySelector('#info-view');
     const mainView = document.querySelector('#main-view');
     const sentinel = document.querySelector('#sentinel');
@@ -226,7 +212,6 @@
 
     function renderPosts(posts, append = false) {
       if (!append) feed.replaceChildren();
-      feedCount.textContent = totalInTopic + ' ' + pluralPosts(totalInTopic);
       if (!posts.length && !append) {
         feed.innerHTML = '<div class="empty">Тут поки тихо. Залиш першу думку.</div>';
         return;
@@ -311,16 +296,6 @@
       document.querySelectorAll('[data-topic]').forEach(b => b.classList.toggle('active', b === button));
       await loadFeed(true);
     }));
-    document.querySelectorAll('[data-wrap]').forEach(button => button.addEventListener('click', () => {
-      const marker = button.dataset.wrap;
-      const start = input.selectionStart, end = input.selectionEnd;
-      const selected = input.value.slice(start, end);
-      let insertion;
-      if (marker === '>') insertion = '>' + (selected || 'текст') ;
-      else insertion = marker + (selected || 'текст') + marker;
-      input.setRangeText(insertion, start, end, 'select');
-      input.focus(); updateComposer();
-    }));
     const feedObserver = new IntersectionObserver(entries => {
       if (entries.some(entry => entry.isIntersecting) && hasMore && !loadingMore) loadFeed(false).catch(err => console.error(err));
     }, { rootMargin: '500px' });
@@ -374,7 +349,7 @@
       }
       if (!content || !currentUser || (!isAdmin && alreadyPosted)) return;
       publish.disabled = true;
-      setStatus('Публікуємо…');
+      setStatus('');
       const { error } = await supabase.from('copypaste_posts').insert({ content, topic: activeTopic });
       if (error) {
         if (error.code === '23505') {

@@ -312,6 +312,13 @@ export default function App() {
           {status && <p className={`auth-progress${error ? ' error' : ''}`}>{status}</p>}
         </div>}
       </section> : <>
+      <div className="topics">
+        {TOPICS.map(({ id, label, Icon }) => <button key={id} type="button"
+          className={`topic-btn${topic === id ? ' active' : ''}`}
+          style={{ '--topic-color': topicColor[id] } as CSSProperties} onClick={() => updateTopic(id)}>
+          <Icon /> {label}
+        </button>)}
+      </div>
       <form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
         <textarea ref={composerRef} value={message} onChange={event => setMessage(event.target.value)} maxLength={180}
           disabled={!user || !profile?.is_registered || busy || (!profile.is_admin && alreadyPosted)}
@@ -321,13 +328,6 @@ export default function App() {
         {status && !authOpen && <div className={`status${error ? ' error' : ''}`} role="status" aria-live="polite">{status}</div>}
       </form>
       <section aria-label="Усі повідомлення">
-        <div className="topics">
-          {TOPICS.map(({ id, label, Icon }) => <button key={id} type="button"
-            className={`topic-btn${topic === id ? ' active' : ''}`}
-            style={{ '--topic-color': topicColor[id] } as CSSProperties} onClick={() => updateTopic(id)}>
-            <Icon /> {label}
-          </button>)}
-        </div>
         <div id="feed" aria-live="polite">
           {posts.length === 0 && !loading ? <div className="empty">Тут поки тихо. Залиш першу думку.</div> : posts.map(post => (
             <article className="post" key={post.id}>

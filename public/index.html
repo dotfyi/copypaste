@@ -34,8 +34,8 @@
     .error { color:#b42318; }
     .formatbar { display:flex; gap:16px; align-items:center; padding:12px 0 2px; }
     .format-btn { font-size:12px; }
-    .topics { display:flex; flex-wrap:wrap; gap:10px; padding:0 0 20px; margin-bottom:4px; border-bottom:1px solid var(--line); }
-    .topic-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; white-space:nowrap; border-radius:999px; padding:10px 14px; min-height:38px; background:#111; color:#fff; font-size:12px; font-weight:600; }
+    .topics { display:flex; flex-wrap:wrap; gap:7px; padding:0 0 14px; margin-bottom:0; border:0; }
+    .topic-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; white-space:nowrap; border-radius:999px; padding:7px 10px; min-height:30px; color:#333; font-size:11px; font-weight:600; transition:filter .15s; }
     .topic-btn svg { width:15px; height:15px; stroke-width:1.8; }
     .topic-btn:hover:not(:disabled) { background:#333; text-decoration:none; }
     .topic-btn.active { background:#111; color:#fff; outline:2px solid #111; outline-offset:2px; }
@@ -68,7 +68,7 @@
 <body>
   <main class="shell">
     <header>
-      <div class="brand"><strong>Copy</strong><span>Paste</span></div>
+      <div class="brand"><strong>COPY</strong><span>PASTE</span></div>
       <nav class="nav" aria-label="Навігація">
         <button class="icon-btn" id="auth-nav" type="button" disabled aria-label="Авторизація" title="Авторизація скоро"><i data-lucide="user-round"></i></button>
         <button class="icon-btn" id="rules-nav" type="button" aria-label="Правила" title="Правила"><i data-lucide="book-open"></i></button>
@@ -91,7 +91,7 @@
           <button class="topic-btn active" type="button" data-topic="general"><i data-lucide="globe-2"></i> Загальне</button>
           <button class="topic-btn" type="button" data-topic="games"><i data-lucide="gamepad-2"></i> Ігри</button>
           <button class="topic-btn" type="button" data-topic="technology"><i data-lucide="cpu"></i> Технології</button>
-          <button class="topic-btn" type="button" data-topic="books-art"><i data-lucide="book-open"></i> Книги й мистецтво</button>
+          <button class="topic-btn" type="button" data-topic="books"><i data-lucide="book-open"></i> Книги</button>\n          <button class="topic-btn" type="button" data-topic="art"><i data-lucide="palette"></i> Мистецтво</button>
         </div>
         <div id="feed" aria-live="polite"><div class="empty">Завантажуємо потік…</div></div>
         <div id="sentinel"></div>
@@ -102,7 +102,7 @@
 
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
-    import { createIcons, Bold, Italic, Strikethrough, UserRound, BookOpen, CircleHelp, Globe2, Gamepad2, Cpu, TextCursor, EyeOff } from 'https://esm.sh/lucide@0.468.0';
+    import { createIcons, Bold, Italic, Strikethrough, UserRound, BookOpen, CircleHelp, Globe2, Gamepad2, Cpu, TextCursor, EyeOff, Palette } from 'https://esm.sh/lucide@0.468.0';
 
     const SUPABASE_URL = 'https://ebngdngtlrzdzaojsggl.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_QxMbOMYZY_JcIO2M5ozPDQ_Uc4mykOf';
@@ -124,7 +124,7 @@
     let loadingMore = false;
     let hasMore = true;
     let totalInTopic = 0;
-    createIcons({ icons: { Bold, Italic, Strikethrough, UserRound, BookOpen, CircleHelp, Globe2, Gamepad2, Cpu, TextCursor, EyeOff } });
+    createIcons({ icons: { Bold, Italic, Strikethrough, UserRound, BookOpen, CircleHelp, Globe2, Gamepad2, Cpu, TextCursor, EyeOff, Palette } });
     let currentUser = null;
     let myHex = null;
     let alreadyPosted = false;
@@ -271,7 +271,7 @@
       } finally { loadingMore = false; }
     }
 
-    const topicLabels = { general:'Загальне', games:'Ігри', technology:'Технології', 'books-art':'Книги й мистецтво' };
+    const topicLabels = { general:'Загальне', games:'Ігри', technology:'Технології', books:'Книги', art:'Мистецтво' };
     function showInfo(which) {
       const pages = {
         rules: '<h2>Правила</h2><h3>Будь людиною</h3><p>Поважай інших. Без образ, погроз, мови ненависті та переслідування.</p><h3>Пиши по суті</h3><p>Одна думка — одне повідомлення. До 180 символів. Не публікуй приватні дані.</p><h3>Форматування</h3><p>Використовуй виділення, але не зловживай ним. Спойлери позначай окремо.</p><h3>Модерація</h3><p>Шкідливий або незаконний контент може бути видалений.</p>',

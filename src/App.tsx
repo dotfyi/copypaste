@@ -270,7 +270,7 @@ export default function App() {
           <button className="icon-btn" type="button" aria-label="Авторизація" title="Авторизація" aria-expanded={authOpen} onClick={() => { if (!user) setAuthMode('login'); setAuthOpen(value => !value); }}><UserRound /></button>
         </nav>
       </header>
-      {authOpen && <section className="auth-page" aria-labelledby="auth-title">
+      {authOpen ? <section className="auth-page" aria-labelledby="auth-title">
         {createdKey ? <div className="auth-content">
           <h2 id="auth-title">Твій ключ для входу</h2>
           <p className="auth-description">Збережи цей ключ зараз. Це єдиний спосіб увійти у свій акаунт. Ми не зможемо відновити його, якщо ти загубиш.</p>
@@ -302,7 +302,7 @@ export default function App() {
           {busy && <p className="auth-progress">Зачекай…</p>}
           {status && <p className={`auth-progress${error ? ' error' : ''}`}>{status}</p>}
         </div>}
-      </section>}
+      </section> : <>
       <form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
         <textarea value={message} onChange={event => setMessage(event.target.value)} maxLength={180}
           disabled={!user || !profile?.is_registered || busy || (!profile.is_admin && alreadyPosted)}
@@ -334,6 +334,7 @@ export default function App() {
         <div ref={sentinelRef} id="sentinel" />
         {hasMore && posts.length > 0 && <button className="load-more" type="button" disabled={loading} onClick={() => void loadPosts(false)}>{loading ? 'Завантажуємо…' : 'Завантажити ще'}</button>}
       </section>
+      </>}
     </main>
   );
 }

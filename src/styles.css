@@ -208,3 +208,12 @@ textarea:disabled {
   box-shadow: none;
   outline: none;
 }
+
+/* Composer expands with line breaks, up to five visible lines */
+.composer textarea {
+  height: 38px;
+  min-height: 38px;
+  max-height: 132px;
+  overflow-y: hidden;
+  transition: height .12s ease;
+}

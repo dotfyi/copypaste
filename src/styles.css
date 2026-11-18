@@ -339,3 +339,5 @@ textarea:disabled {
   .profile-panel { max-width:none; }
   .profile-detail { align-items:flex-start; }
 }
+
+.profile-warning { margin:14px 0 4px; padding:10px 0; border-top:1px solid #eee; border-bottom:1px solid #eee; color:#9a6734; font-size:10px; line-height:1.6; }

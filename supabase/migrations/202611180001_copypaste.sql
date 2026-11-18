@@ -16,12 +16,11 @@ declare
   candidate text;
 begin
   loop
-    candidate := '#' || upper(substr(encode(gen_random_bytes(3), 'hex'), 1, 6));
+    candidate := '#' || upper(substr(encode(extensions.gen_random_bytes(3), 'hex'), 1, 6));
     exit when not exists (
       select 1 from public.copypaste_profiles where hex_login = candidate
     );
   end loop;
-
   insert into public.copypaste_profiles (id, hex_login)
   values (new.id, candidate)
   on conflict (id) do nothing;
@@ -38,7 +37,7 @@ for each row execute function public.copypaste_create_profile();
 
 insert into public.copypaste_profiles (id, hex_login)
 select u.id,
-       '#' || upper(substr(encode(gen_random_bytes(3), 'hex'), 1, 6))
+       '#' || upper(substr(encode(extensions.gen_random_bytes(3), 'hex'), 1, 6))
 from auth.users u
 where not exists (
   select 1 from public.copypaste_profiles p where p.id = u.id
@@ -47,7 +46,7 @@ on conflict do nothing;
 
 create table if not exists public.copypaste_posts (
   id uuid primary key default gen_random_uuid(),
-  author_id uuid not null references public.copypaste_profiles(id) on delete cascade,
+  author_id uuid not null default auth.uid() references public.copypaste_profiles(id) on delete cascade,
   content text not null,
   created_at timestamptz not null default now(),
   post_day date not null default ((now() at time zone 'Europe/Kyiv')::date),
@@ -84,5 +83,3 @@ create policy "users can publish their own copypaste post"
 
 grant select on public.copypaste_profiles to anon, authenticated;
 grant select, insert on public.copypaste_posts to authenticated;
-
--- Realtime feed updates are optional; the site also refreshes the feed periodically.

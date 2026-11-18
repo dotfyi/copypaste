@@ -162,9 +162,13 @@ export default function App() {
   },[accountLogin]);
 
   useEffect(()=>{
-    const el=composerRef.current;if(!el)return;el.style.height='auto';
-    const line=Number.parseFloat(getComputedStyle(el).lineHeight)||24;const max=line*5+12;
-    el.style.height=`${Math.min(el.scrollHeight,max)}px`;el.style.overflowY=el.scrollHeight>max?'auto':'hidden';
+    const el=composerRef.current;if(!el)return;
+    const line=Number.parseFloat(getComputedStyle(el).lineHeight)||24;
+    const max=line*5;
+    el.style.height=`${line}px`;
+    const next=Math.max(line,Math.min(el.scrollHeight,max));
+    el.style.height=`${next}px`;
+    el.style.overflowY=el.scrollHeight>max?'auto':'hidden';
   },[message]);
 
   function updateTopic(next:string){if(next===topic)return;offsetRef.current=0;moreRef.current=true;setHasMore(false);setPosts([]);setTopic(next);}

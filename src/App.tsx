@@ -40,7 +40,7 @@ function passkeyCredentialJSON(credential:PublicKeyCredential,kind:'registration
   const assertion=response as AuthenticatorAssertionResponse;
   return {...common,response:{authenticatorData:encodeB64url(assertion.authenticatorData),clientDataJSON:encodeB64url(assertion.clientDataJSON),signature:encodeB64url(assertion.signature),userHandle:assertion.userHandle?encodeB64url(assertion.userHandle):null}};
 }
-\nfunction Spoiler({children}:{children:string}) {
+function Spoiler({children}:{children:string}) {
   const [revealed,setRevealed]=useState(false);
   const ref=useRef<HTMLButtonElement>(null);
   useEffect(()=>{const close=(event:MouseEvent)=>{if(event.target instanceof Node&&!ref.current?.contains(event.target))setRevealed(false);};document.addEventListener('click',close);return()=>document.removeEventListener('click',close);},[]);
@@ -83,7 +83,8 @@ export default function App() {
   const [topicColor,setTopicColor]=useState('#aaa0cf');
   const [cooldownMinutes,setCooldownMinutes]=useState(1440);
   const [cooldownUntil,setCooldownUntil]=useState<number|null>(null);
-  const [clockNow,setClockNow]=useState(Date.now());\n  const [passkeyCount,setPasskeyCount]=useState(0);
+  const [clockNow,setClockNow]=useState(Date.now());
+  const [passkeyCount,setPasskeyCount]=useState(0);
   const [stats,setStats]=useState({posts:0,users:0});
   const sentinelRef=useRef<HTMLDivElement>(null);
   const composerRef=useRef<HTMLTextAreaElement>(null);
@@ -302,7 +303,8 @@ export default function App() {
     }catch(e){setNotice(e instanceof Error?e.message:'Не вдалося увійти з Passkey.',true);}
     finally{setBusy(false);}
   }
-\n  async function adminAction(action:string,payload:Record<string,unknown>={}){
+
+  async function adminAction(action:string,payload:Record<string,unknown>={}){
     if(action==='create_account'){
       const {data,error}=await supabase.functions.invoke('copypaste-auth',{body:{action,...payload}});
       if(error||data?.error)throw new Error(data?.error||'Створення акаунтів тимчасово недоступне.');

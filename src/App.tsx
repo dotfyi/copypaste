@@ -63,7 +63,7 @@ function ProfilePulse({posts,topics}:{posts:Post[];topics:Topic[]}) {
   return <section className="profile-living" aria-label="Активність учасника">
     <div className="profile-living-heading"><div><span className="profile-section-label">ЖИВИЙ СЛІД</span><h2>Ритм присутності</h2></div><span className="profile-living-period">28 ДНІВ</span></div>
     <div className="profile-activity-grid" role="img" aria-label="Активність за останні 28 днів">
-      {days.map((day,index)=>{const rows=dayRows.get(day)??[];const level=rows.length?Math.max(1,Math.ceil(rows.length/maxDay*4)):0;const dominant=topics.find(item=>item.id===rows[0]?.topic);return <span key={day} className={`profile-activity-cell level-${level}`} style={{'--activity-color':dominant?.color??'#dedede','--activity-opacity':rows.length?String(.28+level*.18):'.42'} as CSSProperties} title={day+`: `+rows.length+` ${rows.length===1?'допис':rows.length>1&&rows.length<5?'дописи':'дописів'}`} aria-hidden="true"/>;})}
+      {days.map((day)=>{const rows=dayRows.get(day)??[];const level=rows.length?Math.max(1,Math.ceil(rows.length/maxDay*4)):0;const dominant=topics.find(item=>item.id===rows[0]?.topic);return <span key={day} className={`profile-activity-cell level-${level}`} style={{'--activity-color':dominant?.color??'#dedede','--activity-opacity':rows.length?String(.28+level*.18):'.42'} as CSSProperties} title={day+`: `+rows.length+` ${rows.length===1?'допис':rows.length>1&&rows.length<5?'дописи':'дописів'}`} aria-hidden="true"/>;})}
     </div>
     <div className="profile-activity-axis"><span>28 днів тому</span><span>сьогодні</span></div>
     <div className="profile-topic-signal">

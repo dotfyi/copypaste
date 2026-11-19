@@ -551,3 +551,18 @@ textarea:disabled {
   .profile-panel { padding-top: 5px; }
   .profile-auth { padding-top: 8px; gap: 8px; }
 }
+
+
+/* One-line, centered authentication actions */
+.profile-auth { align-items: stretch; gap: 10px; }
+.auth-choice { display:flex; justify-content:center; align-items:center; gap:24px; width:100%; }
+.auth-choice .auth-link { align-self:auto !important; }
+.auth-actions { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; }
+.auth-actions .auth-link { align-self:auto !important; }
+.auth-actions .auth-link:disabled { opacity:.4; }
+.auth-actions .copy-auth-key { margin:0; }
+.profile-auth .rules-check { display:flex; align-items:flex-start; gap:8px; margin:0; }
+.profile-auth .rules-check span { line-height:1.4; }
+.profile-auth .secret-key { overflow-wrap:anywhere; }
+.profile-auth .auth-warning { margin:0; font-size:12px; line-height:1.45; color:#777; }
+.profile-auth .auth-key-input { width:100%; }

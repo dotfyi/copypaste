@@ -49,6 +49,31 @@ function FormattedText({value,canRevealSpoilers}:{value:string;canRevealSpoilers
   if(last<value.length)nodes.push(value.slice(last));return <>{nodes}</>;
 }
 
+function ProfilePulse({posts,topics}:{posts:Post[];topics:Topic[]}) {
+  const dateFormatter=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'});
+  const todayParts=new Intl.DateTimeFormat('en-US',{timeZone:'Europe/Kyiv',year:'numeric',month:'numeric',day:'numeric'}).formatToParts(new Date());
+  const part=(type:string)=>Number(todayParts.find(item=>item.type===type)?.value??0);
+  const todayUtc=Date.UTC(part('year'),part('month')-1,part('day'));
+  const days=Array.from({length:28},(_,index)=>new Date(todayUtc-(27-index)*86400000).toISOString().slice(0,10));
+  const dayRows=new Map<string,Post[]>();
+  for(const post of posts){const key=dateFormatter.format(new Date(post.created_at));dayRows.set(key,[...(dayRows.get(key)??[]),post]);}
+  const topicCounts=topics.map(item=>({...item,count:posts.filter(post=>post.topic===item.id).length})).filter(item=>item.count>0).sort((a,b)=>b.count-a.count);
+  const maxDay=Math.max(1,...days.map(day=>(dayRows.get(day)??[]).length));
+  const latest=posts[0];
+  return <section className="profile-living" aria-label="Активність учасника">
+    <div className="profile-living-heading"><div><span className="profile-section-label">ЖИВИЙ СЛІД</span><h2>Ритм присутності</h2></div><span className="profile-living-period">28 ДНІВ</span></div>
+    <div className="profile-activity-grid" role="img" aria-label="Активність за останні 28 днів">
+      {days.map((day,index)=>{const rows=dayRows.get(day)??[];const level=rows.length?Math.max(1,Math.ceil(rows.length/maxDay*4)):0;const dominant=topics.find(item=>item.id===rows[0]?.topic);return <span key={day} className={`profile-activity-cell level-${level}`} style={{'--activity-color':dominant?.color??'#dedede','--activity-opacity':rows.length?String(.28+level*.18):'.42'} as CSSProperties} title={day+`: `+rows.length+` ${rows.length===1?'допис':rows.length>1&&rows.length<5?'дописи':'дописів'}`} aria-hidden="true"/>;})}
+    </div>
+    <div className="profile-activity-axis"><span>28 днів тому</span><span>сьогодні</span></div>
+    <div className="profile-topic-signal">
+      <span className="profile-section-label">ТЕМИ У СЛІДІ</span>
+      {topicCounts.length?<><div className="profile-topic-spectrum" aria-label="Розподіл активності за темами">{topicCounts.map(item=><i key={item.id} style={{width:`${item.count/posts.length*100}%`,'--topic-accent':item.color} as CSSProperties} title={item.label}/>)}</div><div className="profile-topic-legend">{topicCounts.map(item=><span key={item.id}><i style={{'--topic-accent':item.color} as CSSProperties}/>{item.label}</span>)}</div></>:<p className="profile-living-empty">Поки жодного сигналу. Можна почати з будь-якої теми.</p>}
+    </div>
+    <div className="profile-presence"><span className="profile-section-label">ОСТАННІЙ СИГНАЛ</span><strong>{latest?kyivInfo(latest.created_at,latest.post_number):'Очікує на перший імпульс'}</strong></div>
+  </section>;
+}
+
 export default function App() {
   const [route,setRoute]=useState(window.location.pathname);
   const [user,setUser]=useState<User|null>(null);
@@ -368,12 +393,7 @@ export default function App() {
             <span className="account-profile-avatar" style={{'--profile-accent':publicProfile.hex_login} as CSSProperties} aria-hidden="true"/>
             <div className="account-profile-heading"><h1>{publicProfile.hex_login}</h1><span className="account-profile-role">{publicProfile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:publicProfile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
           </div>
-          <div className="public-profile-body">
-            <div className="account-profile-welcome"><h2>Слід у спільноті</h2><span className="public-profile-count">COPypaste MEMBER</span></div>
-            <div className="public-profile-stats"><div><MessageCircle aria-hidden="true"/><strong>{publicProfilePosts.length}</strong><span>ДОПИСІВ</span></div><div><BookOpen aria-hidden="true"/><strong>{new Set(publicProfilePosts.map(post=>post.topic)).size}</strong><span>ТЕМ</span></div></div>
-            <div className="profile-topic-footprint"><span className="profile-section-label">ДО ЯКИХ ТЕМ ДОЛУЧАВСЯ</span><div className="profile-topic-list">{topics.filter(t=>publicProfilePosts.some(post=>post.topic===t.id)).map(t=><span key={t.id} style={{'--topic-accent':t.color} as CSSProperties}><i/>{t.label}</span>)}{!publicProfilePosts.length&&<span className="profile-topic-empty">Поки без публікацій — усе ще попереду.</span>}</div></div>
-            <div className="profile-presence"><span className="profile-section-label">ОСТАННЯ АКТИВНІСТЬ</span><strong>{publicProfilePosts[0]?kyivInfo(publicProfilePosts[0].created_at,publicProfilePosts[0].post_number):'Ще не починав'}</strong></div>
-          </div>
+          <div className="public-profile-body"><ProfilePulse posts={publicProfilePosts} topics={topics}/></div>
         </div>
       </>:<div className="public-profile-empty"><h2>Профіль не знайдено</h2><p>Перевір HEX-логін або повернись до стрічки.</p><button className="profile-logout" type="button" onClick={()=>navigate('/')}>На головну</button></div>}
     </section>}
@@ -386,10 +406,7 @@ export default function App() {
           <button className="profile-logout profile-logout-top" type="button" disabled={busy} onClick={()=>void logout()}>Вийти</button>
         </div>
         <div className="public-profile-body">
-          <div className="account-profile-welcome"><h2>Твій слід у спільноті</h2><span className="public-profile-count">COPypaste MEMBER</span></div>
-          <div className="public-profile-stats"><div><MessageCircle aria-hidden="true"/><strong>{ownProfilePosts.length}</strong><span>ДОПИСІВ</span></div><div><BookOpen aria-hidden="true"/><strong>{new Set(ownProfilePosts.map(post=>post.topic)).size}</strong><span>ТЕМ</span></div></div>
-          <div className="profile-topic-footprint"><span className="profile-section-label">ДО ЯКИХ ТЕМ ДОЛУЧАВСЯ</span><div className="profile-topic-list">{topics.filter(t=>ownProfilePosts.some(post=>post.topic===t.id)).map(t=><span key={t.id} style={{'--topic-accent':t.color} as CSSProperties}><i/>{t.label}</span>)}{!ownProfilePosts.length&&<span className="profile-topic-empty">Тут починається твоя історія.</span>}</div></div>
-          <div className="profile-presence"><span className="profile-section-label">ОСТАННЯ АКТИВНІСТЬ</span><strong>{ownProfilePosts[0]?kyivInfo(ownProfilePosts[0].created_at,ownProfilePosts[0].post_number):'Ще не починав'}</strong></div>
+          <ProfilePulse posts={ownProfilePosts} topics={topics}/>
           {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
         </div>
       </div>

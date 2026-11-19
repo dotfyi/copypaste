@@ -56,9 +56,7 @@ function ProfileActivity({posts,topics}:{posts:ActivityPost[];topics:ActivityTop
   const topHourIndex=hours.indexOf(Math.max(...hours));
   const topTimeLabel=posts.length?['ранком','удень','увечері','вночі'][topHourIndex]:'—';
   const calendarEnd=new Date();
-  const todayKey=dayKey(calendarEnd.toISOString());
   const calendarStart=new Date(calendarEnd); calendarStart.setDate(calendarStart.getDate()-181);
-  const startKey=dayKey(calendarStart.toISOString());
   const calendarCells=Array.from({length:182},(_,i)=>{const d=new Date(calendarStart);d.setDate(d.getDate()+i);const key=dayKey(d.toISOString());return {key,count:days.get(key)?.length??0};});
   const monthlyBars=Array.from({length:12},(_,i)=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-(11-i));const key=dayKey(d.toISOString()).slice(0,7);return {key,label:shortMonthFormat.format(d),count:months.get(key)??0};});
   const milestones=[
@@ -70,7 +68,7 @@ function ProfileActivity({posts,topics}:{posts:ActivityPost[];topics:ActivityTop
   return <section className="profile-activity" aria-label="Профіль та активність">
     <div className="profile-cover">
       <div className="profile-cover-art" aria-hidden="true"><i/><i/><i/></div>
-      <div className="profile-cover-bottom"><span className="profile-cover-avatar" aria-hidden="true">✳</span><div><span className="profile-cover-label">УЧАСНИК COPypaste</span><strong>Твоя історія тут</strong></div><span className="profile-cover-count">#{posts.length.toString().padStart(4,'0')}</span></div>
+      <div className="profile-cover-bottom"><span className="profile-cover-avatar" aria-hidden="true">✳</span><div><span className="profile-cover-label">COPypaste / ОСОБИСТИЙ ПРОФІЛЬ</span><strong>Історія твоєї активності</strong></div></div>
     </div>
     <div className="activity-overview">
       <div className="activity-primary"><strong>{posts.length.toLocaleString('uk-UA')}</strong><span>{plural(posts.length,'допис','дописи','дописів')} загалом</span></div>

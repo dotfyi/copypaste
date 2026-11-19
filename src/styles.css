@@ -1910,3 +1910,29 @@ a:focus-visible,
   .diary-entry-detail { flex-direction:column; gap:7px; }
   .diary-entry-topics { justify-content:flex-start; }
 }
+
+/* Diary topic labels shared by the summary and individual entries */
+.diary-topic-mark {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:#777;
+  font-size:10px;
+}
+.diary-topic-mark i {
+  width:6px;
+  height:6px;
+  flex:0 0 6px;
+  border-radius:50%;
+  background:var(--topic-accent,#aaa);
+}
+.diary-topic-mark small {
+  color:#aaa;
+  font-size:9px;
+  font-variant-numeric:tabular-nums;
+}
+.diary-topic-mark.compact {
+  gap:5px;
+  font-size:9px;
+}
+.diary-topic-mark.compact small { font-size:8px; }

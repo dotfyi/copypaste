@@ -49,6 +49,7 @@ function FormattedText({value}:{value:string}) {
 }
 
 export default function App() {
+  const [route,setRoute]=useState(window.location.pathname);
   const [user,setUser]=useState<User|null>(null);
   const [profile,setProfile]=useState<Profile|null>(null);
   const [posts,setPosts]=useState<Post[]>([]);
@@ -85,6 +86,9 @@ export default function App() {
   const moreRef=useRef(true);
 
   const setNotice=(value:string,isError=false)=>{setStatus(isError?value:'');setError(isError);};
+  const navigate=(path:string)=>{if(window.location.pathname!==path)window.history.pushState({},'',path);setRoute(path);setStatus('');setError(false);};
+  useEffect(()=>{const onPop=()=>{setRoute(window.location.pathname);setStatus('');setError(false);};window.addEventListener('popstate',onPop);return()=>window.removeEventListener('popstate',onPop);},[]);
+  useEffect(()=>{if(route==='/auth'&&!user)setAuthStep(step=>step==='registration'||step==='key-ready'?step:'login');},[route,user]);
 
   const ensureIdentity=useCallback(async()=>{
     const {data,error}=await supabase.auth.getSession();
@@ -186,7 +190,7 @@ export default function App() {
       if(error||data?.error)throw new Error(data?.error||'Ключ не підійшов.');
       const {error:sessionError}=await supabase.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});
       if(sessionError)throw sessionError;
-      await ensureIdentity();setProfileOpen(false);setAuthStep('idle');setLoginKey('');setNotice('');
+      await ensureIdentity();setProfileOpen(false);setAuthStep('idle');setLoginKey('');setNotice('');navigate("/");
     }catch(e){setNotice(e instanceof Error?e.message:'Помилка авторизації.',true);}
     finally{setBusy(false);}
   }
@@ -213,7 +217,7 @@ export default function App() {
     try{
       const {error}=await supabase.auth.setSession({access_token:registration.access_token,refresh_token:registration.refresh_token});
       if(error)throw error;
-      await ensureIdentity();setAuthStep('idle');setRegistration(null);setProfileOpen(false);setLoginKey('');setRulesAccepted(false);setNotice('');setMessage('');
+      await ensureIdentity();setAuthStep('idle');setRegistration(null);setProfileOpen(false);setLoginKey('');setRulesAccepted(false);setNotice('');setMessage('');navigate("/");
     }catch(e){setNotice(e instanceof Error?e.message:'Не вдалося увійти.',true);}
     finally{setBusy(false);}
   }
@@ -253,15 +257,15 @@ export default function App() {
 
   return <main className="shell">
     <header>
-      <button className="brand" type="button" onClick={()=>setAdminOpen(false)} style={{color:topic==='general'?'#111':topics.find(t=>t.id===topic)?.color??'#111'}} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
+      <button className="brand" type="button" onClick={()=>{navigate("/");setAdminOpen(false);setInfoOpen(false);setProfileOpen(false);}} style={{color:topic==='general'?'#111':topics.find(t=>t.id===topic)?.color??'#111'}} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
       <nav className="nav" aria-label="Навігація">
-        <button className={`icon-btn${infoOpen?' active':''}`} type="button" aria-label="Інформація" title="Інформація" onClick={()=>{setInfoOpen(v=>!v);setProfileOpen(false);setAdminOpen(false);}}><Info/></button>
-        <button className={`icon-btn${profileOpen?' active':''}`} type="button" aria-label="Профіль" title="Профіль" onClick={()=>{setProfileOpen(v=>!v);setInfoOpen(false);setAdminOpen(false);setAuthStep('idle');}}><UserRound/></button>
+        <button className={`icon-btn${infoOpen?' active':''}`} type="button" aria-label="Інформація" title="Інформація" onClick={()=>{navigate("/info");setInfoOpen(true);setProfileOpen(false);setAdminOpen(false);}}><Info/></button>
+        <button className={`icon-btn${profileOpen?' active':''}`} type="button" aria-label="Профіль" title="Профіль" onClick={()=>{navigate(user?"/profile":"/auth");setProfileOpen(true);setInfoOpen(false);setAdminOpen(false);setAuthStep(user?"idle":"login");}}><UserRound/></button>
         {profile?.is_admin&&<button className="icon-btn" type="button" aria-label="Панель адміністратора" title="Панель адміністратора" onClick={()=>{setAdminOpen(v=>!v);setInfoOpen(false);setProfileOpen(false);if(!adminOpen)void loadAdminStats();}}><Shield/></button>}
       </nav>
     </header>
-    {infoOpen?<section className="info-panel">
-      <div className="info-tabs"><button className={infoTab==='faq'?'selected':''} onClick={()=>setInfoTab('faq')}>FAQ</button><button className={infoTab==='rules'?'selected':''} onClick={()=>setInfoTab('rules')}>Правила</button><button className="info-close" onClick={()=>setInfoOpen(false)} aria-label="Закрити">×</button></div>
+    {route==='/info'?<section className="info-panel">
+      <div className="info-tabs"><button className={infoTab==='faq'?'selected':''} onClick={()=>setInfoTab('faq')}>FAQ</button><button className={infoTab==='rules'?'selected':''} onClick={()=>setInfoTab('rules')}>Правила</button><button className="info-close" onClick={()=>navigate("/") } aria-label="Закрити">×</button></div>
       {infoTab==='faq'?<div className="info-content">
         <h2>Часті запитання</h2>
         <h3>Як зареєструватися або увійти?</h3><p>Натисни іконку профілю. Там можна створити акаунт або увійти за секретним ключем. Збережи ключ у надійному місці — він потрібен для наступних входів.</p>
@@ -277,7 +281,7 @@ export default function App() {
         {topics.map(t=><div className="topic-rule" key={t.id}><strong>{t.label}</strong><p>{t.id==='games'?'Обговорюй ігри, проходження та ігрові новини. Позначай сюжетні спойлери.':t.id==='technology'?'Технології, програмування та цифрові продукти. Не публікуй шкідливі посилання й шахрайські схеми.':t.id==='books'?'Книги, автори та літературні обговорення. Позначай сюжетні спойлери.':t.id==='art'?'Творчість, мистецтво та власні роботи. Поважай авторство.':t.id==='news'?'Актуальні події та новини. Перевіряй факти й додавай контекст.':'Дотримуйся тематики розділу, спілкуйся ввічливо та не засмічуй стрічку.'}</p></div>)}
       </div>}
     </section>:infoOpen?null:null}
-    {profileOpen&&<section className="profile-panel">
+    {(route==='/profile'||route==='/auth')&&<section className="profile-panel">
       {user&&profile?<>
       <div className="profile-top"><span className="profile-color" style={{background:profile.hex_login}}/><div><strong>{profile.hex_login}{profile.is_admin&&<ZodiacAries className="admin-zodiac-icon" aria-label="Адміністратор"/>}</strong><span>{profile.is_admin?'Адміністратор':profile.is_moderator?'Модератор':'Учасник'}</span></div></div>
       <div className="profile-detail"><span>Статус</span><strong>Авторизований акаунт</strong></div>
@@ -289,7 +293,7 @@ export default function App() {
       </div>}
       {status&&<div className={`status${error?' error':''}`}>{status}</div>}
     </section>}
-    {adminOpen&&profile?.is_admin?<section className="admin-panel">
+    {route==='/'&&(adminOpen&&profile?.is_admin?<section className="admin-panel">
       <div className="admin-heading"><div><span className="admin-eyebrow">CONTROL ROOM</span><h2>Керування copypaste</h2></div><button className="admin-close" type="button" onClick={()=>setAdminOpen(false)}>Закрити ×</button></div>
       <div className="admin-stats"><div><strong>{stats.posts}</strong><span>повідомлень</span></div><div><strong>{stats.users}</strong><span>профілів</span></div><div><strong>{topics.length}</strong><span>розділів</span></div></div>
       <div className="admin-grid">
@@ -318,6 +322,6 @@ export default function App() {
         <div ref={sentinelRef} id="sentinel"/>
         {hasMore&&posts.length>0&&<button className="load-more" type="button" disabled={loading} onClick={()=>void loadPosts(false)}>{loading?'Завантажуємо…':'Завантажити ще'}</button>}
       </section>
-    </>}
+    </>)}
   </main>;
 }

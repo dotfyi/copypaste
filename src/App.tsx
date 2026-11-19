@@ -110,7 +110,7 @@ export default function App() {
     if(error)throw error;
     const activeUser=data.session?.user??null;
     if(!activeUser){setUser(null);setProfile(null);return;}
-    const {data:found,error:profileError}=await supabase.from('copypaste_profiles').select('hex_login,is_admin,is_moderator,is_registered').eq('id',activeUser.id).maybeSingle();
+    const {data:found,error:profileError}=await supabase.from('copypaste_profiles').select('hex_login,is_admin,is_moderator,is_registered,is_suspended').eq('id',activeUser.id).maybeSingle();
     if(profileError)throw profileError;
     if(!found||!found.is_registered){setUser(null);setProfile(null);await supabase.auth.signOut();return;}
     setUser(activeUser);setProfile(found as Profile);
@@ -298,7 +298,7 @@ export default function App() {
     finally{setBusy(false);}
   }
 
-  const canPublish=!!user&&!!profile?.is_registered&&!busy&&!!message.trim()&&message.length<=180;
+  const canPublish=!!user&&!!profile?.is_registered&&!profile?.is_suspended&&!busy&&!!message.trim()&&message.length<=180;
 
   return <main className="shell">
     <header>
@@ -352,8 +352,8 @@ export default function App() {
       {status&&<p className={error?'status error':'status'}>{status}</p>}
     </section>:isFeedRoute?<>
       {user&&<form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
-        <textarea ref={composerRef} value={message} onChange={e=>setMessage(e.target.value.slice(0,180))} disabled={busy} maxLength={180} placeholder="Поділись думкою…" aria-label="Твоє повідомлення"/>
-        <div className="compose-row"><span className="counter">{message.length}/180</span><button type="submit" disabled={!canPublish}>Опублікувати ↗</button></div>
+        <textarea ref={composerRef} value={message} onChange={e=>setMessage(e.target.value.slice(0,180))} disabled={busy||!!profile?.is_suspended} maxLength={180} placeholder={profile?.is_suspended?"Публікації для цього акаунта призупинено":"Поділись думкою…"} aria-label="Твоє повідомлення"/>
+        <div className="compose-row"><span className="counter">{message.length}/180</span><button type="submit" disabled={!canPublish}>Опублікувати ↗</button></div>{profile?.is_suspended&&<div className="status error" role="status">Публікації з цього акаунта тимчасово призупинені адміністрацією. Читати стрічку можна.</div>}
         {status&&<div className={`status${error?' error':''}`} role="status" aria-live="polite">{status}</div>}
       </form>}
       <section aria-label="Усі повідомлення">

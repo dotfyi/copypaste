@@ -1949,3 +1949,12 @@ a:focus-visible,
 .activity-topic-lead{display:flex;align-items:center;gap:9px;margin-bottom:14px}.activity-topic-lead>i{width:9px;height:9px;border-radius:50%;background:var(--activity-topic)}.activity-topic-lead strong{font-size:16px;font-weight:620;letter-spacing:-.03em}.activity-topic-lead span{margin-left:auto;color:#999;font-size:9px}.activity-topic-list{display:grid;gap:10px}.activity-topic-list>div{display:grid;grid-template-columns:90px minmax(0,1fr) 28px;align-items:center;gap:10px}.activity-topic-list>div>span{color:#777;font-size:10px}.activity-topic-list i{display:block;height:4px}.activity-topic-list i b{display:block;height:100%;border-radius:8px;background:var(--activity-topic)}.activity-topic-list small{color:#999;font-size:9px;text-align:right;font-variant-numeric:tabular-nums}
 .activity-facts{display:grid;grid-template-columns:1fr 1fr;gap:18px 25px}.activity-facts>div{display:flex;flex-direction:column;align-items:flex-start;gap:5px}.activity-facts span{color:#999;font-size:9px}.activity-facts strong{color:#39353b;font-size:13px;font-weight:600;letter-spacing:-.025em}.activity-facts small{color:#aaa;font-size:9px}.activity-empty{padding:22px 0;color:#999;font-size:11px}
 @media(max-width:560px){.profile-activity{padding-top:24px}.activity-overview{gap:12px;padding:20px 0}.activity-primary strong{font-size:48px}.activity-overview-side{gap:15px}.activity-overview-side strong{font-size:19px}.activity-overview-side span{font-size:9px}.activity-section{padding:17px 0}.activity-weekdays{gap:6px}.activity-weekday-track{height:42px}.activity-topic-list>div{grid-template-columns:78px minmax(0,1fr) 24px;gap:8px}.activity-facts{gap:16px 13px}.activity-facts strong{font-size:12px}}
+
+/* Activity achievements */
+.activity-primary span{color:#999;font-size:10px}
+.activity-achievements{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,3vw,28px);padding-bottom:2px}
+.activity-achievements>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+.activity-achievements span{color:#999;font-size:8px;font-weight:700;letter-spacing:.11em}
+.activity-achievements strong{font-size:clamp(18px,3vw,23px);font-weight:570;letter-spacing:-.055em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.activity-achievements small{color:#aaa;font-size:9px}
+@media(max-width:560px){.activity-achievements{gap:12px}.activity-achievements span{font-size:7px}.activity-achievements strong{font-size:17px}.activity-achievements small{font-size:8px}}

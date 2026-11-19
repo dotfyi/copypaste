@@ -1008,3 +1008,48 @@ a:focus-visible,
  .account-profile-footer>span { max-width:58%; line-height:1.5; }
  .public-profile-stats { gap:28px; }
 }
+
+
+/* Shared profile finish: one layout for personal and public profiles */
+.account-profile-avatar {
+  width:48px;
+  height:48px;
+  flex:0 0 48px;
+  border:0;
+  border-radius:13px;
+  background:var(--profile-accent,#b123ae);
+  box-shadow:none;
+}
+.account-profile-avatar::before { display:none; }
+.account-profile-avatar span { color:#fff; font-size:17px; font-weight:750; letter-spacing:-.06em; }
+.account-profile-heading { min-width:0; }
+.account-profile-role { display:inline-flex; align-items:center; gap:5px; }
+.account-profile-role svg { width:13px; height:13px; stroke-width:1.9; color:#777; }
+.account-profile-identity { gap:13px; }
+.profile-logout-top {
+  margin-left:auto !important;
+  flex:0 0 auto;
+  padding:8px 12px !important;
+  border:1px solid #f2d6d6 !important;
+  border-radius:8px !important;
+  background:#fff1f1 !important;
+  color:#a65353 !important;
+  font-size:11px !important;
+  line-height:1 !important;
+  text-decoration:none !important;
+}
+.profile-logout-top:hover { border-color:#e8bebe !important; background:#ffe8e8 !important; color:#8e3838 !important; }
+.public-profile-stats { display:grid; grid-template-columns:1fr 1fr; gap:24px; padding:3px 0 20px; }
+.public-profile-stats>div { display:flex; flex-direction:column; gap:5px; }
+.public-profile-stats strong { color:#171717; font-size:23px; font-weight:650; letter-spacing:-.06em; line-height:1; font-variant-numeric:tabular-nums; }
+.public-profile-stats span { color:#999; font-size:9px; font-weight:650; letter-spacing:.09em; }
+.public-profile-count { color:#aaa; font-size:10px; }
+.public-profile-post { margin-top:0; padding:15px 0 17px; border-top:1px solid #eee; }
+.public-profile-post .message { margin:9px 0 0; }
+.public-profile-empty { padding:22px 0; color:#999; font-size:12px; }
+@media(max-width:520px) {
+  .account-profile-identity { gap:11px; }
+  .account-profile-avatar { width:44px; height:44px; flex-basis:44px; border-radius:12px; }
+  .profile-logout-top { padding:7px 9px !important; font-size:10px !important; }
+  .public-profile-stats { gap:14px; }
+}

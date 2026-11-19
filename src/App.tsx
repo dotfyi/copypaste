@@ -228,7 +228,7 @@ export default function App() {
       if(error||data?.error)throw new Error(data?.error||'Ключ не підійшов.');
       const {error:sessionError}=await supabase.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});
       if(sessionError)throw sessionError;
-      await ensureIdentity();setProfileOpen(false);setAuthStep('idle');setLoginKey('');setNotice('');navigate('/profile');
+      await ensureIdentity();setProfileOpen(false);setAuthStep('idle');setLoginKey('');setNotice('');navigate('/');
     }catch(e){setNotice(e instanceof Error?e.message:'Помилка авторизації.',true);}
     finally{setBusy(false);}
   }
@@ -255,7 +255,7 @@ export default function App() {
     try{
       const {error}=await supabase.auth.setSession({access_token:registration.access_token,refresh_token:registration.refresh_token});
       if(error)throw error;
-      await ensureIdentity();setAuthStep('idle');setRegistration(null);setProfileOpen(false);setLoginKey('');setRulesAccepted(false);setNotice('');setMessage('');navigate('/profile');
+      await ensureIdentity();setAuthStep('idle');setRegistration(null);setProfileOpen(false);setLoginKey('');setRulesAccepted(false);setNotice('');setMessage('');navigate('/');
     }catch(e){setNotice(e instanceof Error?e.message:'Не вдалося увійти.',true);}
     finally{setBusy(false);}
   }

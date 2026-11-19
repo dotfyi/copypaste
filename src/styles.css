@@ -293,7 +293,8 @@ textarea:disabled {
 
 
 /* Account, information and community panels */
-.info-panel, .profile-panel { border-top:1px solid var(--line); padding:18px 0 28px; }
+.info-panel { border-top:0; padding:18px 0 28px; }
+.profile-panel { border-top:1px solid var(--line); padding:18px 0 28px; }
 .info-tabs { display:flex; justify-content:center; align-items:center; gap:28px; position:relative; margin:0 0 24px; }
 .info-tabs button { border:0; padding:4px 0; background:transparent; color:#888; font:inherit; font-size:12px; cursor:pointer; }
 .info-tabs button.selected { color:#111; font-weight:650; }
@@ -342,7 +343,7 @@ textarea:disabled {
 
 .profile-warning { margin:14px 0 4px; padding:10px 0; border-top:1px solid #eee; border-bottom:1px solid #eee; color:#9a6734; font-size:10px; line-height:1.6; }
 
-.admin-zodiac-icon { width:13px; height:13px; margin-left:5px; color:#111; stroke-width:1.9; vertical-align:-2px; flex:0 0 auto; }
+.admin-role-icon { width:13px; height:13px; margin-left:5px; color:#111; stroke-width:1.9; vertical-align:-2px; flex:0 0 auto; }
 
 
 /* Profile-based sign in and registration */

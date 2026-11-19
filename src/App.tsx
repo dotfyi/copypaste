@@ -263,15 +263,20 @@ export default function App() {
   }
   async function loadStatsRows(mode:'posts'|'users',selectedTopic=statsTopic,selectedUser=statsUser){
     setStatsMode(mode);setStatsTopic(selectedTopic);setStatsUser(selectedUser);
-    let q=supabase.from('copypaste_posts').select('id,post_number,content,created_at,author_id,topic').order('created_at',{ascending:false}).limit(500);
-    if(selectedTopic)q=q.eq('topic',selectedTopic);
-    if(selectedUser)q=q.eq('author_id',selectedUser);
-    const {data,error}=await q;
-    if(error){setNotice(error.message,true);return;}
-    const ids=[...new Set((data??[]).map((x:any)=>x.author_id))];
+    const allRows:any[]=[];
+    for(let start=0;;start+=1000){
+      let q=supabase.from('copypaste_posts').select('id,post_number,content,created_at,author_id,topic').order('created_at',{ascending:false}).range(start,start+999);
+      if(selectedTopic)q=q.eq('topic',selectedTopic);
+      if(selectedUser)q=q.eq('author_id',selectedUser);
+      const {data,error}=await q;
+      if(error){setNotice(error.message,true);return;}
+      allRows.push(...(data??[]));
+      if((data??[]).length<1000)break;
+    }
+    const ids=[...new Set(allRows.map((x:any)=>x.author_id))];
     const {data:people}=ids.length?await supabase.from('copypaste_profiles').select('id,hex_login').in('id',ids):{data:[] as any[]};
     const names=new Map((people??[]).map((p:any)=>[p.id,p.hex_login]));
-    setStatsRows((data??[]).map((x:any)=>({...x,hex_login:names.get(x.author_id)??'невідомо'})));
+    setStatsRows(allRows.map((x:any)=>({...x,hex_login:names.get(x.author_id)??'невідомо'})));
   }
 
   async function publishPost(event:FormEvent){

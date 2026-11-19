@@ -71,7 +71,9 @@ export default function App() {
   const [infoOpen,setInfoOpen]=useState(false);
   const [infoTab,setInfoTab]=useState<'faq'|'rules'>('faq');
   const [profileOpen,setProfileOpen]=useState(false);
-  const [authStep,setAuthStep]=useState<'idle'|'registration'|'key-ready'>('idle');
+  const [authStep,setAuthStep]=useState<'idle'|'login'|'registration'|'key-ready'>('idle');
+  const [loginKey,setLoginKey]=useState('');
+  const [rulesAccepted,setRulesAccepted]=useState(false);
   const [registration,setRegistration]=useState<{secretKey:string;access_token:string;refresh_token:string;hexLogin:string}|null>(null);
   const [moderatorTopic,setModeratorTopic]=useState('general');
   const [moderatorTopics,setModeratorTopics]=useState<string[]>([]);
@@ -236,14 +238,8 @@ export default function App() {
 
   async function publishPost(event:FormEvent){
     event.preventDefault();const content=message.trim();if(!content)return;
-    if(content==='/registration'&&!user){setMessage('');setAuthStep('registration');setNotice('');return;}
-    if(content.startsWith('/auth ')&&!user){const key=content.slice(6).trim();if(!key){setNotice('Додай секретний ключ після /auth.',true);return;}setMessage('');await runAuthCommand(key);return;}
-    if(!user||!profile){setNotice('Спочатку введи /registration або /auth із секретним ключем.',true);return;}
+    if(!user||!profile){setNotice('Авторизуйся через профіль, щоб публікувати.',true);return;}
     if(content==='/exit'&&profile.is_registered){setMessage('');await logout();return;}
-    if(content==='/auth'||content.startsWith('/auth ')){
-      const key=content.slice(5).trim();if(!key){setNotice('Після /auth додай секретний ключ.',true);return;}
-      setMessage('');await runAuthCommand(key);return;
-    }
 
     setBusy(true);setNotice('');
     try{
@@ -254,14 +250,14 @@ export default function App() {
     finally{setBusy(false);}
   }
 
-  const canPublish=!!user&&!!profile?.is_registered&&!busy&&!!message.trim();
+  const canPublish=!!user&&!!profile?.is_registered&&!busy&&!!message.trim()&&message.length<=180;
 
   return <main className="shell">
     <header>
       <button className="brand" type="button" onClick={()=>setAdminOpen(false)} style={{color:topic==='general'?'#111':topics.find(t=>t.id===topic)?.color??'#111'}} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
       <nav className="nav" aria-label="Навігація">
         <button className={`icon-btn${infoOpen?' active':''}`} type="button" aria-label="Інформація" title="Інформація" onClick={()=>{setInfoOpen(v=>!v);setProfileOpen(false);setAdminOpen(false);}}><Info/></button>
-        {user&&profile?.is_registered&&<button className={`icon-btn${profileOpen?' active':''}`} type="button" aria-label="Профіль" title="Профіль" onClick={()=>{setProfileOpen(v=>!v);setInfoOpen(false);setAdminOpen(false);}}><UserRound/></button>}
+        <button className={`icon-btn${profileOpen?' active':''}`} type="button" aria-label="Профіль" title="Профіль" onClick={()=>{setProfileOpen(v=>!v);setInfoOpen(false);setAdminOpen(false);setAuthStep('idle');}}><UserRound/></button>
         {profile?.is_admin&&<button className="icon-btn" type="button" aria-label="Панель адміністратора" title="Панель адміністратора" onClick={()=>{setAdminOpen(v=>!v);setInfoOpen(false);setProfileOpen(false);if(!adminOpen)void loadAdminStats();}}><Shield/></button>}
       </nav>
     </header>
@@ -283,13 +279,18 @@ export default function App() {
         {topics.map(t=><div className="topic-rule" key={t.id}><strong>{t.label}</strong><p>{t.id==='games'?'Обговорюй ігри, проходження та ігрові новини. Позначай сюжетні спойлери.':t.id==='technology'?'Технології, програмування та цифрові продукти. Не публікуй шкідливі посилання й шахрайські схеми.':t.id==='books'?'Книги, автори та літературні обговорення. Позначай сюжетні спойлери.':t.id==='art'?'Творчість, мистецтво та власні роботи. Поважай авторство.':t.id==='news'?'Актуальні події та новини. Перевіряй факти й додавай контекст.':'Дотримуйся тематики розділу, спілкуйся ввічливо та не засмічуй стрічку.'}</p></div>)}
       </div>}
     </section>:infoOpen?null:null}
-    {profileOpen&&profile?<section className="profile-panel">
+    {profileOpen&&<section className="profile-panel">
+      {user&&profile?<>
       <div className="profile-top"><span className="profile-color" style={{background:profile.hex_login}}/><div><strong>{profile.hex_login}{profile.is_admin&&<ZodiacAries className="admin-zodiac-icon" aria-label="Адміністратор"/>}</strong><span>{profile.is_admin?'Адміністратор':profile.is_moderator?'Модератор':'Учасник'}</span></div></div>
       <div className="profile-detail"><span>Статус</span><strong>Авторизований акаунт</strong></div>
       <div className="profile-detail"><span>Мої розділи</span><strong>{profile.is_admin?'Усі розділи':moderatorTopics.length?moderatorTopics.map(id=>topics.find(t=>t.id===id)?.label??id).join(', '):'Усі відкриті розділи'}</strong></div>
       {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
       <button className="profile-logout" type="button" disabled={busy} onClick={()=>void logout()}><LogOut/> Вийти з акаунта</button>
-    </section>:null}
+      </>:<div className="profile-auth">
+        {authStep==='idle'?<><button type="button" className="auth-link" onClick={()=>setAuthStep('login')}>Авторизуватись</button><button type="button" className="auth-link" onClick={()=>setAuthStep('registration')}>Зареєструватися</button></>:authStep==='login'?<><h3>Авторизація</h3><input className="auth-key-input" type="password" autoComplete="current-password" value={loginKey} onChange={e=>setLoginKey(e.target.value)} placeholder="Секретний ключ"/><button type="button" className="auth-link" disabled={busy||!loginKey.trim()} onClick={async()=>{await runAuthCommand(loginKey);setLoginKey('');}}>Увійти</button><button type="button" className="auth-link muted" onClick={()=>{setAuthStep('idle');setLoginKey('');}}>Назад</button></>:authStep==='registration'?<><h3>Реєстрація</h3><p>Створюючи акаунт, ти погоджуєшся дотримуватися правил спільноти.</p><label className="rules-check"><input type="checkbox" checked={rulesAccepted} onChange={e=>setRulesAccepted(e.target.checked)}/><span>Ознайомлений(-а) з <button type="button" className="inline-link" onClick={()=>{setInfoTab('rules');setInfoOpen(true);}}>правилами</button></span></label><button type="button" className="auth-link" disabled={busy||!rulesAccepted} onClick={()=>void beginRegistration()}>Створити акаунт</button><button type="button" className="auth-link muted" onClick={()=>setAuthStep('idle')}>Назад</button></>:<><h3>Акаунт створено</h3><div className="secret-key">{registration?.secretKey}</div><button type="button" className="auth-link copy-auth-key" onClick={()=>void navigator.clipboard.writeText(registration?.secretKey??'')}><Copy/> Скопіювати ключ</button><p className="auth-warning">Збережи ключ — його неможливо відновити. Логін буде доступний у профілі після входу.</p><button type="button" className="auth-link" disabled={busy} onClick={()=>void continueRegistration()}>Продовжити</button></>}
+      </div>}
+      {status&&<div className={`status${error?' error':''}`}>{status}</div>}
+    </section>}
     {adminOpen&&profile?.is_admin?<section className="admin-panel">
       <div className="admin-heading"><div><span className="admin-eyebrow">CONTROL ROOM</span><h2>Керування copypaste</h2></div><button className="admin-close" type="button" onClick={()=>setAdminOpen(false)}>Закрити ×</button></div>
       <div className="admin-stats"><div><strong>{stats.posts}</strong><span>повідомлень</span></div><div><strong>{stats.users}</strong><span>профілів</span></div><div><strong>{topics.length}</strong><span>розділів</span></div></div>
@@ -301,12 +302,9 @@ export default function App() {
       </div>
       {status&&<p className={error?'status error':'status'}>{status}</p>}
     </section>:<>
-      {!user?<div className="auth-composer">
-        {authStep==='idle'?<form className="composer" onSubmit={publishPost}><textarea ref={composerRef} value={message} onChange={e=>setMessage(e.target.value)} placeholder="Авторизуйся, щоб почати спілкування" aria-label="Команда авторизації"/><div className="compose-row"><span className="auth-hint">/registration · /auth ключ</span><button type="submit" disabled={busy||!message.trim()}>Продовжити ↗</button></div></form>:authStep==='registration'?<div className="auth-inline-panel"><h3>Створення акаунта</h3><p>Отримай свій HEX-логін і секретний ключ для наступних входів.</p><button className="auth-action" type="button" disabled={busy} onClick={()=>void beginRegistration()}>{busy?'Створюємо…':'Створити акаунт'}</button><button className="auth-switch" type="button" onClick={()=>setAuthStep('idle')}>Назад</button></div>:<div className="auth-inline-panel"><h3>Твій акаунт готовий</h3><p>Логін: <strong>{registration?.hexLogin}</strong></p><div className="secret-key">{registration?.secretKey}</div><button className="auth-action" type="button" onClick={()=>void navigator.clipboard.writeText(registration?.secretKey??'')}><Copy/> Скопіювати секретний ключ</button><p className="auth-warning">Збережи ключ — його неможливо відновити.</p><button className="auth-action" type="button" disabled={busy} onClick={()=>void continueRegistration()}>Продовжити</button></div>}
-        {status&&<div className={`status${error?' error':''}`}>{status}</div>}
-      </div>:<form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
-        <textarea ref={composerRef} value={message} onChange={e=>setMessage(e.target.value)} disabled={busy} placeholder="Поділись думкою…" aria-label="Твоє повідомлення"/>
-        <div className="compose-row"><span className="counter"/><button type="submit" disabled={!canPublish}>Опублікувати ↗</button></div>
+      {!user?<div className="composer" aria-label="Нове повідомлення"><textarea ref={composerRef} value="" disabled placeholder="Авторизуйся, щоб почати спілкування" aria-label="Повідомлення — потрібна авторизація"/><div className="compose-row"><span className="counter">0/180</span></div></div>:<form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
+        <textarea ref={composerRef} value={message} onChange={e=>setMessage(e.target.value.slice(0,180))} disabled={busy} maxLength={180} placeholder="Поділись думкою…" aria-label="Твоє повідомлення"/>
+        <div className="compose-row"><span className="counter">{message.length}/180</span><button type="submit" disabled={!canPublish}>Опублікувати ↗</button></div>
         {status&&<div className={`status${error?' error':''}`} role="status" aria-live="polite">{status}</div>}
       </form>}
       <section aria-label="Усі повідомлення">

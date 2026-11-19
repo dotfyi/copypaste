@@ -73,6 +73,9 @@ export default function App() {
   const [infoOpen,setInfoOpen]=useState(false);
   const [infoTab,setInfoTab]=useState<'faq'|'rules'>('faq');
   const [profileOpen,setProfileOpen]=useState(false);
+  const [publicProfile,setPublicProfile]=useState<(Profile&{id:string})|null>(null);
+  const [publicProfilePosts,setPublicProfilePosts]=useState<Post[]>([]);
+  const [publicProfileLoading,setPublicProfileLoading]=useState(false);
   const [authStep,setAuthStep]=useState<'idle'|'login'|'registration'|'key-ready'>(window.location.pathname==='/auth'?'login':'idle');
   const [loginKey,setLoginKey]=useState('');
   const [rulesAccepted,setRulesAccepted]=useState(false);
@@ -196,6 +199,25 @@ export default function App() {
     el.style.overflowY=contentHeight>maxHeight?'auto':'hidden';
   },[message]);
 
+  const isPublicProfileRoute=/^\/[0-9a-fA-F]{6}$/.test(route);
+  useEffect(()=>{
+    if(!isPublicProfileRoute){setPublicProfile(null);setPublicProfilePosts([]);return;}
+    let cancelled=false;
+    setPublicProfileLoading(true);
+    const login='#'+route.slice(1).toUpperCase();
+    void (async()=>{
+      try{
+        const {data:person,error:personError}=await supabase.from('copypaste_profiles').select('id,hex_login,is_admin,is_moderator,is_registered,is_suspended').eq('hex_login',login).eq('is_registered',true).maybeSingle();
+        if(personError)throw personError;
+        if(!person){if(!cancelled){setPublicProfile(null);setPublicProfilePosts([]);}return;}
+        const {data:rows,error:postsError}=await supabase.from('copypaste_posts').select('id,post_number,content,created_at,author_id,topic,profile:copypaste_profiles!copypaste_posts_author_id_fkey(hex_login,is_admin,is_moderator)').eq('author_id',person.id).order('created_at',{ascending:false}).limit(50);
+        if(postsError)throw postsError;
+        if(!cancelled){setPublicProfile(person as Profile&{id:string});setPublicProfilePosts((rows??[]) as unknown as Post[]);}
+      }catch(cause){console.error('Public profile load failed:',cause);if(!cancelled){setPublicProfile(null);setPublicProfilePosts([]);}}
+      finally{if(!cancelled)setPublicProfileLoading(false);}
+    })();
+    return()=>{cancelled=true;};
+  },[route,isPublicProfileRoute]);
   const isFeedRoute=route==='/'||topics.some(t=>route==='/'+t.id);
   function updateTopic(next:string){if(next===topic&&route===(next==='general'?'/':`/${next}`))return;offsetRef.current=0;moreRef.current=true;setHasMore(false);setPosts([]);setTopic(next);navigate(next==='general'?'/':`/${next}`);}
 
@@ -206,7 +228,7 @@ export default function App() {
       if(error||data?.error)throw new Error(data?.error||'Ключ не підійшов.');
       const {error:sessionError}=await supabase.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});
       if(sessionError)throw sessionError;
-      await ensureIdentity();setProfileOpen(false);setAuthStep('idle');setLoginKey('');setNotice('');navigate("/");
+      await ensureIdentity();setProfileOpen(false);setAuthStep('idle');setLoginKey('');setNotice('');navigate('/profile');
     }catch(e){setNotice(e instanceof Error?e.message:'Помилка авторизації.',true);}
     finally{setBusy(false);}
   }
@@ -233,7 +255,7 @@ export default function App() {
     try{
       const {error}=await supabase.auth.setSession({access_token:registration.access_token,refresh_token:registration.refresh_token});
       if(error)throw error;
-      await ensureIdentity();setAuthStep('idle');setRegistration(null);setProfileOpen(false);setLoginKey('');setRulesAccepted(false);setNotice('');setMessage('');navigate("/");
+      await ensureIdentity();setAuthStep('idle');setRegistration(null);setProfileOpen(false);setLoginKey('');setRulesAccepted(false);setNotice('');setMessage('');navigate('/profile');
     }catch(e){setNotice(e instanceof Error?e.message:'Не вдалося увійти.',true);}
     finally{setBusy(false);}
   }
@@ -326,6 +348,14 @@ export default function App() {
         {topics.map(t=><div className="topic-rule" key={t.id}><strong>{t.label}</strong><p>{t.id==='games'?'Обговорюй ігри, проходження та ігрові новини. Позначай сюжетні спойлери.':t.id==='technology'?'Технології, програмування та цифрові продукти. Не публікуй шкідливі посилання й шахрайські схеми.':t.id==='books'?'Книги, автори та літературні обговорення. Позначай сюжетні спойлери.':t.id==='art'?'Творчість, мистецтво та власні роботи. Поважай авторство.':t.id==='news'?'Актуальні події та новини. Перевіряй факти й додавай контекст.':t.id==='animals'?'Домашні улюбленці, дика природа, догляд за тваринами та цікаві спостереження. Поважай тварин і не поширюй шкідливих порад.':'Дотримуйся тематики розділу, спілкуйся ввічливо та не засмічуй стрічку.'}</p></div>)}
       </div>}
     </section>:infoOpen?null:null}
+    {isPublicProfileRoute&&<section className="profile-panel public-profile-panel">
+      {publicProfileLoading?<div className="public-profile-empty">Завантажуємо профіль…</div>:publicProfile?<>
+        <div className="public-profile-hero"><span className="profile-color" style={{background:publicProfile.hex_login}}/><div><span className="public-profile-eyebrow">ПРОФІЛЬ УЧАСНИКА</span><h1>{publicProfile.hex_login}</h1><p>{publicProfile.is_moderator?'Модератор спільноти':'Учасник copypaste'}</p></div></div>
+        <div className="public-profile-stats"><div><strong>{publicProfilePosts.length}</strong><span>останніх повідомлень</span></div><div><strong>{new Set(publicProfilePosts.map(post=>post.topic)).size}</strong><span>розділів</span></div></div>
+        <div className="public-profile-section-head"><h2>Повідомлення</h2><span>Останні 50 публікацій</span></div>
+        {publicProfilePosts.length?publicProfilePosts.map(post=><article className="post public-profile-post" key={post.id}><div className="meta"><span className="public-post-topic">{topics.find(t=>t.id===post.topic)?.label??post.topic}</span><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time></div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered}/></p></article>):<div className="public-profile-empty">Цей учасник ще не публікував повідомлень.</div>}
+      </>:<div className="public-profile-empty"><h2>Профіль не знайдено</h2><p>Перевір HEX-логін або повернись до стрічки.</p><button className="profile-logout" type="button" onClick={()=>navigate('/')}>На головну</button></div>}
+    </section>}
     {(route==='/profile'||route==='/auth')&&<section className="profile-panel">
       {user&&profile?<>
       <div className="profile-top"><span className="profile-color" style={{background:profile.hex_login}}/><div><strong>{profile.hex_login}</strong><span>{profile.is_admin?'Адміністратор':profile.is_moderator?'Модератор':'Учасник'}</span></div></div>
@@ -360,7 +390,7 @@ export default function App() {
         <div className="topics">{topics.map(item=>{const Icon=(ICONS as any)[item.icon]??(LucideIcons as any)[item.icon]??MessageCircle;return <button key={item.id} type="button" className={`topic-btn${topic===item.id?' active':''}`} style={{'--topic-color':item.color} as CSSProperties} onClick={()=>updateTopic(item.id)}><Icon/>{item.label}</button>;})}</div>
         <div id="feed" aria-live="polite">
           {posts.length===0&&!loading?<div className="empty-state"><MessageCircle/><p>Тут поки тихо</p><span>Залиш першу думку в цьому розділі</span></div>:posts.map(post=><article className="post" key={post.id}>
-            <div className="meta"><div className="identity"><span className="swatch" style={{backgroundColor:post.profile?.hex_login??'#aaa'}}/><span className="hex" style={{color:'#111'}}>{post.profile?.hex_login?.toLowerCase()??'#??????'}</span>{post.profile?.is_moderator&&post.profile.moderator_topics?.includes(post.topic)&&(()=>{const topicIconName=topics.find(t=>t.id===post.topic)?.icon??'';const TopicIcon=(ICONS as any)[topicIconName]??(LucideIcons as any)[topicIconName]??MessageCircle;return <TopicIcon className="moderator-topic-icon" style={{color:topics.find(t=>t.id===post.topic)?.color??'#777'}} aria-label="Модератор розділу"/>})()}</div><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time>
+            <div className="meta"><div className="identity"><span className="swatch" style={{backgroundColor:post.profile?.hex_login??'#aaa'}}/><button type="button" className="hex profile-user-link" onClick={()=>{if(post.profile?.hex_login)navigate('/'+post.profile.hex_login.replace(/^#/,'').toLowerCase());}}>{post.profile?.hex_login?.toLowerCase()??'#??????'}</button>{post.profile?.is_moderator&&post.profile.moderator_topics?.includes(post.topic)&&(()=>{const topicIconName=topics.find(t=>t.id===post.topic)?.icon??'';const TopicIcon=(ICONS as any)[topicIconName]??(LucideIcons as any)[topicIconName]??MessageCircle;return <TopicIcon className="moderator-topic-icon" style={{color:topics.find(t=>t.id===post.topic)?.color??'#777'}} aria-label="Модератор розділу"/>})()}</div><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time>
               {(profile?.is_admin||(profile?.is_moderator&&moderatorTopics.includes(post.topic)))&&<button className="moderate-delete" type="button" aria-label="Видалити повідомлення" onClick={async()=>{try{await adminAction('delete_post',{postId:post.id});await loadPosts(true);}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}><Trash2/></button>}
             </div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered}/></p>
           </article>)}

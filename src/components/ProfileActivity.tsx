@@ -48,18 +48,20 @@ function ProfileActivity({posts,topics}:{posts:ActivityPost[];topics:ActivityTop
   const maxTime=Math.max(1,...timeValues);
   const weekdayLabels=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
   const maxWeekday=Math.max(1,...weekdays);
+  const busiestWeekday=weekdayLabels[weekdays.indexOf(Math.max(...weekdays))];
+  const topHourIndex=hours.indexOf(Math.max(...hours));
+  const topTimeLabel=['ранком','удень','увечері','вночі'][topHourIndex];
   const first=posts.length?posts.reduce((a,b)=>Date.parse(a.created_at)<Date.parse(b.created_at)?a:b):null;
   const last=posts.length?posts.reduce((a,b)=>Date.parse(a.created_at)>Date.parse(b.created_at)?a:b):null;
-  const avg=activeDays.length?posts.length/activeDays.length:0;
   const topTopic=leadingTopic?topics.find(t=>t.id===leadingTopic[0]):null;
 
   return <section className="profile-activity" aria-label="Портрет активності">
     <div className="activity-kicker"><span>ПОРТРЕТ АКТИВНОСТІ</span><span>ЗА ВЕСЬ ЧАС</span></div>
     <div className="activity-overview">
       <div className="activity-primary"><strong>{posts.length.toLocaleString('uk-UA')}</strong><span>{plural(posts.length,'допис','дописи','дописів')} загалом</span></div>
-      <div className="activity-overview-side">
-        <div><strong>{activeDays.length.toLocaleString('uk-UA')}</strong><span>активних {plural(activeDays.length,'день','дні','днів')}</span></div>
-        <div><strong>{avg.toLocaleString('uk-UA',{maximumFractionDigits:1})}</strong><span>дописів за активний день</span></div>
+      <div className="activity-achievements">
+        <div><span>НАЙДОВША СЕРІЯ</span><strong>{longest} {plural(longest,'день','дні','днів')}</strong><small>активності поспіль</small></div>
+        <div><span>ОСОБИСТИЙ РЕКОРД</span><strong>{busiest?busiest[1].length:0} {plural(busiest?busiest[1].length:0,'допис','дописи','дописів')}</strong><small>за один день</small></div>
       </div>
     </div>
     <div className="activity-section">
@@ -75,12 +77,12 @@ function ProfileActivity({posts,topics}:{posts:ActivityPost[];topics:ActivityTop
       {topTopic?<><div className="activity-topic-lead"><i style={{'--activity-topic':topTopic.color} as CSSProperties}/><strong>{topTopic.label}</strong><span>{leadingTopic?.[1].toLocaleString('uk-UA')} {plural(leadingTopic?.[1]??0,'допис','дописи','дописів')} · {Math.round((leadingTopic?.[1]??0)/Math.max(1,posts.length)*100)}%</span></div><div className="activity-topic-list">{[...topicCounts.entries()].sort((a,b)=>b[1]-a[1]).map(([id,count])=>{const topic=topics.find(t=>t.id===id);return topic?<div key={id}><span>{topic.label}</span><i><b style={{width:`${count/Math.max(1,posts.length)*100}%`,'--activity-topic':topic.color} as CSSProperties}/></i><small>{count}</small></div>:null;})}</div></>:<p className="activity-empty">Ще немає достатньо даних.</p>}
     </div>
     <div className="activity-section activity-records">
-      <div className="activity-section-head"><span>04 / ФАКТИ</span><small>Особисті показники</small></div>
+      <div className="activity-section-head"><span>04 / ХРОНІКА</span><small>Історія присутності</small></div>
       <div className="activity-facts">
-        <div><span>Найактивніший день</span><strong>{busiest?dateFormat.format(new Date(busiest[0]+'T12:00:00Z')):'—'}</strong><small>{busiest?busiest[1].length+' '+plural(busiest[1].length,'допис','дописи','дописів'):'Немає даних'}</small></div>
-        <div><span>Найдовша серія</span><strong>{longest} {plural(longest,'день','дні','днів')}</strong><small>поспіль з активністю</small></div>
         <div><span>Перша поява</span><strong>{first?dateFormat.format(new Date(first.created_at)):'—'}</strong><small>{first?weekdayFormat.format(new Date(first.created_at)):''}</small></div>
         <div><span>Остання поява</span><strong>{last?dateFormat.format(new Date(last.created_at)):'—'}</strong><small>{last?weekdayFormat.format(new Date(last.created_at)):''}</small></div>
+        <div><span>Найчастіший день</span><strong>{posts.length?busiestWeekday:'—'}</strong><small>за кількістю дописів</small></div>
+        <div><span>Найчастіший час</span><strong>{posts.length?topTimeLabel:'—'}</strong><small>за кількістю дописів</small></div>
       </div>
     </div>
     {!posts.length&&<div className="activity-empty">Коли з'являться перші дописи, тут сформується портрет активності.</div>}

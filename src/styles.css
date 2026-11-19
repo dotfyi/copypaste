@@ -754,3 +754,23 @@ textarea:disabled {
   .admin-user-actions button { min-height:44px; }
   .restriction-layout { grid-template-columns:1fr; }
 }
+
+
+/* Remove native tap/focus flashes from all navigation and text controls. */
+button:not(.spoiler), a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+button:not(.spoiler):active,
+button:not(.spoiler):focus,
+button:not(.spoiler):focus-visible,
+a:active,
+a:focus,
+a:focus-visible,
+[role="button"]:active,
+[role="button"]:focus,
+[role="button"]:focus-visible {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}

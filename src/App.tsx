@@ -358,11 +358,28 @@ export default function App() {
     </section>}
     {(route==='/profile'||route==='/auth')&&<section className="profile-panel">
       {user&&profile?<>
-      <div className="profile-top"><span className="profile-color" style={{background:profile.hex_login}}/><div><strong>{profile.hex_login}</strong><span>{profile.is_admin?'Адміністратор':profile.is_moderator?'Модератор':'Учасник'}</span></div></div>
-      <div className="profile-detail"><span>Статус</span><strong>Авторизований акаунт</strong></div>
-      {(profile.is_admin||profile.is_moderator)&&<div className="profile-detail"><span>Права модерації</span><strong>{profile.is_admin?'Усі розділи':moderatorTopics.length?moderatorTopics.map(id=>topics.find(t=>t.id===id)?.label??id).join(', '):'Не призначено'}</strong></div>}
-      {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
-      <button className="profile-logout" type="button" disabled={busy} onClick={()=>void logout()}><LogOut/> Вийти з акаунта</button>
+      <div className="account-profile">
+        <div className="account-profile-cover">
+          <div className="account-profile-orbit account-profile-orbit-one"/><div className="account-profile-orbit account-profile-orbit-two"/>
+          <span className="account-profile-kicker">ТВІЙ ПРОСТІР У COPypaste</span>
+          <span className="account-profile-index">MEMBER / 001</span>
+          <div className="account-profile-identity">
+            <span className="account-profile-avatar" style={{'--profile-accent':profile.hex_login} as React.CSSProperties}><span>{profile.hex_login.slice(1,3)}</span></span>
+            <div><span className="account-profile-label">ТИ ЗАРАЗ ЯК</span><h1>{profile.hex_login}</h1><span className="account-profile-role">{profile.is_admin?'✳ Адміністратор':profile.is_moderator?'✳ Модератор':'● Учасник спільноти'}</span></div>
+          </div>
+          <span className="account-profile-watermark">cp.</span>
+        </div>
+        <div className="account-profile-body">
+          <div className="account-profile-welcome"><div><span className="account-profile-label">ОСОБИСТИЙ КАБІНЕТ</span><h2>Радий бачити тебе.</h2></div><span className="account-profile-live"><i/> ONLINE</span></div>
+          <div className="account-profile-facts">
+            <div><span>АКАУНТ</span><strong>Активний</strong><small>Ти успішно авторизований</small></div>
+            <div><span>ІДЕНТИЧНІСТЬ</span><strong>Анонімна</strong><small>Без імені. Лише твій HEX.</small></div>
+          </div>
+          {(profile.is_admin||profile.is_moderator)&&<div className="account-profile-permissions"><span>ТВОЇ ПОВНОВАЖЕННЯ</span><strong>{profile.is_admin?'Повний доступ до всіх розділів':moderatorTopics.length?moderatorTopics.map(id=>topics.find(t=>t.id===id)?.label??id).join(' · '):'Роль модератора призначена'}</strong></div>}
+          {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
+          <div className="account-profile-footer"><span>ТВОЯ ПРИСУТНІСТЬ. ТВОЇ ПРАВИЛА.</span><button className="profile-logout" type="button" disabled={busy} onClick={()=>void logout()}><LogOut/> Вийти з акаунта</button></div>
+        </div>
+      </div>
       </>:<div className="profile-auth">
         {authStep==='idle'?<div className="auth-choice"><button type="button" className="auth-link" onClick={()=>setAuthStep('login')}>Авторизуватись</button><button type="button" className="auth-link" onClick={()=>setAuthStep('registration')}>Зареєструватися</button></div>:authStep==='login'?<><input className="auth-key-input" type="password" autoComplete="current-password" value={loginKey} onChange={e=>setLoginKey(e.target.value)} placeholder="Секретний ключ"/><div className="auth-actions"><button type="button" className="auth-link muted" onClick={()=>{setAuthStep('idle');setLoginKey('');}}>Назад</button><button type="button" className="auth-link" disabled={busy||!loginKey.trim()} onClick={async()=>{await runAuthCommand(loginKey);setLoginKey('');}}>Увійти</button></div><p className="auth-switch">Ще немає акаунта? <button type="button" className="auth-link" onClick={()=>{setAuthStep('registration');setLoginKey('');}}>Зареєструватися</button></p></>:authStep==='registration'?<><label className="rules-check"><input type="checkbox" checked={rulesAccepted} onChange={e=>setRulesAccepted(e.target.checked)}/><span>Створюючи акаунт, ти погоджуєшся дотримуватися правил спільноти.</span></label><div className="auth-actions"><button type="button" className="auth-link muted" onClick={()=>setAuthStep('idle')}>Назад</button><button type="button" className="auth-link" disabled={busy||!rulesAccepted} onClick={()=>void beginRegistration()}>Створити акаунт</button></div></>:<><div className="secret-key">{registration?.secretKey}</div><div className="auth-actions auth-key-actions"><button type="button" className="auth-link copy-auth-key" onClick={()=>void navigator.clipboard.writeText(registration?.secretKey??'')}><Copy/> Скопіювати ключ</button><button type="button" className="auth-link" disabled={busy} onClick={()=>void continueRegistration()}>Продовжити</button></div><p className="auth-warning">Цей ключ неможливо відновити. Він єдиний спосіб увійти в акаунт — збережи його в надійному місці.</p></>}
       </div>}

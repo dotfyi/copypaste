@@ -78,12 +78,12 @@ export default function App() {
   const [loginKey,setLoginKey]=useState('');
   const [rulesAccepted,setRulesAccepted]=useState(false);
   const [registration,setRegistration]=useState<{secretKey:string;access_token:string;refresh_token:string;hexLogin:string}|null>(null);
-  const [moderatorTopic,setModeratorTopic]=useState('general');
   const [selectedModeratorTopics,setSelectedModeratorTopics]=useState<string[]>(['general']);
   const [adminUsers,setAdminUsers]=useState<{id:string;hex_login:string;is_admin:boolean;is_moderator:boolean}[]>([]);
   const [cooldownMinutes,setCooldownMinutes]=useState(0);
   const [restrictedUsers,setRestrictedUsers]=useState<string[]>([]);
   const [restrictedTopics,setRestrictedTopics]=useState<string[]>([]);
+  const [restrictionMap,setRestrictionMap]=useState<Record<string,string[]>>({});
   const [statsTopic,setStatsTopic]=useState('');
   const [statsUser,setStatsUser]=useState<string|null>(null);
   const [statsRows,setStatsRows]=useState<any[]>([]);
@@ -146,7 +146,7 @@ export default function App() {
   },[topic]);
 
   useEffect(()=>{void (async()=>{try{await ensureIdentity();setNotice('');}catch(e){console.error(e);setNotice('Не вдалося перевірити авторизацію. Онови сторінку та спробуй ще раз.',true);}})();void loadTopics();},[ensureIdentity,loadTopics]);
-  useEffect(()=>{if(route==='/')void loadPosts(true);},[user,topic,loadPosts,route]);
+  useEffect(()=>{if(route==='/'||topics.some(t=>route==='/'+t.id))void loadPosts(true);},[user,topic,loadPosts,route,topics]);
   useEffect(()=>{
     const {data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{
       if(!session){setUser(null);setProfile(null);}
@@ -192,7 +192,8 @@ export default function App() {
     el.style.overflowY=contentHeight>maxHeight?'auto':'hidden';
   },[message]);
 
-  const isFeedRoute=route==='/'||topics.some(t=>route===`/${t.id}`);\n  function updateTopic(next:string){if(next===topic&&route===(next==='general'?'/':`/${next}`))return;offsetRef.current=0;moreRef.current=true;setHasMore(false);setPosts([]);setTopic(next);navigate(next==='general'?'/':`/${next}`);}
+  const isFeedRoute=route==='/'||topics.some(t=>route==='/'+t.id);
+  function updateTopic(next:string){if(next===topic&&route===(next==='general'?'/':`/${next}`))return;offsetRef.current=0;moreRef.current=true;setHasMore(false);setPosts([]);setTopic(next);navigate(next==='general'?'/':`/${next}`);}
 
   async function runAuthCommand(key:string){
     setBusy(true);setNotice('');

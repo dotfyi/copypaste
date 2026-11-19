@@ -101,7 +101,7 @@ export default function App() {
   const setNotice=(value:string,isError=false)=>{setStatus(value);setError(isError);};
   const navigate=(path:string)=>{const normalized=path==='/-------'?'/animals':path;if(window.location.pathname!==normalized)window.history.pushState({},'',normalized);setRoute(normalized);setStatus('');setError(false);};
   useEffect(()=>{const onPop=()=>{setRoute(window.location.pathname);setStatus('');setError(false);};window.addEventListener('popstate',onPop);return()=>window.removeEventListener('popstate',onPop);},[]);
-  useEffect(()=>{if(route==='/-------'){navigate('/animals');return;}const path=route.slice(1);if(route==='/' )setTopic('general');else if(topics.some(t=>t.id===path))setTopic(path);},[route,topics]);
+  useEffect(()=>{if(route==='/-------'){navigate('/animals');return;}const path=route==='/'?'general':route.slice(1);if((route==='/'||topics.some(t=>t.id===path))&&path!==topic){setPosts([]);offsetRef.current=0;moreRef.current=true;setHasMore(false);loadingRef.current=false;setTopic(path);}},[route,topics,topic]);
   useEffect(()=>{if(route==='/auth'&&!user)setAuthStep(step=>step==='registration'||step==='key-ready'?step:'login');},[route,user]);
   useEffect(()=>{if(route==='/admin'&&profile?.is_admin)void loadAdminStats();},[route,profile?.is_admin]);
 
@@ -150,7 +150,7 @@ export default function App() {
   },[topic]);
 
   useEffect(()=>{void (async()=>{try{await ensureIdentity();setNotice('');}catch(e){console.error(e);setNotice('Не вдалося перевірити авторизацію. Онови сторінку та спробуй ще раз.',true);}})();void loadTopics();},[ensureIdentity,loadTopics]);
-  useEffect(()=>{if(route==='/'||topics.some(t=>route==='/'+t.id))void loadPosts(true);},[user,topic,loadPosts,route,topics]);
+  useEffect(()=>{const routeTopic=route==='/'?'general':route.slice(1);const feedRoute=route==='/'||topics.some(t=>t.id===routeTopic);if(feedRoute&&routeTopic===topic)void loadPosts(true);},[user,topic,loadPosts,route,topics]);
   useEffect(()=>{
     const {data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{
       if(!session){setUser(null);setProfile(null);}

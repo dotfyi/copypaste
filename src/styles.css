@@ -604,3 +604,5 @@ textarea:disabled {
   .admin-check-grid, .stats-topic-list, .stats-user-list { grid-template-columns:1fr; }
   .stats-actions { flex-wrap:wrap; }
 }
+
+.admin-card .admin-check input { display:inline-block; width:13px !important; }

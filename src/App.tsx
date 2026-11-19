@@ -116,7 +116,7 @@ export default function App() {
 
   const loadTopics=useCallback(async()=>{
     const {data,error}=await supabase.from('copypaste_topics').select('id,label,icon,color').order('sort_order');
-    if(!error&&data?.length){setTopics(data as Topic[]);}
+    if(!error&&data?.length){setTopics(data as Topic[]);const path=window.location.pathname.slice(1);if(path&&data.some((t:any)=>t.id===path))setTopic(path);}
   },[]);
 
   const loadPosts=useCallback(async(reset=false)=>{
@@ -245,11 +245,33 @@ export default function App() {
     return data;
   }
   async function loadAdminStats(){
-    const [p,u]=await Promise.all([
+    const [p,u,settings,people,restrictions]=await Promise.all([
       supabase.from('copypaste_posts').select('id',{count:'exact',head:true}),
-      supabase.from('copypaste_profiles').select('id',{count:'exact',head:true})
+      supabase.from('copypaste_profiles').select('id',{count:'exact',head:true}),
+      supabase.from('copypaste_settings').select('cooldown_minutes').eq('id',true).maybeSingle(),
+      supabase.from('copypaste_profiles').select('id,hex_login,is_admin,is_moderator').order('hex_login'),
+      supabase.from('copypaste_post_restrictions').select('user_id,topic_id')
     ]);
     setStats({posts:p.count??0,users:u.count??0});
+    setCooldownMinutes(settings.data?.cooldown_minutes??0);
+    const peopleRows=(people.data??[]) as any[];
+    setAdminUsers(peopleRows);
+    const byId=new Map(peopleRows.map(person=>[person.id,person.hex_login]));
+    const map:Record<string,string[]>={};
+    for(const row of restrictions.data??[]){const login=byId.get(row.user_id);if(login)map[login]=[...(map[login]??[]),row.topic_id];}
+    setRestrictionMap(map);
+  }
+  async function loadStatsRows(mode:'posts'|'users',selectedTopic=statsTopic,selectedUser=statsUser){
+    setStatsMode(mode);setStatsTopic(selectedTopic);setStatsUser(selectedUser);
+    let q=supabase.from('copypaste_posts').select('id,post_number,content,created_at,author_id,topic').order('created_at',{ascending:false}).limit(500);
+    if(selectedTopic)q=q.eq('topic',selectedTopic);
+    if(selectedUser)q=q.eq('author_id',selectedUser);
+    const {data,error}=await q;
+    if(error){setNotice(error.message,true);return;}
+    const ids=[...new Set((data??[]).map((x:any)=>x.author_id))];
+    const {data:people}=ids.length?await supabase.from('copypaste_profiles').select('id,hex_login').in('id',ids):{data:[] as any[]};
+    const names=new Map((people??[]).map((p:any)=>[p.id,p.hex_login]));
+    setStatsRows((data??[]).map((x:any)=>({...x,hex_login:names.get(x.author_id)??'невідомо'})));
   }
 
   async function publishPost(event:FormEvent){

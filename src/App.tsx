@@ -72,7 +72,7 @@ export default function App() {
   const [infoOpen,setInfoOpen]=useState(false);
   const [infoTab,setInfoTab]=useState<'faq'|'rules'>('faq');
   const [profileOpen,setProfileOpen]=useState(false);
-  const [authStep,setAuthStep]=useState<'idle'|'login'|'registration'|'key-ready'>('idle');
+  const [authStep,setAuthStep]=useState<'idle'|'login'|'registration'|'key-ready'>(window.location.pathname==='/auth'?'login':'idle');
   const [loginKey,setLoginKey]=useState('');
   const [rulesAccepted,setRulesAccepted]=useState(false);
   const [registration,setRegistration]=useState<{secretKey:string;access_token:string;refresh_token:string;hexLogin:string}|null>(null);
@@ -135,7 +135,7 @@ export default function App() {
   },[topic]);
 
   useEffect(()=>{void (async()=>{try{await ensureIdentity();setNotice('');}catch(e){console.error(e);setNotice('Не вдалося перевірити авторизацію. Онови сторінку та спробуй ще раз.',true);}})();void loadTopics();},[ensureIdentity,loadTopics]);
-  useEffect(()=>{void loadPosts(true);},[user,topic,loadPosts]);
+  useEffect(()=>{if(route==='/')void loadPosts(true);},[user,topic,loadPosts,route]);
   useEffect(()=>{
     const {data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{
       if(!session){setUser(null);setProfile(null);}

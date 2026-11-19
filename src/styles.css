@@ -1053,3 +1053,137 @@ a:focus-visible,
   .profile-logout-top { padding:7px 9px !important; font-size:10px !important; }
   .public-profile-stats { gap:14px; }
 }
+
+
+/* Profile identity and activity: clean, compact, editorial */
+.account-profile-identity {
+  min-height:0;
+  align-items:center;
+  gap:14px;
+}
+.account-profile-avatar {
+  width:48px;
+  height:48px;
+  flex:0 0 48px;
+  border:0;
+  border-radius:13px;
+  background:var(--profile-accent,#b123ae);
+}
+.account-profile-avatar::before { display:none !important; }
+.account-profile-heading {
+  min-height:48px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:4px;
+}
+.account-profile-heading h1 {
+  margin:0;
+  font-size:27px;
+  line-height:1.05;
+  letter-spacing:-.065em;
+}
+.account-profile-role { line-height:1.25; }
+.account-profile-welcome {
+  padding:20px 0 10px;
+}
+.account-profile-welcome h2 {
+  margin:0;
+  font-size:16px;
+  font-weight:620;
+  letter-spacing:-.035em;
+}
+.public-profile-stats {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+  padding:10px 0 22px;
+}
+.public-profile-stats>div {
+  display:grid;
+  grid-template-columns:18px 1fr;
+  grid-template-rows:auto auto;
+  align-items:center;
+  column-gap:7px;
+  row-gap:4px;
+  min-width:0;
+}
+.public-profile-stats>div>svg {
+  grid-column:1;
+  grid-row:1;
+  width:15px;
+  height:15px;
+  color:#999;
+  stroke-width:1.7;
+}
+.public-profile-stats strong {
+  grid-column:2;
+  grid-row:1;
+  font-size:19px;
+  line-height:1;
+  font-weight:650;
+  letter-spacing:-.045em;
+  font-variant-numeric:tabular-nums;
+}
+.public-profile-stats span {
+  grid-column:1 / -1;
+  grid-row:2;
+  color:#999;
+  font-size:8px;
+  font-weight:650;
+  letter-spacing:.09em;
+  white-space:nowrap;
+}
+.profile-posts-heading {
+  padding:13px 0 10px;
+  border-top:1px solid #eaeaea;
+  color:#222;
+  font-size:13px;
+  font-weight:620;
+  letter-spacing:-.02em;
+}
+.public-profile-post {
+  position:relative;
+  margin:0;
+  padding:16px 0 18px;
+  border-top:1px solid #ededed;
+  border-bottom:0;
+}
+.public-profile-post .meta {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 9px;
+}
+.public-profile-post .public-post-topic {
+  color:#777;
+  font-size:9px;
+  font-weight:650;
+  letter-spacing:.075em;
+  text-transform:uppercase;
+}
+.public-profile-post .meta time {
+  color:#aaa;
+  font-size:10px;
+  white-space:nowrap;
+}
+.public-profile-post .message {
+  margin:0;
+  color:#262626;
+  font-size:14px;
+  line-height:1.7;
+  letter-spacing:-.012em;
+}
+@media(max-width:520px) {
+  .account-profile-avatar { width:44px; height:44px; flex-basis:44px; border-radius:12px; }
+  .account-profile-heading { min-height:44px; }
+  .account-profile-heading h1 { font-size:25px; }
+  .public-profile-stats { gap:8px; }
+  .public-profile-stats>div { column-gap:5px; grid-template-columns:16px 1fr; }
+  .public-profile-stats>div>svg { width:14px; height:14px; }
+  .public-profile-stats strong { font-size:17px; }
+  .public-profile-stats span { font-size:7px; letter-spacing:.055em; }
+  .public-profile-post { padding:14px 0 16px; }
+  .public-profile-post .message { font-size:14px; }
+}

@@ -369,7 +369,7 @@ export default function App() {
             <span className="account-profile-avatar" style={{'--profile-accent':publicProfile.hex_login} as CSSProperties} aria-hidden="true"/>
             <div className="account-profile-heading"><h1>{publicProfile.hex_login}</h1><span className="account-profile-role">{publicProfile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:publicProfile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
           </div>
-          <div className="public-profile-body"><ProfilePulse posts={publicProfilePosts} topics={topics}/></div>
+          <div className="public-profile-body"><DiaryTimeline posts={publicProfilePosts} topics={topics}/></div>
         </div>
       </>:<div className="public-profile-empty"><h2>Профіль не знайдено</h2><p>Перевір HEX-логін або повернись до стрічки.</p><button className="profile-logout" type="button" onClick={()=>navigate('/')}>На головну</button></div>}
     </section>}
@@ -382,7 +382,7 @@ export default function App() {
           <button className="profile-logout profile-logout-top" type="button" disabled={busy} onClick={()=>void logout()}>Вийти</button>
         </div>
         <div className="public-profile-body">
-          <ProfilePulse posts={ownProfilePosts} topics={topics}/>
+          <DiaryTimeline posts={ownProfilePosts} topics={topics}/>
           {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
         </div>
       </div>

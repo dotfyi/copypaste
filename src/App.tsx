@@ -236,7 +236,7 @@ export default function App() {
         const {data:person,error:personError}=await supabase.from('copypaste_profiles').select('id,hex_login,is_admin,is_moderator,is_registered,is_suspended').eq('hex_login',login).eq('is_registered',true).maybeSingle();
         if(personError)throw personError;
         if(!person){if(!cancelled){setPublicProfile(null);setPublicProfilePosts([]);}return;}
-        const {data:rows,error:postsError}=await supabase.from('copypaste_posts').select('id,post_number,content,created_at,author_id,topic,profile:copypaste_profiles!copypaste_posts_author_id_fkey(hex_login,is_admin,is_moderator)').eq('author_id',person.id).order('created_at',{ascending:false}).limit(50);
+        const {data:rows,error:postsError}=await supabase.from('copypaste_posts').select('id,post_number,created_at,author_id,topic').eq('author_id',person.id).order('created_at',{ascending:false}).limit(50);
         if(postsError)throw postsError;
         if(!cancelled){setPublicProfile(person as Profile&{id:string});setPublicProfilePosts((rows??[]) as unknown as Post[]);}
       }catch(cause){console.error('Public profile load failed:',cause);if(!cancelled){setPublicProfile(null);setPublicProfilePosts([]);}}
@@ -249,7 +249,7 @@ export default function App() {
     let cancelled=false;
     void (async()=>{
       try{
-        const {data:rows,error:postsError}=await supabase.from('copypaste_posts').select('id,post_number,content,created_at,author_id,topic,profile:copypaste_profiles!copypaste_posts_author_id_fkey(hex_login,is_admin,is_moderator)').eq('author_id',user.id).order('created_at',{ascending:false}).limit(50);
+        const {data:rows,error:postsError}=await supabase.from('copypaste_posts').select('id,post_number,created_at,author_id,topic').eq('author_id',user.id).order('created_at',{ascending:false}).limit(50);
         if(postsError)throw postsError;
         if(!cancelled)setOwnProfilePosts((rows??[]) as unknown as Post[]);
       }catch(cause){console.error('Own profile posts load failed:',cause);if(!cancelled)setOwnProfilePosts([]);}

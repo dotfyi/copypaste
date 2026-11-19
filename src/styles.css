@@ -1792,3 +1792,48 @@ a:focus-visible,
   .profile-living .profile-presence { flex-direction:row; align-items:baseline; }
   .profile-living .profile-presence strong { text-align:right; }
 }
+
+
+/* Refined profile constellation — visible, balanced, and data-safe */
+.profile-living { padding:30px 0 0; }
+.profile-constellation-meta {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  color:#999; font-size:8px; font-weight:700; letter-spacing:.16em;
+}
+.profile-constellation { position:relative; margin:14px -5px 0; }
+.profile-constellation svg { display:block; width:100%; height:auto; overflow:visible; }
+.profile-orbit { fill:none; stroke:#e9e8e8; stroke-width:1; stroke-dasharray:1.5 7; opacity:.9; }
+.profile-orbit-inner { stroke:#eeeeed; stroke-dasharray:1 6; }
+.profile-constellation-arc { fill:none; stroke:#efeeee; stroke-width:1; opacity:.85; }
+.profile-constellation-link { stroke:#b9b6bc; stroke-width:1; opacity:.2; }
+.profile-constellation-total {
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-54%);
+  display:flex; flex-direction:column; align-items:center; gap:4px; pointer-events:none;
+}
+.profile-constellation-total strong {
+  color:#242126; font-size:clamp(29px,6vw,39px); font-weight:560;
+  letter-spacing:-.085em; line-height:1; font-variant-numeric:tabular-nums;
+}
+.profile-constellation-total small {
+  color:#a2a0a2; font-size:7px; font-weight:700; letter-spacing:.19em;
+}
+.profile-constellation-caption {
+  position:absolute; left:50%; top:calc(50% + 31px); transform:translateX(-50%);
+  color:#aaa; font-size:8px; letter-spacing:.025em; white-space:nowrap;
+}
+.profile-topic-signal { margin-top:14px; padding-top:17px; border-top:1px solid #ededed; }
+.profile-topic-spectrum { display:flex; width:100%; height:4px; gap:3px; margin:0; overflow:hidden; border-radius:99px; }
+.profile-topic-spectrum i { display:block; min-width:4px; border-radius:99px; background:var(--topic-accent); }
+.profile-topic-legend { display:flex; flex-wrap:wrap; gap:10px 17px; margin-top:13px; }
+.profile-topic-legend span { display:inline-flex; align-items:center; gap:6px; color:#777; font-size:10px; }
+.profile-topic-legend i { width:6px; height:6px; flex:0 0 6px; border-radius:50%; background:var(--topic-accent); }
+.profile-living-empty { margin:12px 0 0; color:#999; font-size:11px; }
+.profile-living .profile-presence { margin-top:22px; padding-top:13px; border-top:1px solid #ededed; }
+.profile-living .profile-presence strong { color:#777; font-size:10px; font-weight:500; letter-spacing:0; }
+@media(max-width:560px) {
+  .profile-living { padding-top:25px; }
+  .profile-constellation { margin:13px -3px 0; }
+  .profile-topic-signal { margin-top:12px; }
+  .profile-living .profile-presence { flex-direction:row; align-items:baseline; }
+  .profile-living .profile-presence strong { text-align:right; }
+}

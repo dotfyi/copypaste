@@ -327,7 +327,6 @@ export default function App() {
       <div className="profile-top"><span className="profile-color" style={{background:profile.hex_login}}/><div><strong>{profile.hex_login}</strong><span>{profile.is_admin?'Адміністратор':profile.is_moderator?'Модератор':'Учасник'}</span></div></div>
       <div className="profile-detail"><span>Статус</span><strong>Авторизований акаунт</strong></div>
       {(profile.is_admin||profile.is_moderator)&&<div className="profile-detail"><span>Права модерації</span><strong>{profile.is_admin?'Усі розділи':moderatorTopics.length?moderatorTopics.map(id=>topics.find(t=>t.id===id)?.label??id).join(', '):'Не призначено'}</strong></div>}
-      {profile.is_admin&&<button className="profile-admin-link" type="button" onClick={()=>{navigate('/admin');void loadAdminStats();}}><ShieldCheck/> Відкрити панель адміністратора</button>}
       {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
       <button className="profile-logout" type="button" disabled={busy} onClick={()=>void logout()}><LogOut/> Вийти з акаунта</button>
       </>:<div className="profile-auth">

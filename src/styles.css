@@ -1187,3 +1187,246 @@ a:focus-visible,
   .public-profile-post { padding:14px 0 16px; }
   .public-profile-post .message { font-size:14px; }
 }
+
+
+/* Copypaste profile art direction — warm, expressive, quiet */
+.profile-panel:has(.account-profile),.profile-panel.public-profile-panel {
+  max-width:700px;
+  padding:26px 0 56px;
+}
+.account-profile,.public-account-profile { width:100%; }
+.account-profile-identity.public-account-identity {
+  position:relative;
+  isolation:isolate;
+  display:flex;
+  align-items:center;
+  min-height:112px;
+  gap:17px;
+  overflow:hidden;
+  padding:23px 24px;
+  border:0;
+  border-radius:20px;
+  background:color-mix(in srgb,var(--profile-accent,#b123ae) 8%,#fff);
+}
+.account-profile-identity.public-account-identity::after {
+  position:absolute;
+  z-index:-1;
+  top:-76px;
+  right:75px;
+  width:210px;
+  height:210px;
+  border-radius:50%;
+  background:color-mix(in srgb,var(--profile-accent,#b123ae) 7%,transparent);
+  content:"";
+}
+.account-profile-avatar {
+  width:58px;
+  height:58px;
+  flex:0 0 58px;
+  border-radius:17px;
+  background:var(--profile-accent,#b123ae);
+  box-shadow:0 8px 18px color-mix(in srgb,var(--profile-accent,#b123ae) 20%,transparent);
+}
+.account-profile-heading {
+  position:relative;
+  z-index:1;
+  min-height:58px;
+  gap:6px;
+}
+.account-profile-heading h1 {
+  color:#171717;
+  font-size:30px;
+  font-weight:720;
+  letter-spacing:-.075em;
+}
+.account-profile-role {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:#69636d;
+  font-size:11px;
+  font-weight:550;
+}
+.account-profile-role svg {
+  width:14px;
+  height:14px;
+  color:var(--profile-accent,#777);
+  stroke-width:2;
+}
+.profile-logout-top {
+  position:relative;
+  z-index:2;
+  margin-left:auto !important;
+  padding:9px 14px !important;
+  border:0 !important;
+  border-radius:999px !important;
+  background:#f9e5e5 !important;
+  color:#a24f55 !important;
+  font-size:11px !important;
+  font-weight:600 !important;
+  transition:background .18s ease,transform .18s ease;
+}
+.profile-logout-top:hover {
+  border:0 !important;
+  background:#f4d6d7 !important;
+  color:#873e44 !important;
+  text-decoration:none !important;
+  transform:translateY(-1px);
+}
+.public-profile-body { padding:0 2px; }
+.account-profile-welcome {
+  padding:27px 2px 13px;
+}
+.account-profile-welcome h2 {
+  color:#262329;
+  font-size:17px;
+  font-weight:680;
+  letter-spacing:-.045em;
+}
+.public-profile-stats {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  padding:4px 0 28px;
+}
+.public-profile-stats>div {
+  position:relative;
+  display:flex;
+  min-height:112px;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:15px 16px 14px;
+  overflow:hidden;
+  border:0;
+  border-radius:16px;
+  background:#f6f5f3;
+}
+.public-profile-stats>div:nth-child(2) { background:#f3f5f3; }
+.public-profile-stats>div:nth-child(3) { background:#f7f3f6; }
+.public-profile-stats>div>svg {
+  width:17px;
+  height:17px;
+  color:#8b858c;
+  stroke-width:1.8;
+}
+.public-profile-stats strong {
+  color:#242126;
+  font-size:26px;
+  font-weight:700;
+  line-height:1;
+  letter-spacing:-.07em;
+}
+.public-profile-stats span {
+  color:#88828a;
+  font-size:9px;
+  font-weight:650;
+  letter-spacing:.075em;
+}
+.profile-posts-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 2px 11px;
+  border:0;
+  color:#28252b;
+  font-size:16px;
+  font-weight:680;
+  letter-spacing:-.045em;
+}
+.public-profile-post {
+  margin:0 0 11px;
+  padding:17px 19px 18px;
+  border:0;
+  border-radius:15px;
+  background:#f8f7f5;
+  transition:background .18s ease,transform .18s ease;
+}
+.public-profile-post:hover {
+  background:#f3f1ee;
+  transform:translateY(-1px);
+}
+.public-profile-post .meta {
+  margin:0 0 11px;
+}
+.public-profile-post .public-post-topic {
+  display:inline-flex;
+  align-items:center;
+  min-height:23px;
+  padding:4px 9px;
+  border-radius:999px;
+  background:#fff;
+  color:#77717a;
+  font-size:9px;
+  font-weight:650;
+  letter-spacing:.025em;
+  text-transform:none;
+}
+.public-profile-post .meta time {
+  color:#9b969d;
+  font-size:10px;
+}
+.public-profile-post .message {
+  color:#302d32;
+  font-size:14px;
+  line-height:1.75;
+  letter-spacing:-.012em;
+  overflow-wrap:anywhere;
+}
+.public-profile-empty {
+  padding:23px 19px;
+  border-radius:15px;
+  background:#f8f7f5;
+  color:#88828a;
+  font-size:12px;
+}
+.profile-warning {
+  margin-top:16px;
+  padding:12px 14px;
+  border:0;
+  border-radius:12px;
+  background:#fff5e8;
+  color:#87633d;
+}
+@media(max-width:560px) {
+  .profile-panel:has(.account-profile),.profile-panel.public-profile-panel { padding:15px 0 36px; }
+  .account-profile-identity.public-account-identity {
+    min-height:94px;
+    gap:13px;
+    padding:18px 16px;
+    border-radius:17px;
+  }
+  .account-profile-avatar {
+    width:50px;
+    height:50px;
+    flex-basis:50px;
+    border-radius:15px;
+  }
+  .account-profile-heading { min-height:50px; gap:5px; }
+  .account-profile-heading h1 { font-size:25px; }
+  .account-profile-role { font-size:10px; }
+  .profile-logout-top { padding:8px 11px !important; font-size:10px !important; }
+  .account-profile-welcome { padding:23px 2px 12px; }
+  .public-profile-stats { gap:8px; padding-bottom:22px; }
+  .public-profile-stats>div {
+    min-height:98px;
+    gap:10px;
+    padding:12px 11px;
+    border-radius:13px;
+  }
+  .public-profile-stats>div>svg { width:15px; height:15px; }
+  .public-profile-stats strong { font-size:22px; }
+  .public-profile-stats span { font-size:7px; letter-spacing:.045em; }
+  .public-profile-post { margin-bottom:9px; padding:14px 14px 15px; border-radius:13px; }
+  .public-profile-post .message { font-size:13px; }
+}
+@media(max-width:370px) {
+  .account-profile-identity.public-account-identity { gap:10px; padding:16px 12px; }
+  .account-profile-avatar { width:44px; height:44px; flex-basis:44px; }
+  .account-profile-heading h1 { font-size:22px; }
+  .profile-logout-top { padding:7px 9px !important; }
+  .public-profile-stats { gap:6px; }
+  .public-profile-stats>div { padding:10px 8px; }
+  .public-profile-stats span { font-size:6px; }
+}

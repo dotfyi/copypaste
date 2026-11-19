@@ -250,7 +250,7 @@ export default function App() {
       const {error}=await supabase.from('copypaste_posts').insert({content,topic});
       if(error)throw error;
       setMessage('');await loadPosts(true);
-    }catch(e){console.error(e);setNotice(e instanceof Error?e.message:'Не вдалося опублікувати.',true);}
+    }catch(e){console.error('Publish failed:',e);const detail=e&&typeof e==='object'&&'message' in e&&typeof (e as {message?:unknown}).message==='string'?(e as {message:string}).message:e instanceof Error?e.message:'Невідома помилка сервера';setNotice(`Не вдалося опублікувати: ${detail}`,true);}
     finally{setBusy(false);}
   }
 

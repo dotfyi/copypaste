@@ -20,7 +20,6 @@ const DEFAULT_TOPICS: Topic[] = [
   {id:'news',label:'Новини',icon:'Newspaper',color:'#c99b82'}
 ];
 const ICONS: Record<string, typeof Globe2> = {AlarmClock:AlarmClock,Anchor:Anchor,Archive:Archive,Award:Award,Baby:Baby,BadgeCheck:BadgeCheck,Banknote:Banknote,Bell:Bell,Binary:Binary,Blocks:Blocks,Bot:Bot,Box:Box,Briefcase:Briefcase,Building2:Building2,Calendar:Calendar,Car:Car,Castle:Castle,Check:Check,ChessKnight:ChessKnight,Cloud:Cloud,Crown:Crown,Database:Database,Dog:Dog,DoorOpen:DoorOpen,Feather:Feather,Flag:Flag,Flower:Flower,Footprints:Footprints,Gift:Gift,GraduationCap:GraduationCap,Handshake:Handshake,Headphones:Headphones,Key:Key,Leaf:Leaf,Lock:Lock,Mail:Mail,Mic:Mic,Moon:Moon,Mountain:Mountain,Plane:Plane,Puzzle:Puzzle,QrCode:QrCode,Radio:Radio,Rainbow:Rainbow,Scissors:Scissors,Server:Server,ShieldCheck:ShieldCheck,Ship:Ship,ShoppingCart:ShoppingCart,Snowflake:Snowflake,Swords:Swords,Ticket:Ticket,Trees:Trees,Tv:Tv,Umbrella:Umbrella,Waves:Waves,Wifi:Wifi,Wind:Wind,Activity,Aperture,Atom,AudioLines,Bike,Bird,Book,BookOpen,Bookmark,BriefcaseBusiness,Camera,Cat,ChartNoAxesCombined,CircleHelp,Code,Coffee,Compass,Cpu,Dice5,Dumbbell,Earth,Film,Flame,FlaskConical,Flower2,Gamepad2,Gem,Ghost,Globe2,Hammer,Heart,House,Lightbulb,Map:MapIcon,MessageCircle,Music,Palette,PawPrint,Rocket,School,Search,Shield,ShoppingBag,Smile,Sparkles,Star,Sun,Terminal,Trophy,Users,Video,Wallet,WandSparkles,Wrench,Zap,Newspaper};
-const ICON_OPTIONS = Object.keys(ICONS).sort();
 function kyivInfo(value: string, postNumber: number) {
   const date = new Date(value);
   const day = new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit',timeZone:'Europe/Kyiv'}).format(date);
@@ -62,7 +61,6 @@ export default function App() {
   const [busy,setBusy]=useState(false);
   const [loading,setLoading]=useState(false);
   const [hasMore,setHasMore]=useState(false);
-  const [adminOpen,setAdminOpen]=useState(false);
   const [accountLogin,setAccountLogin]=useState('');
   const [loginAvailability,setLoginAvailability]=useState<'idle'|'checking'|'free'|'taken'|'invalid'>('idle');
   const [newAccount,setNewAccount]=useState<{login:string;secretKey:string}|null>(null);
@@ -210,7 +208,7 @@ export default function App() {
   }
   async function logout(){
     setBusy(true);
-    try{await supabase.auth.signOut();setUser(null);setProfile(null);setModeratorTopics([]);setProfileOpen(false);setAdminOpen(false);setNotice('');}
+    try{await supabase.auth.signOut();setUser(null);setProfile(null);setModeratorTopics([]);setProfileOpen(false);setNotice('');}
     catch(e){setNotice(e instanceof Error?e.message:'Не вдалося вийти.',true);}
     finally{setBusy(false);}
   }
@@ -293,11 +291,11 @@ export default function App() {
 
   return <main className="shell">
     <header>
-      <button className="brand" type="button" onClick={()=>{navigate("/");setAdminOpen(false);setInfoOpen(false);setProfileOpen(false);}} style={{color:topic==='general'?'#111':topics.find(t=>t.id===topic)?.color??'#111'}} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
+      <button className="brand" type="button" onClick={()=>{navigate("/");setInfoOpen(false);setProfileOpen(false);}} style={{color:topic==='general'?'#111':topics.find(t=>t.id===topic)?.color??'#111'}} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
       <nav className="nav" aria-label="Навігація">
-        <button className={`icon-btn${infoOpen?' active':''}`} type="button" aria-label="Інформація" title="Інформація" onClick={()=>{navigate("/info");setInfoOpen(true);setProfileOpen(false);setAdminOpen(false);}}><Info/></button>
-        <button className={`icon-btn${profileOpen?' active':''}`} type="button" aria-label="Профіль" title="Профіль" onClick={()=>{navigate(user?"/profile":"/auth");setProfileOpen(true);setInfoOpen(false);setAdminOpen(false);setAuthStep(user?"idle":"login");}}><UserRound/></button>
-        {profile?.is_admin&&<button className="icon-btn" type="button" aria-label="Панель адміністратора" title="Панель адміністратора" onClick={()=>{setAdminOpen(true);setInfoOpen(false);setProfileOpen(false);navigate('/admin');void loadAdminStats();}}><ShieldCheck/></button>}
+        <button className={`icon-btn${infoOpen?' active':''}`} type="button" aria-label="Інформація" title="Інформація" onClick={()=>{navigate("/info");setInfoOpen(true);setProfileOpen(false);}}><Info/></button>
+        <button className={`icon-btn${profileOpen?' active':''}`} type="button" aria-label="Профіль" title="Профіль" onClick={()=>{navigate(user?"/profile":"/auth");setProfileOpen(true);setInfoOpen(false);setAuthStep(user?"idle":"login");}}><UserRound/></button>
+        {profile?.is_admin&&<button className="icon-btn" type="button" aria-label="Панель адміністратора" title="Панель адміністратора" onClick={()=>{setInfoOpen(false);setProfileOpen(false);navigate('/admin');void loadAdminStats();}}><ShieldCheck/></button>}
       </nav>
     </header>
     {route==='/info'?<section className="info-panel">
@@ -330,7 +328,7 @@ export default function App() {
       {status&&<div className={`status${error?' error':''}`}>{status}</div>}
     </section>}
     {route==='/admin'&&profile?.is_admin?<section className="admin-panel">
-      <div className="admin-heading"><div><span className="admin-eyebrow">CONTROL ROOM</span><h2>Керування copypaste</h2></div><button className="admin-close" type="button" onClick={()=>{setAdminOpen(false);navigate('/profile');}}>До профілю ×</button></div>
+      <div className="admin-heading"><div><span className="admin-eyebrow">CONTROL ROOM</span><h2>Керування copypaste</h2></div><button className="admin-close" type="button" onClick={()=>{navigate('/profile');}}>До профілю ×</button></div>
       <div className="admin-stats"><div><strong>{stats.posts}</strong><span>повідомлень</span></div><div><strong>{stats.users}</strong><span>профілів</span></div><div><strong>{topics.length}</strong><span>розділів</span></div></div>
       <div className="admin-grid">
         <section className="admin-card admin-wide"><div className="admin-card-title"><span>01</span><h3>Публікації та обмеження</h3></div><p>Загальний інтервал між публікаціями для всіх учасників. Адміністратор не обмежується таймером.</p><div className="admin-inline"><label>Інтервал у хвилинах<input type="number" min="0" max="10080" value={cooldownMinutes} onChange={e=>setCooldownMinutes(Math.max(0,Math.min(10080,Number(e.target.value)||0)))}/></label><button type="button" onClick={async()=>{try{await adminAction('update_settings',{cooldownMinutes});setNotice(cooldownMinutes?'Загальний таймінг збережено.':'Часові обмеження вимкнено.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Зберегти таймінг</button></div><p className="admin-help">Обмежити вибраним учасникам доступ до певних розділів</p><div className="restriction-layout"><div><strong>Учасники</strong>{adminUsers.filter(p=>!p.is_admin).map(p=><label className="admin-check" key={p.id}><input type="checkbox" checked={restrictedUsers.includes(p.hex_login)} onChange={e=>setRestrictedUsers(old=>e.target.checked?[...old,p.hex_login]:old.filter(x=>x!==p.hex_login))}/><span>{p.hex_login}{restrictionMap[p.hex_login]?.length?' · вже обмежено':''}</span></label>)}</div><div><strong>Розділи</strong>{topics.map(t=><label className="admin-check" key={t.id}><input type="checkbox" checked={restrictedTopics.includes(t.id)} onChange={e=>setRestrictedTopics(old=>e.target.checked?[...old,t.id]:old.filter(x=>x!==t.id))}/><span>{t.label}</span></label>)}</div></div><div className="admin-inline"><button type="button" disabled={!restrictedUsers.length} onClick={async()=>{try{const restrictions=adminUsers.filter(p=>!p.is_admin).map(p=>({login:p.hex_login,topicIds:restrictedUsers.includes(p.hex_login)?restrictedTopics:(restrictionMap[p.hex_login]??[])})).filter(x=>x.topicIds.length);await adminAction('replace_post_restrictions',{restrictions});const next={...restrictionMap};for(const login of restrictedUsers)next[login]=[...restrictedTopics];setRestrictionMap(next);setRestrictedUsers([]);setNotice(restrictedTopics.length?'Обмеження збережено.':'Обмеження для вибраних учасників знято.');}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}>Зберегти обмеження</button><button type="button" className="admin-text-button" onClick={()=>{setRestrictedUsers([]);setRestrictedTopics([]);}}>Очистити вибір</button></div></section>

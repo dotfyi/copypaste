@@ -84,7 +84,7 @@ export default function App() {
   const offsetRef=useRef(0);
   const moreRef=useRef(true);
 
-  const setNotice=(value:string,isError=false)=>{setStatus(value);setError(isError);};
+  const setNotice=(value:string,isError=false)=>{setStatus(isError?value:'');setError(isError);};
 
   const ensureIdentity=useCallback(async()=>{
     const {data,error}=await supabase.auth.getSession();
@@ -180,25 +180,25 @@ export default function App() {
   function updateTopic(next:string){if(next===topic)return;offsetRef.current=0;moreRef.current=true;setHasMore(false);setPosts([]);setTopic(next);}
 
   async function runAuthCommand(key:string){
-    setBusy(true);setNotice('Перевіряємо ключ…');
+    setBusy(true);setNotice('');
     try{
       const {data,error}=await supabase.functions.invoke('copypaste-auth',{body:{action:'login',secretKey:key.trim().toLowerCase()}});
       if(error||data?.error)throw new Error(data?.error||'Ключ не підійшов.');
       const {error:sessionError}=await supabase.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});
       if(sessionError)throw sessionError;
-      await ensureIdentity();setNotice('Увійшли в акаунт.');
+      await ensureIdentity();setProfileOpen(false);setAuthStep('idle');setLoginKey('');setNotice('');
     }catch(e){setNotice(e instanceof Error?e.message:'Помилка авторизації.',true);}
     finally{setBusy(false);}
   }
   async function logout(){
     setBusy(true);
-    try{await supabase.auth.signOut();setUser(null);setProfile(null);setModeratorTopics([]);setProfileOpen(false);setAdminOpen(false);setNotice('Ти вийшов з акаунта.');}
+    try{await supabase.auth.signOut();setUser(null);setProfile(null);setModeratorTopics([]);setProfileOpen(false);setAdminOpen(false);setNotice('');}
     catch(e){setNotice(e instanceof Error?e.message:'Не вдалося вийти.',true);}
     finally{setBusy(false);}
   }
 
   async function beginRegistration(){
-    setBusy(true);setNotice('Створюємо акаунт…');
+    setBusy(true);setNotice('');
     try{
       const {data,error}=await supabase.functions.invoke('copypaste-auth',{body:{action:'register'}});
       if(error||data?.error)throw new Error(data?.error||'Не вдалося створити акаунт.');
@@ -213,7 +213,7 @@ export default function App() {
     try{
       const {error}=await supabase.auth.setSession({access_token:registration.access_token,refresh_token:registration.refresh_token});
       if(error)throw error;
-      await ensureIdentity();setAuthStep('idle');setRegistration(null);setNotice('Акаунт створено. Ти увійшов.');setMessage('');
+      await ensureIdentity();setAuthStep('idle');setRegistration(null);setProfileOpen(false);setLoginKey('');setRulesAccepted(false);setNotice('');setMessage('');
     }catch(e){setNotice(e instanceof Error?e.message:'Не вдалося увійти.',true);}
     finally{setBusy(false);}
   }

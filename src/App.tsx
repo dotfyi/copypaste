@@ -369,10 +369,10 @@ export default function App() {
             <div className="account-profile-heading"><h1>{publicProfile.hex_login}</h1><span className="account-profile-role">{publicProfile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:publicProfile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
           </div>
           <div className="public-profile-body">
-            <div className="account-profile-welcome"><h2>Активність</h2></div>
-            <div className="public-profile-stats"><div><MessageCircle aria-hidden="true"/><strong>{publicProfilePosts.length}</strong><span>ПОВІДОМЛЕНЬ</span></div><div><BookOpen aria-hidden="true"/><strong>{new Set(publicProfilePosts.map(post=>post.topic)).size}</strong><span>ТЕМ</span></div><div><Trophy aria-hidden="true"/><strong>0/99</strong><span>ДОСЯГНЕНЬ</span></div></div>
-            <div className="profile-posts-heading">Останні думки</div>
-            {publicProfilePosts.length?publicProfilePosts.map(post=><article className="post public-profile-post" key={post.id}><div className="meta"><span className="public-post-topic">{topics.find(t=>t.id===post.topic)?.label??post.topic}</span><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time></div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered}/></p></article>):<div className="public-profile-empty">Цей учасник ще не публікував повідомлень.</div>}
+            <div className="account-profile-welcome"><h2>Слід у спільноті</h2><span className="public-profile-count">COPypaste MEMBER</span></div>
+            <div className="public-profile-stats"><div><MessageCircle aria-hidden="true"/><strong>{publicProfilePosts.length}</strong><span>ДОПИСІВ</span></div><div><BookOpen aria-hidden="true"/><strong>{new Set(publicProfilePosts.map(post=>post.topic)).size}</strong><span>ТЕМ</span></div></div>
+            <div className="profile-topic-footprint"><span className="profile-section-label">ДО ЯКИХ ТЕМ ДОЛУЧАВСЯ</span><div className="profile-topic-list">{topics.filter(t=>publicProfilePosts.some(post=>post.topic===t.id)).map(t=><span key={t.id} style={{'--topic-accent':t.color} as CSSProperties}><i/>{t.label}</span>)}{!publicProfilePosts.length&&<span className="profile-topic-empty">Поки без публікацій — усе ще попереду.</span>}</div></div>
+            <div className="profile-presence"><span className="profile-section-label">ОСТАННЯ АКТИВНІСТЬ</span><strong>{publicProfilePosts[0]?kyivInfo(publicProfilePosts[0].created_at,publicProfilePosts[0].post_number):'Ще не починав'}</strong></div>
           </div>
         </div>
       </>:<div className="public-profile-empty"><h2>Профіль не знайдено</h2><p>Перевір HEX-логін або повернись до стрічки.</p><button className="profile-logout" type="button" onClick={()=>navigate('/')}>На головну</button></div>}
@@ -386,10 +386,10 @@ export default function App() {
           <button className="profile-logout profile-logout-top" type="button" disabled={busy} onClick={()=>void logout()}>Вийти</button>
         </div>
         <div className="public-profile-body">
-          <div className="account-profile-welcome"><h2>Активність</h2></div>
-          <div className="public-profile-stats"><div><MessageCircle aria-hidden="true"/><strong>{ownProfilePosts.length}</strong><span>ПОВІДОМЛЕНЬ</span></div><div><BookOpen aria-hidden="true"/><strong>{new Set(ownProfilePosts.map(post=>post.topic)).size}</strong><span>ТЕМ</span></div><div><Trophy aria-hidden="true"/><strong>0/99</strong><span>ДОСЯГНЕНЬ</span></div></div>
-          <div className="profile-posts-heading">Публікації</div>
-          {ownProfilePosts.length?ownProfilePosts.map(post=><article className="post public-profile-post" key={post.id}><div className="meta"><span className="public-post-topic">{topics.find(t=>t.id===post.topic)?.label??post.topic}</span><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time></div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!profile.is_registered}/></p></article>):<div className="public-profile-empty">Ти ще не публікував повідомлень.</div>}
+          <div className="account-profile-welcome"><h2>Твій слід у спільноті</h2><span className="public-profile-count">COPypaste MEMBER</span></div>
+          <div className="public-profile-stats"><div><MessageCircle aria-hidden="true"/><strong>{ownProfilePosts.length}</strong><span>ДОПИСІВ</span></div><div><BookOpen aria-hidden="true"/><strong>{new Set(ownProfilePosts.map(post=>post.topic)).size}</strong><span>ТЕМ</span></div></div>
+          <div className="profile-topic-footprint"><span className="profile-section-label">ДО ЯКИХ ТЕМ ДОЛУЧАВСЯ</span><div className="profile-topic-list">{topics.filter(t=>ownProfilePosts.some(post=>post.topic===t.id)).map(t=><span key={t.id} style={{'--topic-accent':t.color} as CSSProperties}><i/>{t.label}</span>)}{!ownProfilePosts.length&&<span className="profile-topic-empty">Тут починається твоя історія.</span>}</div></div>
+          <div className="profile-presence"><span className="profile-section-label">ОСТАННЯ АКТИВНІСТЬ</span><strong>{ownProfilePosts[0]?kyivInfo(ownProfilePosts[0].created_at,ownProfilePosts[0].post_number):'Ще не починав'}</strong></div>
           {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
         </div>
       </div>

@@ -606,3 +606,7 @@ textarea:disabled {
 }
 
 .admin-card .admin-check input { display:inline-block; width:13px !important; }
+
+.profile-admin-link { display:inline-flex; align-items:center; gap:8px; margin:12px 0; padding:8px 0; border:0; border-bottom:1px solid #e8e8e8; background:transparent; color:#222; font:inherit; font-size:12px; cursor:pointer; }
+.profile-admin-link svg { width:14px; height:14px; }
+.profile-admin-link:hover { border-bottom-color:#222; }

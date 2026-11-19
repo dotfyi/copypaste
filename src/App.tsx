@@ -57,20 +57,45 @@ function ProfilePulse({posts,topics}:{posts:Post[];topics:Topic[]}) {
   const days=Array.from({length:28},(_,index)=>new Date(todayUtc-(27-index)*86400000).toISOString().slice(0,10));
   const dayRows=new Map<string,Post[]>();
   for(const post of posts){const key=dateFormatter.format(new Date(post.created_at));dayRows.set(key,[...(dayRows.get(key)??[]),post]);}
-  const topicCounts=topics.map(item=>({...item,count:posts.filter(post=>post.topic===item.id).length})).filter(item=>item.count>0).sort((a,b)=>b.count-a.count);
-  const maxDay=Math.max(1,...days.map(day=>(dayRows.get(day)??[]).length));
+  const points=[
+    [42,105],[88,55],[113,158],[151,91],[174,198],[202,42],[224,126],[250,76],
+    [278,177],[301,111],[326,35],[350,147],[378,83],[402,207],[429,119],[455,54],
+    [480,166],[510,98],[535,211],[66,218],[132,24],[189,151],[245,226],[310,218],
+    [366,20],[423,27],[476,229],[548,37]
+  ];
+  const activity=days.map((day,index)=>{
+    const rows=dayRows.get(day)??[];
+    const dominant=topics.find(item=>item.id===rows[0]?.topic);
+    return {day,rows,index,x:points[index][0],y:points[index][1],color:dominant?.color??'#c9c9c9'};
+  });
+  const maxDay=Math.max(1,...activity.map(point=>point.rows.length));
+  const topicCounts=topics.map(item=>({...item,count:activity.reduce((sum,point)=>sum+point.rows.filter(post=>post.topic===item.id).length,0)})).filter(item=>item.count>0).sort((a,b)=>b.count-a.count);
   const latest=posts[0];
-  return <section className="profile-living" aria-label="Активність учасника">
-    <div className="profile-living-heading"><div><span className="profile-section-label">ЖИВИЙ СЛІД</span><h2>Ритм присутності</h2></div><span className="profile-living-period">28 ДНІВ</span></div>
-    <div className="profile-activity-grid" role="img" aria-label="Активність за останні 28 днів">
-      {days.map((day)=>{const rows=dayRows.get(day)??[];const level=rows.length?Math.max(1,Math.ceil(rows.length/maxDay*4)):0;const dominant=topics.find(item=>item.id===rows[0]?.topic);return <span key={day} className={`profile-activity-cell level-${level}`} style={{'--activity-color':dominant?.color??'#dedede','--activity-opacity':rows.length?String(.28+level*.18):'.42'} as CSSProperties} title={day+`: `+rows.length+` ${rows.length===1?'допис':rows.length>1&&rows.length<5?'дописи':'дописів'}`} aria-hidden="true"/>;})}
+  const total=activity.reduce((sum,point)=>sum+point.rows.length,0);
+  return <section className="profile-living" aria-label="Активність учасника за останні 28 днів">
+    <div className="profile-constellation-meta"><span>АКТИВНІСТЬ</span><span>ОСТАННІ 28 ДНІВ</span></div>
+    <div className="profile-constellation" role="img" aria-label={`За останні 28 днів: ${total} дописів`}>
+      <svg viewBox="0 0 590 250" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <ellipse className="profile-orbit" cx="295" cy="125" rx="248" ry="91"/>
+        <ellipse className="profile-orbit profile-orbit-inner" cx="295" cy="125" rx="168" ry="58" transform="rotate(-13 295 125)"/>
+        {activity.map((point,index)=>index>0&&point.rows.length>0&&activity[index-1].rows.length>0?<line key={point.day} x1={activity[index-1].x} y1={activity[index-1].y} x2={point.x} y2={point.y} className="profile-constellation-link"/>:null)}
+        {activity.map(point=>{
+          const intensity=point.rows.length?point.rows.length/maxDay:0;
+          const radius=point.rows.length?2.7+intensity*6.2:1.6;
+          return <g key={point.day}>
+            {point.rows.length>0&&<circle cx={point.x} cy={point.y} r={radius*2.2} fill={point.color} opacity={.09+intensity*.1}/>}
+            <circle cx={point.x} cy={point.y} r={radius} fill={point.color} opacity={point.rows.length?.48+intensity*.52:.22}/>
+            {point.rows.length>0&&<circle cx={point.x} cy={point.y} r="1.2" fill="#fff" opacity=".72"/>}
+            <title>{point.day}: {point.rows.length} дописів</title>
+          </g>;
+        })}
+      </svg>
+      <span className="profile-constellation-total"><strong>{total}</strong><small>ДОПИСІВ</small></span>
     </div>
-    <div className="profile-activity-axis"><span>28 днів тому</span><span>сьогодні</span></div>
     <div className="profile-topic-signal">
-      <span className="profile-section-label">ТЕМИ У СЛІДІ</span>
-      {topicCounts.length?<><div className="profile-topic-spectrum" aria-label="Розподіл активності за темами">{topicCounts.map(item=><i key={item.id} style={{width:`${item.count/posts.length*100}%`,'--topic-accent':item.color} as CSSProperties} title={item.label}/>)}</div><div className="profile-topic-legend">{topicCounts.map(item=><span key={item.id}><i style={{'--topic-accent':item.color} as CSSProperties}/>{item.label}</span>)}</div></>:<p className="profile-living-empty">Поки жодного сигналу. Можна почати з будь-якої теми.</p>}
+      {topicCounts.length?<><div className="profile-topic-spectrum" aria-label="Розподіл активності за темами">{topicCounts.map(item=><i key={item.id} style={{width:`${item.count/total*100}%`,'--topic-accent':item.color} as CSSProperties} title={item.label}/>)}</div><div className="profile-topic-legend">{topicCounts.map(item=><span key={item.id}><i style={{'--topic-accent':item.color} as CSSProperties}/>{item.label}</span>)}</div></>:<p className="profile-living-empty">Тут поки тихо. Перший допис стане першою зіркою.</p>}
     </div>
-    <div className="profile-presence"><span className="profile-section-label">ОСТАННІЙ СИГНАЛ</span><strong>{latest?kyivInfo(latest.created_at,latest.post_number):'Очікує на перший імпульс'}</strong></div>
+    {latest&&<div className="profile-presence"><span className="profile-section-label">ОСТАННІЙ ДОПИС</span><strong>{kyivInfo(latest.created_at,latest.post_number)}</strong></div>}
   </section>;
 }
 

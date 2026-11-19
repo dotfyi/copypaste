@@ -35,13 +35,13 @@ function Spoiler({children,canReveal}:{children:string;canReveal:boolean}) {
   useEffect(()=>{const close=(event:MouseEvent)=>{if(!(event.target instanceof Element&&event.target.closest('.spoiler-wrap')))setRevealed(false);};document.addEventListener('click',close);return()=>document.removeEventListener('click',close);},[]);
   return <span className="spoiler-wrap"><button type="button" className={`spoiler${revealed?' revealed':''}${canReveal?'':' locked'}`} onClick={()=>{if(canReveal)setRevealed(value=>!value);}} aria-label={canReveal?'Відкрити спойлер':'Прихований текст'}>{children}</button></span>;
 }
-function FormattedText({value,canRevealSpoilers,onLocked}:{value:string;canRevealSpoilers:boolean;onLocked:()=>void}) {
+function FormattedText({value,canRevealSpoilers}:{value:string;canRevealSpoilers:boolean}) {
   const pattern=/(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|\|\|[^|]+\|\||>[^\n]+)/gm;
   const nodes=[];let last=0;
   for(const match of value.matchAll(pattern)){const token=match[0],index=match.index??0;if(index>last)nodes.push(value.slice(last,index));
     if(token.startsWith('**'))nodes.push(<strong key={index}>{token.slice(2,-2)}</strong>);
     else if(token.startsWith('~~'))nodes.push(<del key={index}>{token.slice(2,-2)}</del>);
-    else if(token.startsWith('||'))nodes.push(<Spoiler key={index} canReveal={canRevealSpoilers} onLocked={onLocked}>{token.slice(2,-2)}</Spoiler>);
+    else if(token.startsWith('||'))nodes.push(<Spoiler key={index} canReveal={canRevealSpoilers}>{token.slice(2,-2)}</Spoiler>);
     else if(token.startsWith('*'))nodes.push(<em key={index}>{token.slice(1,-1)}</em>);
     else nodes.push(<span className="green-text" key={index}>{token.slice(1)}</span>);
     last=index+token.length;
@@ -362,7 +362,7 @@ export default function App() {
           {posts.length===0&&!loading?<div className="empty-state"><MessageCircle/><p>Тут поки тихо</p><span>Залиш першу думку в цьому розділі</span></div>:posts.map(post=><article className="post" key={post.id}>
             <div className="meta"><div className="identity"><span className="swatch" style={{backgroundColor:post.profile?.hex_login??'#aaa'}}/><span className="hex" style={{color:'#111'}}>{post.profile?.hex_login?.toLowerCase()??'#??????'}</span>{post.profile?.is_moderator&&post.profile.moderator_topics?.includes(post.topic)&&(()=>{const topicIconName=topics.find(t=>t.id===post.topic)?.icon??'';const TopicIcon=(ICONS as any)[topicIconName]??(LucideIcons as any)[topicIconName]??MessageCircle;return <TopicIcon className="moderator-topic-icon" style={{color:topics.find(t=>t.id===post.topic)?.color??'#777'}} aria-label="Модератор розділу"/>})()}</div><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time>
               {(profile?.is_admin||(profile?.is_moderator&&moderatorTopics.includes(post.topic)))&&<button className="moderate-delete" type="button" aria-label="Видалити повідомлення" onClick={async()=>{try{await adminAction('delete_post',{postId:post.id});await loadPosts(true);}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}><Trash2/></button>}
-            </div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered} onLocked={()=>{setAuthStep('login');setProfileOpen(true);setInfoOpen(false);navigate('/auth');setNotice('Щоб переглянути спойлер, увійди або створи акаунт.');window.scrollTo({top:0,behavior:'smooth'});}}/></p>
+            </div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered}/></p>
           </article>)}
           {loading&&posts.length===0&&<div className="empty">Завантажуємо потік…</div>}
         </div>

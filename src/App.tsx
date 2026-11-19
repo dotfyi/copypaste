@@ -64,7 +64,6 @@ function ProfilePulse({posts,topics}:{posts:Post[];topics:Topic[]}) {
     const key=dateParts(new Date(post.created_at));
     dayRows.set(key,[...(dayRows.get(key)??[]),post]);
   }
-  const formatter=new Intl.DateTimeFormat('uk-UA',{timeZone:'Europe/Kyiv'});
   const shortDate=new Intl.DateTimeFormat('uk-UA',{day:'numeric',month:'short',timeZone:'Europe/Kyiv'});
   const weekday=new Intl.DateTimeFormat('uk-UA',{weekday:'short',timeZone:'Europe/Kyiv'});
   const clock=new Intl.DateTimeFormat('uk-UA',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Europe/Kyiv'});
@@ -75,7 +74,7 @@ function ProfilePulse({posts,topics}:{posts:Post[];topics:Topic[]}) {
     const counts=new Map<string,number>();
     rows.forEach(post=>counts.set(post.topic,(counts.get(post.topic)??0)+1));
     const topicRows=[...counts.entries()].map(([id,count])=>({topic:topics.find(item=>item.id===id),count})).filter(item=>item.topic);
-    return {key,date,rows,topicRows,first:rows[0],last:rows[rows.length-1]};
+    return {key,date,rows,topicRows,first:rows[0]!,last:rows[rows.length-1]!};
   }).filter(entry=>entry.rows.length>0).reverse();
   const weeks: {key:string;label:string;entries:typeof entries}[]=[];
   for(const entry of entries){

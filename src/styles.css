@@ -343,3 +343,23 @@ textarea:disabled {
 .profile-warning { margin:14px 0 4px; padding:10px 0; border-top:1px solid #eee; border-bottom:1px solid #eee; color:#9a6734; font-size:10px; line-height:1.6; }
 
 .admin-zodiac-icon { width:13px; height:13px; margin-left:5px; color:#111; stroke-width:1.9; vertical-align:-2px; flex:0 0 auto; }
+
+
+/* Profile-based sign in and registration */
+.profile-auth { display:flex; flex-direction:column; align-items:flex-start; gap:13px; padding:18px 0 4px; }
+.profile-auth h3 { margin:0; font-size:14px; font-weight:650; }
+.profile-auth p { margin:0; color:#888; font-size:11px; line-height:1.6; }
+.auth-link, .inline-link { display:inline-flex; align-items:center; gap:6px; width:max-content; padding:0; border:0; background:transparent; color:#222; font:inherit; font-size:12px; text-decoration:underline; text-decoration-color:transparent; text-underline-offset:3px; cursor:pointer; }
+.auth-link:hover:not(:disabled), .inline-link:hover { text-decoration-color:currentColor; }
+.auth-link:disabled { color:#aaa; cursor:default; }
+.auth-link.muted { color:#999; }
+.auth-key-input { width:100%; padding:10px 0; border:0; border-bottom:1px solid var(--line); border-radius:0; outline:none; background:transparent; color:#111; font:inherit; font-size:13px; }
+.auth-key-input:focus { border-bottom-color:#111; }
+.rules-check { display:flex; align-items:center; gap:8px; color:#666; font-size:11px; cursor:pointer; }
+.rules-check input { width:14px; height:14px; margin:0; accent-color:#222; }
+.inline-link { display:inline; font-size:inherit; }
+.copy-auth-key svg { width:13px; height:13px; }
+.profile-auth .secret-key { margin:0; width:100%; font-family:ui-monospace,monospace; text-align:center; }
+.profile-auth .auth-warning { color:#9a6734; }
+.composer .counter { min-width:44px; color:#aaa; font-variant-numeric:tabular-nums; }
+.composer textarea:disabled { cursor:not-allowed; }

@@ -366,25 +366,19 @@ export default function App() {
     {(route==='/profile'||route==='/auth')&&<section className="profile-panel">
       {user&&profile?<>
       <div className="account-profile">
-        <div className="account-profile-cover">
-          <div className="account-profile-orbit account-profile-orbit-one"/><div className="account-profile-orbit account-profile-orbit-two"/>
-          <span className="account-profile-kicker">ТВІЙ ПРОСТІР У COPYPASTE</span>
-          <span className="account-profile-index">PROFILE / PERSONAL</span>
-          <div className="account-profile-identity">
-            <span className="account-profile-avatar" style={{'--profile-accent':profile.hex_login} as CSSProperties}><span>{profile.hex_login.slice(1,3)}</span></span>
-            <div><span className="account-profile-label">ТИ ЗАРАЗ ЯК</span><h1>{profile.hex_login}</h1><span className="account-profile-role">{profile.is_admin?'✳ Адміністратор':profile.is_moderator?'✳ Модератор':'● Учасник спільноти'}</span></div>
-          </div>
-          <span className="account-profile-watermark">cp.</span>
+        <div className="account-profile-identity public-account-identity">
+          <span className="account-profile-avatar" style={{'--profile-accent':profile.hex_login} as CSSProperties}><span>{profile.hex_login.slice(1,3)}</span></span>
+          <div><span className="account-profile-label">ТВІЙ ПРОФІЛЬ</span><h1>{profile.hex_login}</h1><span className="account-profile-role">{profile.is_admin?'✳ Адміністратор':profile.is_moderator?'✳ Модератор':'Учасник спільноти'}</span></div>
         </div>
         <div className="account-profile-body">
-          <div className="account-profile-welcome"><div><span className="account-profile-label">ОСОБИСТИЙ КАБІНЕТ</span><h2>Радий бачити тебе.</h2></div><span className="account-profile-live"><i/> ONLINE</span></div>
+          <div className="account-profile-welcome"><div><span className="account-profile-label">COPYPASTE / ACCOUNT</span><h2>Радий, що ти тут.</h2></div></div>
           <div className="account-profile-facts">
-            <div><span>АКАУНТ</span><strong>Активний</strong><small>Ти успішно авторизований</small></div>
-            <div><span>ІДЕНТИЧНІСТЬ</span><strong>Анонімна</strong><small>Без імені. Лише твій HEX.</small></div>
+            <div><span>СТАТУС</span><strong>Активний</strong><small>Акаунт авторизований</small></div>
+            <div><span>ФОРМАТ</span><strong>Анонімний</strong><small>Твій HEX — твоя ідентичність</small></div>
           </div>
-          {(profile.is_admin||profile.is_moderator)&&<div className="account-profile-permissions"><span>ТВОЇ ПОВНОВАЖЕННЯ</span><strong>{profile.is_admin?'Повний доступ до всіх розділів':moderatorTopics.length?moderatorTopics.map(id=>topics.find(t=>t.id===id)?.label??id).join(' · '):'Роль модератора призначена'}</strong></div>}
+          {(profile.is_admin||profile.is_moderator)&&<div className="account-profile-permissions"><span>ПОВНОВАЖЕННЯ</span><strong>{profile.is_admin?'Повний доступ до всіх розділів':moderatorTopics.length?moderatorTopics.map(id=>topics.find(t=>t.id===id)?.label??id).join(' · '):'Роль модератора призначена'}</strong></div>}
           {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
-          <div className="account-profile-footer"><span>ТВОЯ ПРИСУТНІСТЬ. ТВОЇ ПРАВИЛА.</span><button className="profile-logout" type="button" disabled={busy} onClick={()=>void logout()}><LogOut/> Вийти з акаунта</button></div>
+          <div className="account-profile-footer"><span>БЕРЕЖИ СВІЙ СЕКРЕТНИЙ КЛЮЧ</span><button className="profile-logout" type="button" disabled={busy} onClick={()=>void logout()}>Вийти з акаунта</button></div>
         </div>
       </div>
       </>:<div className="profile-auth">

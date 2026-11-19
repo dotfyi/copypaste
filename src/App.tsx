@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent, type CSSProperties } from 'react';
-import { AlarmClock, Anchor, Archive, Award, Baby, BadgeCheck, Banknote, Bell, Binary, Blocks, Bot, Box, Briefcase, Building2, Calendar, Car, Castle, Check, ChessKnight, Cloud, Crown, Database, Dog, DoorOpen, Feather, Flag, Flower, Footprints, Gift, GraduationCap, Handshake, Headphones, Key, Leaf, Lock, Mail, Mic, Moon, Mountain, Plane, Puzzle, QrCode, Radio, Rainbow, Scissors, Server, ShieldCheck, Ship, ShoppingCart, Snowflake, Swords, Ticket, Trees, Tv, Umbrella, Waves, Wifi, Wind, ZodiacAries, ZodiacAquarius, ZodiacCancer, ZodiacCapricorn, ZodiacGemini, ZodiacLeo, ZodiacLibra, ZodiacPisces, ZodiacSagittarius, ZodiacScorpio, ZodiacTaurus, ZodiacVirgo, Activity, Aperture, Atom, AudioLines, Bike, Bird, Book, BookOpen, Bookmark, BriefcaseBusiness, Camera, Cat, ChartNoAxesCombined, CircleHelp, Code, Coffee, Compass, Cpu, Dice5, Dumbbell, Earth, Film, Flame, FlaskConical, Flower2, Gamepad2, Gem, Ghost, Globe2, Hammer, Heart, House, Lightbulb, Map as MapIcon, MessageCircle, Music, Palette, PawPrint, Rocket, School, Search, Shield, ShoppingBag, Smile, Sparkles, Star, Sun, Terminal, Trophy, Users, Video, Wallet, WandSparkles, Wrench, Zap, Newspaper, Trash2, Info, UserRound, LogOut, Copy } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
+import { AlarmClock, Anchor, Archive, Award, Baby, BadgeCheck, Banknote, Bell, Binary, Blocks, Bot, Box, Briefcase, Building2, Calendar, Car, Castle, Check, ChessKnight, Cloud, Crown, Database, Dog, DoorOpen, Feather, Flag, Flower, Footprints, Gift, GraduationCap, Handshake, Headphones, Key, Leaf, Lock, Mail, Mic, Moon, Mountain, Plane, Puzzle, QrCode, Radio, Rainbow, Scissors, Server, ShieldCheck, Ship, ShoppingCart, Snowflake, Swords, Ticket, Trees, Tv, Umbrella, Waves, Wifi, Wind, Activity, Aperture, Atom, AudioLines, Bike, Bird, Book, BookOpen, Bookmark, BriefcaseBusiness, Camera, Cat, ChartNoAxesCombined, CircleHelp, Code, Coffee, Compass, Cpu, Dice5, Dumbbell, Earth, Film, Flame, FlaskConical, Flower2, Gamepad2, Gem, Ghost, Globe2, Hammer, Heart, House, Lightbulb, Map as MapIcon, MessageCircle, Music, Palette, PawPrint, Rocket, School, Search, Shield, ShoppingBag, Smile, Sparkles, Star, Sun, Terminal, Trophy, Users, Video, Wallet, WandSparkles, Wrench, Zap, Newspaper, Trash2, Info, UserRound, LogOut, Copy } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 
@@ -18,7 +19,7 @@ const DEFAULT_TOPICS: Topic[] = [
   {id:'art',label:'Мистецтво',icon:'Palette',color:'#8eae88'},
   {id:'news',label:'Новини',icon:'Newspaper',color:'#c99b82'}
 ];
-const ICONS: Record<string, typeof Globe2> = {AlarmClock:AlarmClock,Anchor:Anchor,Archive:Archive,Award:Award,Baby:Baby,BadgeCheck:BadgeCheck,Banknote:Banknote,Bell:Bell,Binary:Binary,Blocks:Blocks,Bot:Bot,Box:Box,Briefcase:Briefcase,Building2:Building2,Calendar:Calendar,Car:Car,Castle:Castle,Check:Check,ChessKnight:ChessKnight,Cloud:Cloud,Crown:Crown,Database:Database,Dog:Dog,DoorOpen:DoorOpen,Feather:Feather,Flag:Flag,Flower:Flower,Footprints:Footprints,Gift:Gift,GraduationCap:GraduationCap,Handshake:Handshake,Headphones:Headphones,Key:Key,Leaf:Leaf,Lock:Lock,Mail:Mail,Mic:Mic,Moon:Moon,Mountain:Mountain,Plane:Plane,Puzzle:Puzzle,QrCode:QrCode,Radio:Radio,Rainbow:Rainbow,Scissors:Scissors,Server:Server,ShieldCheck:ShieldCheck,Ship:Ship,ShoppingCart:ShoppingCart,Snowflake:Snowflake,Swords:Swords,Ticket:Ticket,Trees:Trees,Tv:Tv,Umbrella:Umbrella,Waves:Waves,Wifi:Wifi,Wind:Wind,ZodiacAries:ZodiacAries,ZodiacAquarius:ZodiacAquarius,ZodiacCancer:ZodiacCancer,ZodiacCapricorn:ZodiacCapricorn,ZodiacGemini:ZodiacGemini,ZodiacLeo:ZodiacLeo,ZodiacLibra:ZodiacLibra,ZodiacPisces:ZodiacPisces,ZodiacSagittarius:ZodiacSagittarius,ZodiacScorpio:ZodiacScorpio,ZodiacTaurus:ZodiacTaurus,ZodiacVirgo:ZodiacVirgo,Activity,Aperture,Atom,AudioLines,Bike,Bird,Book,BookOpen,Bookmark,BriefcaseBusiness,Camera,Cat,ChartNoAxesCombined,CircleHelp,Code,Coffee,Compass,Cpu,Dice5,Dumbbell,Earth,Film,Flame,FlaskConical,Flower2,Gamepad2,Gem,Ghost,Globe2,Hammer,Heart,House,Lightbulb,Map:MapIcon,MessageCircle,Music,Palette,PawPrint,Rocket,School,Search,Shield,ShoppingBag,Smile,Sparkles,Star,Sun,Terminal,Trophy,Users,Video,Wallet,WandSparkles,Wrench,Zap,Newspaper};
+const ICONS: Record<string, typeof Globe2> = {AlarmClock:AlarmClock,Anchor:Anchor,Archive:Archive,Award:Award,Baby:Baby,BadgeCheck:BadgeCheck,Banknote:Banknote,Bell:Bell,Binary:Binary,Blocks:Blocks,Bot:Bot,Box:Box,Briefcase:Briefcase,Building2:Building2,Calendar:Calendar,Car:Car,Castle:Castle,Check:Check,ChessKnight:ChessKnight,Cloud:Cloud,Crown:Crown,Database:Database,Dog:Dog,DoorOpen:DoorOpen,Feather:Feather,Flag:Flag,Flower:Flower,Footprints:Footprints,Gift:Gift,GraduationCap:GraduationCap,Handshake:Handshake,Headphones:Headphones,Key:Key,Leaf:Leaf,Lock:Lock,Mail:Mail,Mic:Mic,Moon:Moon,Mountain:Mountain,Plane:Plane,Puzzle:Puzzle,QrCode:QrCode,Radio:Radio,Rainbow:Rainbow,Scissors:Scissors,Server:Server,ShieldCheck:ShieldCheck,Ship:Ship,ShoppingCart:ShoppingCart,Snowflake:Snowflake,Swords:Swords,Ticket:Ticket,Trees:Trees,Tv:Tv,Umbrella:Umbrella,Waves:Waves,Wifi:Wifi,Wind:Wind,Activity,Aperture,Atom,AudioLines,Bike,Bird,Book,BookOpen,Bookmark,BriefcaseBusiness,Camera,Cat,ChartNoAxesCombined,CircleHelp,Code,Coffee,Compass,Cpu,Dice5,Dumbbell,Earth,Film,Flame,FlaskConical,Flower2,Gamepad2,Gem,Ghost,Globe2,Hammer,Heart,House,Lightbulb,Map:MapIcon,MessageCircle,Music,Palette,PawPrint,Rocket,School,Search,Shield,ShoppingBag,Smile,Sparkles,Star,Sun,Terminal,Trophy,Users,Video,Wallet,WandSparkles,Wrench,Zap,Newspaper};
 const ICON_OPTIONS = Object.keys(ICONS).sort();
 function kyivInfo(value: string, postNumber: number) {
   const date = new Date(value);
@@ -67,6 +68,7 @@ export default function App() {
   const [newAccount,setNewAccount]=useState<{login:string;secretKey:string}|null>(null);
   const [moderatorLogin,setModeratorLogin]=useState('');
   const [topicName,setTopicName]=useState('');
+  const [topicPath,setTopicPath]=useState('');
   const [topicIcon,setTopicIcon]=useState('MessageCircle');
   const [topicColor,setTopicColor]=useState('#aaa0cf');
   const [infoOpen,setInfoOpen]=useState(false);
@@ -77,6 +79,15 @@ export default function App() {
   const [rulesAccepted,setRulesAccepted]=useState(false);
   const [registration,setRegistration]=useState<{secretKey:string;access_token:string;refresh_token:string;hexLogin:string}|null>(null);
   const [moderatorTopic,setModeratorTopic]=useState('general');
+  const [selectedModeratorTopics,setSelectedModeratorTopics]=useState<string[]>(['general']);
+  const [adminUsers,setAdminUsers]=useState<{id:string;hex_login:string;is_admin:boolean;is_moderator:boolean}[]>([]);
+  const [cooldownMinutes,setCooldownMinutes]=useState(0);
+  const [restrictedUsers,setRestrictedUsers]=useState<string[]>([]);
+  const [restrictedTopics,setRestrictedTopics]=useState<string[]>([]);
+  const [statsTopic,setStatsTopic]=useState('');
+  const [statsUser,setStatsUser]=useState<string|null>(null);
+  const [statsRows,setStatsRows]=useState<any[]>([]);
+  const [statsMode,setStatsMode]=useState<'topics'|'posts'|'users'>('topics');
   const [moderatorTopics,setModeratorTopics]=useState<string[]>([]);
   const [stats,setStats]=useState({posts:0,users:0});
   const sentinelRef=useRef<HTMLDivElement>(null);
@@ -181,7 +192,7 @@ export default function App() {
     el.style.overflowY=contentHeight>maxHeight?'auto':'hidden';
   },[message]);
 
-  function updateTopic(next:string){if(next===topic)return;offsetRef.current=0;moreRef.current=true;setHasMore(false);setPosts([]);setTopic(next);}
+  const isFeedRoute=route==='/'||topics.some(t=>route===`/${t.id}`);\n  function updateTopic(next:string){if(next===topic&&route===(next==='general'?'/':`/${next}`))return;offsetRef.current=0;moreRef.current=true;setHasMore(false);setPosts([]);setTopic(next);navigate(next==='general'?'/':`/${next}`);}
 
   async function runAuthCommand(key:string){
     setBusy(true);setNotice('');
@@ -261,7 +272,7 @@ export default function App() {
       <nav className="nav" aria-label="Навігація">
         <button className={`icon-btn${infoOpen?' active':''}`} type="button" aria-label="Інформація" title="Інформація" onClick={()=>{navigate("/info");setInfoOpen(true);setProfileOpen(false);setAdminOpen(false);}}><Info/></button>
         <button className={`icon-btn${profileOpen?' active':''}`} type="button" aria-label="Профіль" title="Профіль" onClick={()=>{navigate(user?"/profile":"/auth");setProfileOpen(true);setInfoOpen(false);setAdminOpen(false);setAuthStep(user?"idle":"login");}}><UserRound/></button>
-        {profile?.is_admin&&<button className="icon-btn" type="button" aria-label="Панель адміністратора" title="Панель адміністратора" onClick={()=>{setAdminOpen(v=>!v);setInfoOpen(false);setProfileOpen(false);if(!adminOpen)void loadAdminStats();}}><ShieldCheck/></button>}
+        {profile?.is_admin&&<button className="icon-btn" type="button" aria-label="Панель адміністратора" title="Панель адміністратора" onClick={()=>{setAdminOpen(true);setInfoOpen(false);setProfileOpen(false);navigate('/admin');void loadAdminStats();}}><ShieldCheck/></button>}
       </nav>
     </header>
     {route==='/info'?<section className="info-panel">
@@ -283,7 +294,7 @@ export default function App() {
     </section>:infoOpen?null:null}
     {(route==='/profile'||route==='/auth')&&<section className="profile-panel">
       {user&&profile?<>
-      <div className="profile-top"><span className="profile-color" style={{background:profile.hex_login}}/><div><strong>{profile.hex_login}{profile.is_admin&&<ShieldCheck className="admin-zodiac-icon" aria-label="Адміністратор"/>}</strong><span>{profile.is_admin?'Адміністратор':profile.is_moderator?'Модератор':'Учасник'}</span></div></div>
+      <div className="profile-top"><span className="profile-color" style={{background:profile.hex_login}}/><div><strong>{profile.hex_login}{profile.is_admin&&<ShieldCheck className="admin-role-icon" aria-label="Адміністратор"/>}</strong><span>{profile.is_admin?'Адміністратор':profile.is_moderator?'Модератор':'Учасник'}</span></div></div>
       <div className="profile-detail"><span>Статус</span><strong>Авторизований акаунт</strong></div>
       {(profile.is_admin||profile.is_moderator)&&<div className="profile-detail"><span>Права модерації</span><strong>{profile.is_admin?'Усі розділи':moderatorTopics.length?moderatorTopics.map(id=>topics.find(t=>t.id===id)?.label??id).join(', '):'Не призначено'}</strong></div>}
       {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
@@ -293,8 +304,8 @@ export default function App() {
       </div>}
       {status&&<div className={`status${error?' error':''}`}>{status}</div>}
     </section>}
-    {route==='/'&&(adminOpen&&profile?.is_admin?<section className="admin-panel">
-      <div className="admin-heading"><div><span className="admin-eyebrow">CONTROL ROOM</span><h2>Керування copypaste</h2></div><button className="admin-close" type="button" onClick={()=>setAdminOpen(false)}>Закрити ×</button></div>
+    {route==='/admin'&&profile?.is_admin?<section className="admin-panel">
+      <div className="admin-heading"><div><span className="admin-eyebrow">CONTROL ROOM</span><h2>Керування copypaste</h2></div><button className="admin-close" type="button" onClick={()=>{setAdminOpen(false);navigate('/profile');}}>До профілю ×</button></div>
       <div className="admin-stats"><div><strong>{stats.posts}</strong><span>повідомлень</span></div><div><strong>{stats.users}</strong><span>профілів</span></div><div><strong>{topics.length}</strong><span>розділів</span></div></div>
       <div className="admin-grid">
         <section className="admin-card"><div className="admin-card-title"><span>01</span><h3>Публікації</h3></div><p>Часових обмежень на публікації немає. Писати можуть усі авторизовані користувачі.</p></section>
@@ -313,7 +324,7 @@ export default function App() {
         <div className="topics">{topics.map(item=>{const Icon=ICONS[item.icon]??MessageCircle;return <button key={item.id} type="button" className={`topic-btn${topic===item.id?' active':''}`} style={{'--topic-color':item.color} as CSSProperties} onClick={()=>updateTopic(item.id)}><Icon/>{item.label}</button>;})}</div>
         <div id="feed" aria-live="polite">
           {posts.length===0&&!loading?<div className="empty-state"><MessageCircle/><p>Тут поки тихо</p><span>Залиш першу думку в цьому розділі</span></div>:posts.map(post=><article className="post" key={post.id}>
-            <div className="meta"><div className="identity"><span className="swatch" style={{backgroundColor:post.profile?.hex_login??'#aaa'}}/><span className="hex" style={{color:'#111'}}>{post.profile?.hex_login?.toLowerCase()??'#??????'}</span>{post.profile?.is_admin&&<ZodiacAries className="admin-zodiac-icon" aria-label="Адміністратор"/>}{post.profile?.is_moderator&&post.profile.moderator_topics?.includes(post.topic)&&(()=>{const TopicIcon=ICONS[topics.find(t=>t.id===post.topic)?.icon??'']??MessageCircle;return <TopicIcon className="moderator-topic-icon" style={{color:topics.find(t=>t.id===post.topic)?.color??'#777'}} aria-label="Модератор розділу"/>})()}</div><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time>
+            <div className="meta"><div className="identity"><span className="swatch" style={{backgroundColor:post.profile?.hex_login??'#aaa'}}/><span className="hex" style={{color:'#111'}}>{post.profile?.hex_login?.toLowerCase()??'#??????'}</span>{post.profile?.is_admin&&<ShieldCheck className="admin-role-icon" aria-label="Адміністратор"/>}{post.profile?.is_moderator&&post.profile.moderator_topics?.includes(post.topic)&&(()=>{const TopicIcon=ICONS[topics.find(t=>t.id===post.topic)?.icon??'']??MessageCircle;return <TopicIcon className="moderator-topic-icon" style={{color:topics.find(t=>t.id===post.topic)?.color??'#777'}} aria-label="Модератор розділу"/>})()}</div><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time>
               {(profile?.is_admin||(profile?.is_moderator&&moderatorTopics.includes(post.topic)))&&<button className="moderate-delete" type="button" aria-label="Видалити повідомлення" onClick={async()=>{try{await adminAction('delete_post',{postId:post.id});await loadPosts(true);}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}><Trash2/></button>}
             </div><p className="message"><FormattedText value={post.content}/></p>
           </article>)}

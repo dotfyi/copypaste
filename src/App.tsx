@@ -365,12 +365,13 @@ export default function App() {
       {publicProfileLoading?<div className="public-profile-empty">Завантажуємо профіль…</div>:publicProfile?<>
         <div className="account-profile public-account-profile">
           <div className="account-profile-identity public-account-identity">
-            <span className="account-profile-avatar" style={{'--profile-accent':publicProfile.hex_login} as CSSProperties}><span>{publicProfile.hex_login.slice(1,3)}</span></span>
-            <div className="account-profile-heading"><span className="account-profile-label">ПРОФІЛЬ УЧАСНИКА</span><h1>{publicProfile.hex_login}</h1><span className="account-profile-role">{publicProfile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:publicProfile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
+            <span className="account-profile-avatar" style={{'--profile-accent':publicProfile.hex_login} as CSSProperties} aria-hidden="true"/>
+            <div className="account-profile-heading"><h1>{publicProfile.hex_login}</h1><span className="account-profile-role">{publicProfile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:publicProfile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
           </div>
           <div className="public-profile-body">
-            <div className="account-profile-welcome"><div><span className="account-profile-label">СЛІД У СПІЛЬНОТІ</span><h2>Останні публікації</h2></div><span className="public-profile-count">до 50</span></div>
-            <div className="public-profile-stats"><div><strong>{publicProfilePosts.length}</strong><span>ПУБЛІКАЦІЙ</span></div><div><strong>{new Set(publicProfilePosts.map(post=>post.topic)).size}</strong><span>ТЕМ З ОБГОВОРЕННЯМИ</span></div></div>
+            <div className="account-profile-welcome"><h2>Активність</h2></div>
+            <div className="public-profile-stats"><div><MessageCircle aria-hidden="true"/><strong>{publicProfilePosts.length}</strong><span>ПОВІДОМЛЕНЬ</span></div><div><BookOpen aria-hidden="true"/><strong>{new Set(publicProfilePosts.map(post=>post.topic)).size}</strong><span>ТЕМ</span></div><div><Trophy aria-hidden="true"/><strong>0/99</strong><span>ДОСЯГНЕНЬ</span></div></div>
+            <div className="profile-posts-heading">Публікації</div>
             {publicProfilePosts.length?publicProfilePosts.map(post=><article className="post public-profile-post" key={post.id}><div className="meta"><span className="public-post-topic">{topics.find(t=>t.id===post.topic)?.label??post.topic}</span><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time></div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered}/></p></article>):<div className="public-profile-empty">Цей учасник ще не публікував повідомлень.</div>}
           </div>
         </div>
@@ -380,13 +381,14 @@ export default function App() {
       {user&&profile?<>
       <div className="account-profile">
         <div className="account-profile-identity public-account-identity">
-          <span className="account-profile-avatar" style={{'--profile-accent':profile.hex_login} as CSSProperties}><span>{profile.hex_login.slice(1,3)}</span></span>
-          <div className="account-profile-heading"><span className="account-profile-label">ТВІЙ ПРОФІЛЬ</span><h1>{profile.hex_login}</h1><span className="account-profile-role">{profile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:profile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
+          <span className="account-profile-avatar" style={{'--profile-accent':profile.hex_login} as CSSProperties} aria-hidden="true"/>
+          <div className="account-profile-heading"><h1>{profile.hex_login}</h1><span className="account-profile-role">{profile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:profile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
           <button className="profile-logout profile-logout-top" type="button" disabled={busy} onClick={()=>void logout()}>Вийти</button>
         </div>
         <div className="public-profile-body">
-          <div className="account-profile-welcome"><div><span className="account-profile-label">СЛІД У СПІЛЬНОТІ</span><h2>Останні публікації</h2></div><span className="public-profile-count">до 50</span></div>
-          <div className="public-profile-stats"><div><strong>{ownProfilePosts.length}</strong><span>ПУБЛІКАЦІЙ</span></div><div><strong>{new Set(ownProfilePosts.map(post=>post.topic)).size}</strong><span>ТЕМ З ОБГОВОРЕННЯМИ</span></div></div>
+          <div className="account-profile-welcome"><h2>Активність</h2></div>
+          <div className="public-profile-stats"><div><MessageCircle aria-hidden="true"/><strong>{ownProfilePosts.length}</strong><span>ПОВІДОМЛЕНЬ</span></div><div><BookOpen aria-hidden="true"/><strong>{new Set(ownProfilePosts.map(post=>post.topic)).size}</strong><span>ТЕМ</span></div><div><Trophy aria-hidden="true"/><strong>0/99</strong><span>ДОСЯГНЕНЬ</span></div></div>
+          <div className="profile-posts-heading">Публікації</div>
           {ownProfilePosts.length?ownProfilePosts.map(post=><article className="post public-profile-post" key={post.id}><div className="meta"><span className="public-post-topic">{topics.find(t=>t.id===post.topic)?.label??post.topic}</span><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time></div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!profile.is_registered}/></p></article>):<div className="public-profile-empty">Ти ще не публікував повідомлень.</div>}
           {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
         </div>

@@ -82,7 +82,6 @@ export default function App() {
   const [cooldownMinutes,setCooldownMinutes]=useState('0');
   const [selectedRestrictionUser,setSelectedRestrictionUser]=useState('');
   const [auditRows,setAuditRows]=useState<any[]>([]);
-  const [restrictedUsers,setRestrictedUsers]=useState<string[]>([]);
   const [restrictedTopics,setRestrictedTopics]=useState<string[]>([]);
   const [restrictionMap,setRestrictionMap]=useState<Record<string,string[]>>({});
   const [statsTopic,setStatsTopic]=useState('');

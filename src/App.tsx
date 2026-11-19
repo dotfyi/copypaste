@@ -364,14 +364,14 @@ export default function App() {
     {isPublicProfileRoute&&<section className="profile-panel public-profile-panel">
       {publicProfileLoading?<div className="public-profile-empty">Завантажуємо профіль…</div>:publicProfile?<>
         <div className="account-profile public-account-profile">
-          <div className="account-profile-identity public-account-identity">
+          <div className="account-profile-identity public-account-identity" style={{'--profile-accent':publicProfile.hex_login} as CSSProperties}>
             <span className="account-profile-avatar" style={{'--profile-accent':publicProfile.hex_login} as CSSProperties} aria-hidden="true"/>
             <div className="account-profile-heading"><h1>{publicProfile.hex_login}</h1><span className="account-profile-role">{publicProfile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:publicProfile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
           </div>
           <div className="public-profile-body">
             <div className="account-profile-welcome"><h2>Активність</h2></div>
             <div className="public-profile-stats"><div><MessageCircle aria-hidden="true"/><strong>{publicProfilePosts.length}</strong><span>ПОВІДОМЛЕНЬ</span></div><div><BookOpen aria-hidden="true"/><strong>{new Set(publicProfilePosts.map(post=>post.topic)).size}</strong><span>ТЕМ</span></div><div><Trophy aria-hidden="true"/><strong>0/99</strong><span>ДОСЯГНЕНЬ</span></div></div>
-            <div className="profile-posts-heading">Публікації</div>
+            <div className="profile-posts-heading">Останні думки</div>
             {publicProfilePosts.length?publicProfilePosts.map(post=><article className="post public-profile-post" key={post.id}><div className="meta"><span className="public-post-topic">{topics.find(t=>t.id===post.topic)?.label??post.topic}</span><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time></div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered}/></p></article>):<div className="public-profile-empty">Цей учасник ще не публікував повідомлень.</div>}
           </div>
         </div>
@@ -380,7 +380,7 @@ export default function App() {
     {(route==='/profile'||route==='/auth')&&<section className="profile-panel">
       {user&&profile?<>
       <div className="account-profile">
-        <div className="account-profile-identity public-account-identity">
+        <div className="account-profile-identity public-account-identity" style={{'--profile-accent':profile.hex_login} as CSSProperties}>
           <span className="account-profile-avatar" style={{'--profile-accent':profile.hex_login} as CSSProperties} aria-hidden="true"/>
           <div className="account-profile-heading"><h1>{profile.hex_login}</h1><span className="account-profile-role">{profile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:profile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
           <button className="profile-logout profile-logout-top" type="button" disabled={busy} onClick={()=>void logout()}>Вийти</button>

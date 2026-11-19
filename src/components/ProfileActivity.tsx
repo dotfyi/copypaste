@@ -52,7 +52,6 @@ function ProfileActivity({posts,topics}:{posts:ActivityPost[];topics:ActivityTop
   const maxMonth=Math.max(1,...months.values());
   const busiestMonth=[...months.entries()].sort((a,b)=>b[1]-a[1])[0];
   const weekdayLabels=['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
-  const timeLabels=['Ранок','День','Вечір','Ніч'];
   const topHourIndex=hours.indexOf(Math.max(...hours));
   const topTimeLabel=posts.length?['ранком','удень','увечері','вночі'][topHourIndex]:'—';
   const calendarEnd=new Date();

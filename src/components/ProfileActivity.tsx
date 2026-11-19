@@ -29,8 +29,8 @@ function ProfileActivity({posts,topics}:{posts:ActivityPost[];topics:ActivityTop
     days.set(key,[...(days.get(key)??[]),post]);
     const hour=Number(hourFormat.format(date));
     hours[hour<6?3:hour<12?0:hour<18?1:2]++;
-    const weekday=Number(new Intl.DateTimeFormat('en-US',{weekday:'short',timeZone:TZ}).formatToParts(date).find(p=>p.type==='weekday')?.value==='Sun'?0:0);
-    const dayIndex=Number(new Intl.DateTimeFormat('en-US',{weekday:'short',timeZone:TZ}).formatToParts(date).find(p=>p.type==='weekday')?.value ? new Date(date.toLocaleString('en-US',{timeZone:TZ})).getDay() : 0);
+    const weekdayName=new Intl.DateTimeFormat('en-US',{weekday:'short',timeZone:TZ}).format(date);
+    const dayIndex=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(weekdayName);
     weekdays[dayIndex]=(weekdays[dayIndex]??0)+1;
     topicCounts.set(post.topic,(topicCounts.get(post.topic)??0)+1);
   }

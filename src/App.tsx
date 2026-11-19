@@ -249,7 +249,7 @@ export default function App() {
       supabase.from('copypaste_posts').select('id',{count:'exact',head:true}),
       supabase.from('copypaste_profiles').select('id',{count:'exact',head:true}),
       supabase.from('copypaste_settings').select('cooldown_minutes').eq('id',true).maybeSingle(),
-      supabase.from('copypaste_profiles').select('id,hex_login,is_admin,is_moderator').order('hex_login'),
+      supabase.from('copypaste_profiles').select('id,hex_login,is_admin,is_moderator').eq('is_registered',true).order('hex_login'),
       supabase.from('copypaste_post_restrictions').select('user_id,topic_id')
     ]);
     setStats({posts:p.count??0,users:u.count??0});

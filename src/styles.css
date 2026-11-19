@@ -411,3 +411,110 @@ textarea:disabled {
 .profile-auth .auth-key-input { margin-top:4px; padding:12px 2px; font-size:14px; letter-spacing:.04em; }
 .profile-auth .rules-check { padding:5px 0 3px; line-height:1.5; }
 .profile-auth .secret-key { border-radius:5px; background:#fafafa; }
+
+
+/* Clear, spacious sign-in and registration layouts */
+.profile-auth {
+  width:100%;
+  max-width:420px;
+  margin:0 auto;
+  padding:26px 0 10px;
+  gap:14px;
+  align-items:stretch;
+}
+.profile-auth h3 {
+  margin:0;
+  color:#171717;
+  font-size:20px;
+  line-height:1.25;
+  font-weight:650;
+  letter-spacing:-.045em;
+}
+.profile-auth p {
+  max-width:360px;
+  color:#777;
+  font-size:12px;
+  line-height:1.7;
+}
+.profile-auth > .auth-link:not(.muted) {
+  display:flex;
+  justify-content:center;
+  width:100%;
+  min-height:44px;
+  padding:0 18px;
+  border:1px solid #dedede;
+  border-radius:8px;
+  background:#fff;
+  color:#222;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:0;
+  text-align:center;
+  transition:background .16s ease,border-color .16s ease,color .16s ease;
+}
+.profile-auth > .auth-link:not(.muted)::after { content:none; }
+.profile-auth > .auth-link:not(.muted):hover:not(:disabled) {
+  padding:0 18px;
+  border-color:#222;
+  background:#fafafa;
+  color:#111;
+}
+.profile-auth > .auth-link:not(.muted):has(svg),
+.profile-auth > .auth-link.copy-auth-key {
+  justify-content:flex-start;
+}
+.profile-auth > .auth-link.muted {
+  align-self:flex-start;
+  margin:0;
+  padding:5px 0;
+  color:#888;
+  font-size:11px;
+}
+.profile-auth .auth-key-input {
+  box-sizing:border-box;
+  width:100%;
+  min-height:48px;
+  margin:4px 0 2px;
+  padding:0 14px;
+  border:1px solid #e3e3e3;
+  border-radius:8px;
+  background:#fff;
+  text-align:left;
+  font-size:13px;
+  letter-spacing:0;
+}
+.profile-auth .auth-key-input:focus { border-color:#999; }
+.profile-auth .rules-check {
+  align-items:flex-start;
+  gap:10px;
+  padding:7px 0;
+  color:#666;
+  font-size:11px;
+  line-height:1.55;
+}
+.profile-auth .rules-check input { margin-top:1px; flex:0 0 auto; }
+.profile-auth .secret-key {
+  margin:4px 0 0;
+  padding:15px;
+  border:1px solid #e6e6e6;
+  border-radius:8px;
+  background:#fafafa;
+  font-size:13px;
+  line-height:1.7;
+  text-align:center;
+  overflow-wrap:anywhere;
+}
+.profile-auth .auth-warning { color:#956b3f; }
+.profile-auth .copy-auth-key {
+  justify-content:flex-start !important;
+  min-height:34px !important;
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  color:#555 !important;
+}
+.profile-auth .copy-auth-key:hover { color:#111 !important; }
+@media(max-width:560px) {
+  .profile-auth { padding-top:22px; }
+  .profile-auth h3 { font-size:19px; }
+}

@@ -99,6 +99,7 @@ export default function App() {
   const setNotice=(value:string,isError=false)=>{setStatus(isError?value:'');setError(isError);};
   const navigate=(path:string)=>{if(window.location.pathname!==path)window.history.pushState({},'',path);setRoute(path);setStatus('');setError(false);};
   useEffect(()=>{const onPop=()=>{setRoute(window.location.pathname);setStatus('');setError(false);};window.addEventListener('popstate',onPop);return()=>window.removeEventListener('popstate',onPop);},[]);
+  useEffect(()=>{const path=route.slice(1);if(route==='/' )setTopic('general');else if(topics.some(t=>t.id===path))setTopic(path);},[route,topics]);
   useEffect(()=>{if(route==='/auth'&&!user)setAuthStep(step=>step==='registration'||step==='key-ready'?step:'login');},[route,user]);
   useEffect(()=>{if(route==='/admin'&&profile?.is_admin)void loadAdminStats();},[route,profile?.is_admin]);
 

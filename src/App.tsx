@@ -261,7 +261,7 @@ export default function App() {
       <nav className="nav" aria-label="Навігація">
         <button className={`icon-btn${infoOpen?' active':''}`} type="button" aria-label="Інформація" title="Інформація" onClick={()=>{navigate("/info");setInfoOpen(true);setProfileOpen(false);setAdminOpen(false);}}><Info/></button>
         <button className={`icon-btn${profileOpen?' active':''}`} type="button" aria-label="Профіль" title="Профіль" onClick={()=>{navigate(user?"/profile":"/auth");setProfileOpen(true);setInfoOpen(false);setAdminOpen(false);setAuthStep(user?"idle":"login");}}><UserRound/></button>
-        {profile?.is_admin&&<button className="icon-btn" type="button" aria-label="Панель адміністратора" title="Панель адміністратора" onClick={()=>{setAdminOpen(v=>!v);setInfoOpen(false);setProfileOpen(false);if(!adminOpen)void loadAdminStats();}}><Shield/></button>}
+        {profile?.is_admin&&<button className="icon-btn" type="button" aria-label="Панель адміністратора" title="Панель адміністратора" onClick={()=>{setAdminOpen(v=>!v);setInfoOpen(false);setProfileOpen(false);if(!adminOpen)void loadAdminStats();}}><ShieldCheck/></button>}
       </nav>
     </header>
     {route==='/info'?<section className="info-panel">
@@ -283,7 +283,7 @@ export default function App() {
     </section>:infoOpen?null:null}
     {(route==='/profile'||route==='/auth')&&<section className="profile-panel">
       {user&&profile?<>
-      <div className="profile-top"><span className="profile-color" style={{background:profile.hex_login}}/><div><strong>{profile.hex_login}{profile.is_admin&&<ZodiacAries className="admin-zodiac-icon" aria-label="Адміністратор"/>}</strong><span>{profile.is_admin?'Адміністратор':profile.is_moderator?'Модератор':'Учасник'}</span></div></div>
+      <div className="profile-top"><span className="profile-color" style={{background:profile.hex_login}}/><div><strong>{profile.hex_login}{profile.is_admin&&<ShieldCheck className="admin-zodiac-icon" aria-label="Адміністратор"/>}</strong><span>{profile.is_admin?'Адміністратор':profile.is_moderator?'Модератор':'Учасник'}</span></div></div>
       <div className="profile-detail"><span>Статус</span><strong>Авторизований акаунт</strong></div>
       {(profile.is_admin||profile.is_moderator)&&<div className="profile-detail"><span>Права модерації</span><strong>{profile.is_admin?'Усі розділи':moderatorTopics.length?moderatorTopics.map(id=>topics.find(t=>t.id===id)?.label??id).join(', '):'Не призначено'}</strong></div>}
       {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}

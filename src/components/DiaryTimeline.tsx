@@ -16,7 +16,7 @@ type DiaryWeekData = { key: string; label: string; entries: DiaryEntryData[] };
 
 const KYIV_TIME_ZONE = 'Europe/Kyiv';
 const DAY_MS = 24 * 60 * 60 * 1000;
-const shortDate = new Intl.DateTimeFormat('uk-UA', { day: 'numeric', month: 'short', timeZone: KYIV_TIME_ZONE });
+const weekDate = new Intl.DateTimeFormat('uk-UA', { day: 'numeric', month: 'long', timeZone: KYIV_TIME_ZONE });
 const weekday = new Intl.DateTimeFormat('uk-UA', { weekday: 'short', timeZone: KYIV_TIME_ZONE });
 const clock = new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: KYIV_TIME_ZONE });
 
@@ -80,7 +80,11 @@ function groupEntriesByWeek(entries: DiaryEntryData[]): DiaryWeekData[] {
     if (!week) {
       const sunday = new Date(monday);
       sunday.setUTCDate(sunday.getUTCDate() + 6);
-      week = { key, label: `${shortDate.format(monday)} — ${shortDate.format(sunday)}`, entries: [] };
+      const sameMonth = monday.getUTCMonth() === sunday.getUTCMonth();
+      const label = sameMonth
+        ? `${monday.getUTCDate()}–${weekDate.format(sunday)}`
+        : `${weekDate.format(monday)} — ${weekDate.format(sunday)}`;
+      week = { key, label, entries: [] };
       weeks.push(week);
     }
 
@@ -139,7 +143,6 @@ function DiaryEntry({ entry }: { entry: DiaryEntryData }) {
       </div>
       <div className="diary-entry-content">
         <div className="diary-entry-heading">
-          <strong>{shortDate.format(entry.date)}</strong>
           <span>{entry.posts.length} {pluralizePosts(entry.posts.length)}</span>
         </div>
         <div className="diary-entry-detail">

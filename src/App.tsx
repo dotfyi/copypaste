@@ -239,7 +239,6 @@ export default function App() {
   async function publishPost(event:FormEvent){
     event.preventDefault();const content=message.trim();if(!content)return;
     if(!user||!profile){setNotice('Авторизуйся через профіль, щоб публікувати.',true);return;}
-    if(content==='/exit'&&profile.is_registered){setMessage('');await logout();return;}
 
     setBusy(true);setNotice('');
     try{
@@ -265,9 +264,8 @@ export default function App() {
       <div className="info-tabs"><button className={infoTab==='faq'?'selected':''} onClick={()=>setInfoTab('faq')}>FAQ</button><button className={infoTab==='rules'?'selected':''} onClick={()=>setInfoTab('rules')}>Правила</button><button className="info-close" onClick={()=>setInfoOpen(false)} aria-label="Закрити">×</button></div>
       {infoTab==='faq'?<div className="info-content">
         <h2>Часті запитання</h2>
-        <h3>Як зареєструватися?</h3><p>У полі введення напиши <code>/registration</code> та натисни Enter. Створи акаунт, скопіюй секретний ключ і натисни «Продовжити» — вхід відбудеться автоматично.</p>
-        <h3>Як авторизуватися?</h3><p>Введи <code>/auth твій_секретний_ключ</code>. Наприклад: <code>/auth 8f2a…</code>. Секретний ключ — єдиний спосіб відновити доступ. Збережи його в надійному місці.</p>
-        <h3>Як вийти?</h3><p>Відкрий профіль і натисни «Вийти» або введи <code>/exit</code>.</p>
+        <h3>Як зареєструватися або увійти?</h3><p>Натисни іконку профілю. Там можна створити акаунт або увійти за секретним ключем. Збережи ключ у надійному місці — він потрібен для наступних входів.</p>
+        <h3>Як вийти?</h3><p>Відкрий профіль і натисни «Вийти з акаунта».</p>
         <h3>Що таке HEX-логін?</h3><p>Це твій унікальний кольоровий ідентифікатор, наприклад <code>#6AC73C</code>. Він не містить персональних даних.</p>
         <h3>Чи можна писати без реєстрації?</h3><p>Ні. Читати стрічку можуть усі, але публікувати повідомлення — лише авторизовані користувачі. Часових лімітів на публікації немає.</p>
         <h3>Яке форматування підтримується?</h3><p><code>**жирний**</code>, <code>*курсив*</code>, <code>~~закреслений~~</code>, <code>||спойлер||</code> та <code>&gt;зелений текст</code>.</p>

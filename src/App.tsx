@@ -75,6 +75,7 @@ export default function App() {
   const [profileOpen,setProfileOpen]=useState(false);
   const [publicProfile,setPublicProfile]=useState<(Profile&{id:string})|null>(null);
   const [publicProfilePosts,setPublicProfilePosts]=useState<Post[]>([]);
+  const [ownProfilePosts,setOwnProfilePosts]=useState<Post[]>([]);
   const [publicProfileLoading,setPublicProfileLoading]=useState(false);
   const [authStep,setAuthStep]=useState<'idle'|'login'|'registration'|'key-ready'>(window.location.pathname==='/auth'?'login':'idle');
   const [loginKey,setLoginKey]=useState('');
@@ -218,6 +219,18 @@ export default function App() {
     })();
     return()=>{cancelled=true;};
   },[route,isPublicProfileRoute]);
+  useEffect(()=>{
+    if(!user?.id||!(route==='/profile'||route==='/auth')){setOwnProfilePosts([]);return;}
+    let cancelled=false;
+    void (async()=>{
+      try{
+        const {data:rows,error:postsError}=await supabase.from('copypaste_posts').select('id,post_number,content,created_at,author_id,topic,profile:copypaste_profiles!copypaste_posts_author_id_fkey(hex_login,is_admin,is_moderator)').eq('author_id',user.id).order('created_at',{ascending:false}).limit(50);
+        if(postsError)throw postsError;
+        if(!cancelled)setOwnProfilePosts((rows??[]) as unknown as Post[]);
+      }catch(cause){console.error('Own profile posts load failed:',cause);if(!cancelled)setOwnProfilePosts([]);}
+    })();
+    return()=>{cancelled=true;};
+  },[route,user?.id]);
   const isFeedRoute=route==='/'||topics.some(t=>route==='/'+t.id);
   function updateTopic(next:string){if(next===topic&&route===(next==='general'?'/':`/${next}`))return;offsetRef.current=0;moreRef.current=true;setHasMore(false);setPosts([]);setTopic(next);navigate(next==='general'?'/':`/${next}`);}
 
@@ -353,11 +366,11 @@ export default function App() {
         <div className="account-profile public-account-profile">
           <div className="account-profile-identity public-account-identity">
             <span className="account-profile-avatar" style={{'--profile-accent':publicProfile.hex_login} as CSSProperties}><span>{publicProfile.hex_login.slice(1,3)}</span></span>
-            <div><span className="account-profile-label">ПРОФІЛЬ УЧАСНИКА</span><h1>{publicProfile.hex_login}</h1><span className="account-profile-role">{publicProfile.is_admin?'✳ Адміністратор':publicProfile.is_moderator?'✳ Модератор':'Учасник спільноти'}</span></div>
+            <div className="account-profile-heading"><span className="account-profile-label">ПРОФІЛЬ УЧАСНИКА</span><h1>{publicProfile.hex_login}</h1><span className="account-profile-role">{publicProfile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:publicProfile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
           </div>
           <div className="public-profile-body">
-            <div className="account-profile-welcome"><div><span className="account-profile-label">ПРИСУТНІСТЬ У COPYPASTE</span><h2>Повідомлення</h2></div><span className="public-profile-count">{publicProfilePosts.length} / 50</span></div>
-            <div className="public-profile-stats"><div><strong>{publicProfilePosts.length}</strong><span>останніх повідомлень</span></div><div><strong>{new Set(publicProfilePosts.map(post=>post.topic)).size}</strong><span>розділів</span></div></div>
+            <div className="account-profile-welcome"><div><span className="account-profile-label">СЛІД У СПІЛЬНОТІ</span><h2>Останні публікації</h2></div><span className="public-profile-count">до 50</span></div>
+            <div className="public-profile-stats"><div><strong>{publicProfilePosts.length}</strong><span>ПУБЛІКАЦІЙ</span></div><div><strong>{new Set(publicProfilePosts.map(post=>post.topic)).size}</strong><span>ТЕМ З ОБГОВОРЕННЯМИ</span></div></div>
             {publicProfilePosts.length?publicProfilePosts.map(post=><article className="post public-profile-post" key={post.id}><div className="meta"><span className="public-post-topic">{topics.find(t=>t.id===post.topic)?.label??post.topic}</span><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time></div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered}/></p></article>):<div className="public-profile-empty">Цей учасник ще не публікував повідомлень.</div>}
           </div>
         </div>
@@ -368,17 +381,14 @@ export default function App() {
       <div className="account-profile">
         <div className="account-profile-identity public-account-identity">
           <span className="account-profile-avatar" style={{'--profile-accent':profile.hex_login} as CSSProperties}><span>{profile.hex_login.slice(1,3)}</span></span>
-          <div><span className="account-profile-label">ТВІЙ ПРОФІЛЬ</span><h1>{profile.hex_login}</h1><span className="account-profile-role">{profile.is_admin?'✳ Адміністратор':profile.is_moderator?'✳ Модератор':'Учасник спільноти'}</span></div>
+          <div className="account-profile-heading"><span className="account-profile-label">ТВІЙ ПРОФІЛЬ</span><h1>{profile.hex_login}</h1><span className="account-profile-role">{profile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:profile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
+          <button className="profile-logout profile-logout-top" type="button" disabled={busy} onClick={()=>void logout()}>Вийти</button>
         </div>
-        <div className="account-profile-body">
-          <div className="account-profile-welcome"><div><span className="account-profile-label">COPYPASTE / ACCOUNT</span><h2>Радий, що ти тут.</h2></div></div>
-          <div className="account-profile-facts">
-            <div><span>СТАТУС</span><strong>Активний</strong><small>Акаунт авторизований</small></div>
-            <div><span>ФОРМАТ</span><strong>Анонімний</strong><small>Твій HEX — твоя ідентичність</small></div>
-          </div>
-          {(profile.is_admin||profile.is_moderator)&&<div className="account-profile-permissions"><span>ПОВНОВАЖЕННЯ</span><strong>{profile.is_admin?'Повний доступ до всіх розділів':moderatorTopics.length?moderatorTopics.map(id=>topics.find(t=>t.id===id)?.label??id).join(' · '):'Роль модератора призначена'}</strong></div>}
+        <div className="public-profile-body">
+          <div className="account-profile-welcome"><div><span className="account-profile-label">СЛІД У СПІЛЬНОТІ</span><h2>Останні публікації</h2></div><span className="public-profile-count">до 50</span></div>
+          <div className="public-profile-stats"><div><strong>{ownProfilePosts.length}</strong><span>ПУБЛІКАЦІЙ</span></div><div><strong>{new Set(ownProfilePosts.map(post=>post.topic)).size}</strong><span>ТЕМ З ОБГОВОРЕННЯМИ</span></div></div>
+          {ownProfilePosts.length?ownProfilePosts.map(post=><article className="post public-profile-post" key={post.id}><div className="meta"><span className="public-post-topic">{topics.find(t=>t.id===post.topic)?.label??post.topic}</span><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time></div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!profile.is_registered}/></p></article>):<div className="public-profile-empty">Ти ще не публікував повідомлень.</div>}
           {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
-          <div className="account-profile-footer"><span>БЕРЕЖИ СВІЙ СЕКРЕТНИЙ КЛЮЧ</span><button className="profile-logout" type="button" disabled={busy} onClick={()=>void logout()}>Вийти з акаунта</button></div>
         </div>
       </div>
       </>:<div className="profile-auth">

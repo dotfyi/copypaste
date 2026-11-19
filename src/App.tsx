@@ -350,10 +350,17 @@ export default function App() {
     </section>:infoOpen?null:null}
     {isPublicProfileRoute&&<section className="profile-panel public-profile-panel">
       {publicProfileLoading?<div className="public-profile-empty">Завантажуємо профіль…</div>:publicProfile?<>
-        <div className="public-profile-hero"><span className="profile-color" style={{background:publicProfile.hex_login}}/><div><span className="public-profile-eyebrow">ПРОФІЛЬ УЧАСНИКА</span><h1>{publicProfile.hex_login}</h1><p>{publicProfile.is_moderator?'Модератор спільноти':'Учасник copypaste'}</p></div></div>
-        <div className="public-profile-stats"><div><strong>{publicProfilePosts.length}</strong><span>останніх повідомлень</span></div><div><strong>{new Set(publicProfilePosts.map(post=>post.topic)).size}</strong><span>розділів</span></div></div>
-        <div className="public-profile-section-head"><h2>Повідомлення</h2><span>Останні 50 публікацій</span></div>
-        {publicProfilePosts.length?publicProfilePosts.map(post=><article className="post public-profile-post" key={post.id}><div className="meta"><span className="public-post-topic">{topics.find(t=>t.id===post.topic)?.label??post.topic}</span><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time></div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered}/></p></article>):<div className="public-profile-empty">Цей учасник ще не публікував повідомлень.</div>}
+        <div className="account-profile public-account-profile">
+          <div className="account-profile-identity public-account-identity">
+            <span className="account-profile-avatar" style={{'--profile-accent':publicProfile.hex_login} as CSSProperties}><span>{publicProfile.hex_login.slice(1,3)}</span></span>
+            <div><span className="account-profile-label">ПРОФІЛЬ УЧАСНИКА</span><h1>{publicProfile.hex_login}</h1><span className="account-profile-role">{publicProfile.is_admin?'✳ Адміністратор':publicProfile.is_moderator?'✳ Модератор':'Учасник спільноти'}</span></div>
+          </div>
+          <div className="public-profile-body">
+            <div className="account-profile-welcome"><div><span className="account-profile-label">ПРИСУТНІСТЬ У COPYPASTE</span><h2>Повідомлення</h2></div><span className="public-profile-count">{publicProfilePosts.length} / 50</span></div>
+            <div className="public-profile-stats"><div><strong>{publicProfilePosts.length}</strong><span>останніх повідомлень</span></div><div><strong>{new Set(publicProfilePosts.map(post=>post.topic)).size}</strong><span>розділів</span></div></div>
+            {publicProfilePosts.length?publicProfilePosts.map(post=><article className="post public-profile-post" key={post.id}><div className="meta"><span className="public-post-topic">{topics.find(t=>t.id===post.topic)?.label??post.topic}</span><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time></div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered}/></p></article>):<div className="public-profile-empty">Цей учасник ще не публікував повідомлень.</div>}
+          </div>
+        </div>
       </>:<div className="public-profile-empty"><h2>Профіль не знайдено</h2><p>Перевір HEX-логін або повернись до стрічки.</p><button className="profile-logout" type="button" onClick={()=>navigate('/')}>На головну</button></div>}
     </section>}
     {(route==='/profile'||route==='/auth')&&<section className="profile-panel">

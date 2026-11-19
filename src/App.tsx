@@ -87,7 +87,9 @@ export default function App() {
   const [statsTopic,setStatsTopic]=useState('');
   const [statsUser,setStatsUser]=useState<string|null>(null);
   const [statsRows,setStatsRows]=useState<any[]>([]);
-  const [statsMode,setStatsMode]=useState<'topics'|'posts'|'users'>('topics');\n  const [adminSearch,setAdminSearch]=useState('');\n  const [statsSearch,setStatsSearch]=useState('');
+  const [statsMode,setStatsMode]=useState<'topics'|'posts'|'users'>('topics');
+  const [adminSearch,setAdminSearch]=useState('');
+  const [statsSearch,setStatsSearch]=useState('');
   const [moderatorTopics,setModeratorTopics]=useState<string[]>([]);
   const [stats,setStats]=useState({posts:0,users:0});
   const sentinelRef=useRef<HTMLDivElement>(null);

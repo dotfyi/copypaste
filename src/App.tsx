@@ -364,7 +364,7 @@ export default function App() {
           <span className="account-profile-kicker">ТВІЙ ПРОСТІР У COPypaste</span>
           <span className="account-profile-index">MEMBER / 001</span>
           <div className="account-profile-identity">
-            <span className="account-profile-avatar" style={{'--profile-accent':profile.hex_login} as React.CSSProperties}><span>{profile.hex_login.slice(1,3)}</span></span>
+            <span className="account-profile-avatar" style={{'--profile-accent':profile.hex_login} as CSSProperties}><span>{profile.hex_login.slice(1,3)}</span></span>
             <div><span className="account-profile-label">ТИ ЗАРАЗ ЯК</span><h1>{profile.hex_login}</h1><span className="account-profile-role">{profile.is_admin?'✳ Адміністратор':profile.is_moderator?'✳ Модератор':'● Учасник спільноти'}</span></div>
           </div>
           <span className="account-profile-watermark">cp.</span>

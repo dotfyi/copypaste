@@ -30,10 +30,10 @@ function kyivInfo(value: string, postNumber: number) {
   return `${day} ${weekday.charAt(0).toLocaleUpperCase('uk-UA')}${weekday.slice(1)} ${time} №${postNumber}`;
 }
 
-function Spoiler({children,canReveal,onLocked}:{children:string;canReveal:boolean;onLocked:()=>void}) {
+function Spoiler({children,canReveal}:{children:string;canReveal:boolean}) {
   const [revealed,setRevealed]=useState(false);
   useEffect(()=>{const close=(event:MouseEvent)=>{if(!(event.target instanceof Element&&event.target.closest('.spoiler-wrap')))setRevealed(false);};document.addEventListener('click',close);return()=>document.removeEventListener('click',close);},[]);
-  return <span className="spoiler-wrap"><button type="button" className={`spoiler${revealed?' revealed':''}${canReveal?'':' locked'}`} onClick={()=>{if(canReveal)setRevealed(value=>!value);else onLocked();}} aria-label={canReveal?'Відкрити спойлер':'Увійти, щоб відкрити спойлер'}>{children}</button></span>;
+  return <span className="spoiler-wrap"><button type="button" className={`spoiler${revealed?' revealed':''}${canReveal?'':' locked'}`} onClick={()=>{if(canReveal)setRevealed(value=>!value);}} aria-label={canReveal?'Відкрити спойлер':'Прихований текст'}>{children}</button></span>;
 }
 function FormattedText({value,canRevealSpoilers,onLocked}:{value:string;canRevealSpoilers:boolean;onLocked:()=>void}) {
   const pattern=/(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|\|\|[^|]+\|\||>[^\n]+)/gm;

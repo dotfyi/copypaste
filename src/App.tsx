@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import * as LucideIcons from 'lucide-react';
 import { AlarmClock, Anchor, Archive, Award, Baby, BadgeCheck, Banknote, Bell, Binary, Blocks, Bot, Box, Briefcase, Building2, Calendar, Car, Castle, Check, ChessKnight, Cloud, Crown, Database, Dog, DoorOpen, Feather, Flag, Flower, Footprints, Gift, GraduationCap, Handshake, Headphones, Key, Leaf, Lock, Mail, Mic, Moon, Mountain, Plane, Puzzle, QrCode, Radio, Rainbow, Scissors, Server, ShieldCheck, Ship, ShoppingCart, Snowflake, Swords, Ticket, Trees, Tv, Umbrella, Waves, Wifi, Wind, Activity, Aperture, Atom, AudioLines, Bike, Bird, Book, BookOpen, Bookmark, BriefcaseBusiness, Camera, Cat, ChartNoAxesCombined, CircleHelp, Code, Coffee, Compass, Cpu, Dice5, Dumbbell, Earth, Film, Flame, FlaskConical, Flower2, Gamepad2, Gem, Ghost, Globe2, Hammer, Heart, House, Lightbulb, Map as MapIcon, MessageCircle, Music, Palette, PawPrint, Rocket, School, Search, Shield, ShoppingBag, Smile, Sparkles, Star, Sun, Terminal, Trophy, Users, Video, Wallet, WandSparkles, Wrench, Zap, Newspaper, Trash2, Info, UserRound, Copy } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
+import DiaryTimeline from './components/DiaryTimeline';
 
 type Topic = { id: string; label: string; icon: string; color: string };
 type Profile = { hex_login: string; is_admin: boolean; is_moderator: boolean; is_registered: boolean; is_suspended?: boolean };
@@ -47,79 +48,6 @@ function FormattedText({value,canRevealSpoilers}:{value:string;canRevealSpoilers
     last=index+token.length;
   }
   if(last<value.length)nodes.push(value.slice(last));return <>{nodes}</>;
-}
-
-function ProfilePulse({posts,topics}:{posts:Post[];topics:Topic[]}) {
-  const dateParts=(value:Date)=>{
-    const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(value);
-    const get=(type:string)=>parts.find(item=>item.type===type)?.value??'00';
-    return `${get('year')}-${get('month')}-${get('day')}`;
-  };
-  const todayKey=dateParts(new Date());
-  const [year,month,day]=todayKey.split('-').map(Number);
-  const todayUtc=Date.UTC(year,month-1,day);
-  const days=Array.from({length:28},(_,index)=>dateParts(new Date(todayUtc-(27-index)*86400000)));
-  const dayRows=new Map<string,Post[]>();
-  for(const post of posts){
-    const key=dateParts(new Date(post.created_at));
-    dayRows.set(key,[...(dayRows.get(key)??[]),post]);
-  }
-  const shortDate=new Intl.DateTimeFormat('uk-UA',{day:'numeric',month:'short',timeZone:'Europe/Kyiv'});
-  const weekday=new Intl.DateTimeFormat('uk-UA',{weekday:'short',timeZone:'Europe/Kyiv'});
-  const clock=new Intl.DateTimeFormat('uk-UA',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Europe/Kyiv'});
-  const entries=days.map(key=>{
-    const rows=(dayRows.get(key)??[]).slice().sort((a,b)=>new Date(a.created_at).getTime()-new Date(b.created_at).getTime());
-    const [y,m,d]=key.split('-').map(Number);
-    const date=new Date(Date.UTC(y,m-1,d,12));
-    const counts=new Map<string,number>();
-    rows.forEach(post=>counts.set(post.topic,(counts.get(post.topic)??0)+1));
-    const topicRows=[...counts.entries()].map(([id,count])=>({topic:topics.find(item=>item.id===id),count})).filter(item=>item.topic);
-    return {key,date,rows,topicRows,first:rows[0]!,last:rows[rows.length-1]!};
-  }).filter(entry=>entry.rows.length>0).reverse();
-  const weeks: {key:string;label:string;entries:typeof entries}[]=[];
-  for(const entry of entries){
-    const monday=new Date(entry.date);monday.setUTCDate(monday.getUTCDate()-((monday.getUTCDay()+6)%7));
-    const weekKey=dateParts(monday);
-    let week=weeks.find(item=>item.key===weekKey);
-    if(!week){const sunday=new Date(monday);sunday.setUTCDate(sunday.getUTCDate()+6);week={key:weekKey,label:`${shortDate.format(monday)} — ${shortDate.format(sunday)}`,entries:[]};weeks.push(week);}
-    week.entries.push(entry);
-  }
-  const total=entries.reduce((sum,entry)=>sum+entry.rows.length,0);
-  const activeDays=entries.length;
-  const topicTotals=topics.map(topic=>({...topic,count:entries.reduce((sum,entry)=>sum+entry.rows.filter(post=>post.topic===topic.id).length,0)})).filter(topic=>topic.count>0).sort((a,b)=>b.count-a.count);
-  return <section className="profile-living profile-diary" aria-label="Щоденник присутності за останні 28 днів">
-    <div className="diary-topline"><span>ЩОДЕННИК ПРИСУТНОСТІ</span><span>ОСТАННІ 28 ДНІВ</span></div>
-    <div className="diary-intro">
-      <div className="diary-total"><strong>{total}</strong><span>дописів за цей період</span></div>
-      <div className="diary-active"><strong>{activeDays}</strong><span>{activeDays===1?'день присутності':activeDays>1&&activeDays<5?'дні присутності':'днів присутності'}</span></div>
-    </div>
-    {topicTotals.length>0&&<div className="diary-topics" aria-label="Теми дописів">
-      {topicTotals.map(item=><span key={item.id}><i style={{'--topic-accent':item.color} as CSSProperties}/>{item.label}<small>{item.count}</small></span>)}
-    </div>}
-    {weeks.length? <div className="diary-weeks">
-      {weeks.map(week=><section className="diary-week" key={week.key}>
-        <div className="diary-week-heading"><span>{week.label}</span><i/></div>
-        <div className="diary-entries">
-          {week.entries.map(entry=><article className="diary-entry" key={entry.key}>
-            <div className="diary-date">
-              <strong>{entry.date.getUTCDate().toString().padStart(2,'0')}</strong>
-              <span>{weekday.format(entry.date).replace('.','')}</span>
-            </div>
-            <div className="diary-entry-content">
-              <div className="diary-entry-heading">
-                <strong>{shortDate.format(entry.date)}</strong>
-                <span>{entry.rows.length} {entry.rows.length===1?'допис':entry.rows.length<5?'дописи':'дописів'}</span>
-              </div>
-              <div className="diary-entry-detail">
-                <span>{clock.format(new Date(entry.first.created_at))}{entry.last.id!==entry.first.id? ` — ${clock.format(new Date(entry.last.created_at))}`:''}</span>
-                <div className="diary-entry-topics">{entry.topicRows.map(item=><span key={item.topic!.id}><i style={{'--topic-accent':item.topic!.color} as CSSProperties}/>{item.topic!.label}{item.count>1?<small>×{item.count}</small>:null}</span>)}</div>
-              </div>
-            </div>
-          </article>)}
-        </div>
-      </section>)}
-    </div>:<div className="diary-empty"><span>—</span><p>Ці сторінки поки порожні.</p><small>Коли з'являться дописи, тут залишиться хронологія твоєї присутності.</small></div>}
-  </section>;
 }
 
 export default function App() {

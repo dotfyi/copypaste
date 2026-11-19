@@ -361,8 +361,8 @@ export default function App() {
       <div className="account-profile">
         <div className="account-profile-cover">
           <div className="account-profile-orbit account-profile-orbit-one"/><div className="account-profile-orbit account-profile-orbit-two"/>
-          <span className="account-profile-kicker">ТВІЙ ПРОСТІР У COPypaste</span>
-          <span className="account-profile-index">MEMBER / 001</span>
+          <span className="account-profile-kicker">ТВІЙ ПРОСТІР У COPYPASTE</span>
+          <span className="account-profile-index">PROFILE / PERSONAL</span>
           <div className="account-profile-identity">
             <span className="account-profile-avatar" style={{'--profile-accent':profile.hex_login} as CSSProperties}><span>{profile.hex_login.slice(1,3)}</span></span>
             <div><span className="account-profile-label">ТИ ЗАРАЗ ЯК</span><h1>{profile.hex_login}</h1><span className="account-profile-role">{profile.is_admin?'✳ Адміністратор':profile.is_moderator?'✳ Модератор':'● Учасник спільноти'}</span></div>

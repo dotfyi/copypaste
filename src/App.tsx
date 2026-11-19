@@ -3,7 +3,7 @@ import * as LucideIcons from 'lucide-react';
 import { AlarmClock, Anchor, Archive, Award, Baby, BadgeCheck, Banknote, Bell, Binary, Blocks, Bot, Box, Briefcase, Building2, Calendar, Car, Castle, Check, ChessKnight, Cloud, Crown, Database, Dog, DoorOpen, Feather, Flag, Flower, Footprints, Gift, GraduationCap, Handshake, Headphones, Key, Leaf, Lock, Mail, Mic, Moon, Mountain, Plane, Puzzle, QrCode, Radio, Rainbow, Scissors, Server, ShieldCheck, Ship, ShoppingCart, Snowflake, Swords, Ticket, Trees, Tv, Umbrella, Waves, Wifi, Wind, Activity, Aperture, Atom, AudioLines, Bike, Bird, Book, BookOpen, Bookmark, BriefcaseBusiness, Camera, Cat, ChartNoAxesCombined, CircleHelp, Code, Coffee, Compass, Cpu, Dice5, Dumbbell, Earth, Film, Flame, FlaskConical, Flower2, Gamepad2, Gem, Ghost, Globe2, Hammer, Heart, House, Lightbulb, Map as MapIcon, MessageCircle, Music, Palette, PawPrint, Rocket, School, Search, Shield, ShoppingBag, Smile, Sparkles, Star, Sun, Terminal, Trophy, Users, Video, Wallet, WandSparkles, Wrench, Zap, Newspaper, Trash2, Info, UserRound, Copy } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
-import DiaryTimeline from './components/DiaryTimeline';
+import ProfileActivity from './components/ProfileActivity';
 
 type Topic = { id: string; label: string; icon: string; color: string };
 type Profile = { hex_login: string; is_admin: boolean; is_moderator: boolean; is_registered: boolean; is_suspended?: boolean };
@@ -212,9 +212,14 @@ export default function App() {
         const {data:person,error:personError}=await supabase.from('copypaste_profiles').select('id,hex_login,is_admin,is_moderator,is_registered,is_suspended').eq('hex_login',login).eq('is_registered',true).maybeSingle();
         if(personError)throw personError;
         if(!person){if(!cancelled){setPublicProfile(null);setPublicProfilePosts([]);}return;}
-        const {data:rows,error:postsError}=await supabase.from('copypaste_posts').select('id,post_number,created_at,author_id,topic').eq('author_id',person.id).order('created_at',{ascending:false}).limit(50);
-        if(postsError)throw postsError;
-        if(!cancelled){setPublicProfile(person as Profile&{id:string});setPublicProfilePosts((rows??[]) as unknown as Post[]);}
+        const rows: {id:string;created_at:string;topic:string}[] = [];
+        for(let start=0;;start+=1000){
+          const {data,error:postsError}=await supabase.from('copypaste_posts').select('id,created_at,topic').eq('author_id',person.id).order('created_at',{ascending:false}).range(start,start+999);
+          if(postsError)throw postsError;
+          rows.push(...(data??[]));
+          if((data??[]).length<1000)break;
+        }
+        if(!cancelled){setPublicProfile(person as Profile&{id:string});setPublicProfilePosts(rows as unknown as Post[]);}
       }catch(cause){console.error('Public profile load failed:',cause);if(!cancelled){setPublicProfile(null);setPublicProfilePosts([]);}}
       finally{if(!cancelled)setPublicProfileLoading(false);}
     })();
@@ -225,9 +230,14 @@ export default function App() {
     let cancelled=false;
     void (async()=>{
       try{
-        const {data:rows,error:postsError}=await supabase.from('copypaste_posts').select('id,post_number,created_at,author_id,topic').eq('author_id',user.id).order('created_at',{ascending:false}).limit(50);
-        if(postsError)throw postsError;
-        if(!cancelled)setOwnProfilePosts((rows??[]) as unknown as Post[]);
+        const rows: {id:string;created_at:string;topic:string}[] = [];
+        for(let start=0;;start+=1000){
+          const {data,error:postsError}=await supabase.from('copypaste_posts').select('id,created_at,topic').eq('author_id',user.id).order('created_at',{ascending:false}).range(start,start+999);
+          if(postsError)throw postsError;
+          rows.push(...(data??[]));
+          if((data??[]).length<1000)break;
+        }
+        if(!cancelled)setOwnProfilePosts(rows as unknown as Post[]);
       }catch(cause){console.error('Own profile posts load failed:',cause);if(!cancelled)setOwnProfilePosts([]);}
     })();
     return()=>{cancelled=true;};
@@ -369,7 +379,7 @@ export default function App() {
             <span className="account-profile-avatar" style={{'--profile-accent':publicProfile.hex_login} as CSSProperties} aria-hidden="true"/>
             <div className="account-profile-heading"><h1>{publicProfile.hex_login}</h1><span className="account-profile-role">{publicProfile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:publicProfile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
           </div>
-          <div className="public-profile-body"><DiaryTimeline posts={publicProfilePosts} topics={topics}/></div>
+          <div className="public-profile-body"><ProfileActivity posts={publicProfilePosts} topics={topics}/></div>
         </div>
       </>:<div className="public-profile-empty"><h2>Профіль не знайдено</h2><p>Перевір HEX-логін або повернись до стрічки.</p><button className="profile-logout" type="button" onClick={()=>navigate('/')}>На головну</button></div>}
     </section>}
@@ -382,7 +392,7 @@ export default function App() {
           <button className="profile-logout profile-logout-top" type="button" disabled={busy} onClick={()=>void logout()}>Вийти</button>
         </div>
         <div className="public-profile-body">
-          <DiaryTimeline posts={ownProfilePosts} topics={topics}/>
+          <ProfileActivity posts={ownProfilePosts} topics={topics}/>
           {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
         </div>
       </div>

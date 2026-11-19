@@ -300,7 +300,7 @@ export default function App() {
       </div>
       {status&&<p className={error?'status error':'status'}>{status}</p>}
     </section>:<>
-      {user?<form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
+      {user&&<form className="composer" onSubmit={publishPost} aria-label="Нове повідомлення">
         <textarea ref={composerRef} value={message} onChange={e=>setMessage(e.target.value.slice(0,180))} disabled={busy} maxLength={180} placeholder="Поділись думкою…" aria-label="Твоє повідомлення"/>
         <div className="compose-row"><span className="counter">{message.length}/180</span><button type="submit" disabled={!canPublish}>Опублікувати ↗</button></div>
         {status&&<div className={`status${error?' error':''}`} role="status" aria-live="polite">{status}</div>}

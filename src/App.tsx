@@ -50,50 +50,61 @@ function FormattedText({value,canRevealSpoilers}:{value:string;canRevealSpoilers
 }
 
 function ProfilePulse({posts,topics}:{posts:Post[];topics:Topic[]}) {
-  const dateFormatter=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'});
-  const todayParts=new Intl.DateTimeFormat('en-US',{timeZone:'Europe/Kyiv',year:'numeric',month:'numeric',day:'numeric'}).formatToParts(new Date());
-  const part=(type:string)=>Number(todayParts.find(item=>item.type===type)?.value??0);
-  const todayUtc=Date.UTC(part('year'),part('month')-1,part('day'));
-  const days=Array.from({length:28},(_,index)=>new Date(todayUtc-(27-index)*86400000).toISOString().slice(0,10));
+  const dateParts=(value:Date)=>{
+    const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Europe/Kyiv',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(value);
+    const get=(type:string)=>parts.find(item=>item.type===type)?.value??'00';
+    return `${get('year')}-${get('month')}-${get('day')}`;
+  };
+  const todayKey=dateParts(new Date());
+  const [year,month,day]=todayKey.split('-').map(Number);
+  const todayUtc=Date.UTC(year,month-1,day);
+  const days=Array.from({length:28},(_,index)=>dateParts(new Date(todayUtc-(27-index)*86400000)));
   const dayRows=new Map<string,Post[]>();
-  for(const post of posts){const key=dateFormatter.format(new Date(post.created_at));dayRows.set(key,[...(dayRows.get(key)??[]),post]);}
-  const points=[
-    [42,105],[88,55],[113,158],[151,91],[174,198],[202,42],[224,126],[250,76],
-    [278,177],[301,111],[326,35],[350,147],[378,83],[402,207],[429,119],[455,54],
-    [480,166],[510,98],[535,211],[66,218],[132,24],[189,151],[245,226],[310,218],
-    [366,20],[423,27],[476,229],[548,37]
-  ];
+  for(const post of posts){
+    const key=dateParts(new Date(post.created_at));
+    dayRows.set(key,[...(dayRows.get(key)??[]),post]);
+  }
   const activity=days.map((day,index)=>{
     const rows=dayRows.get(day)??[];
-    const dominant=topics.find(item=>item.id===rows[0]?.topic);
-    return {day,rows,index,x:points[index][0],y:points[index][1],color:dominant?.color??'#c9c9c9'};
+    const counts=new Map<string,number>();
+    rows.forEach(post=>counts.set(post.topic,(counts.get(post.topic)??0)+1));
+    const dominant=[...counts.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0];
+    const ring=index%2;
+    const slot=Math.floor(index/2);
+    const angle=-Math.PI/2+slot*(Math.PI*2/14)+(ring?.12:0);
+    const rx=ring?145:213;
+    const ry=ring?62:103;
+    return {day,rows,index,x:295+Math.cos(angle)*rx,y:128+Math.sin(angle)*ry,color:topics.find(item=>item.id===dominant)?.color??'#d8d8d8'};
   });
   const maxDay=Math.max(1,...activity.map(point=>point.rows.length));
   const topicCounts=topics.map(item=>({...item,count:activity.reduce((sum,point)=>sum+point.rows.filter(post=>post.topic===item.id).length,0)})).filter(item=>item.count>0).sort((a,b)=>b.count-a.count);
   const latest=posts[0];
   const total=activity.reduce((sum,point)=>sum+point.rows.length,0);
+  const active=activity.filter(point=>point.rows.length>0);
   return <section className="profile-living" aria-label="Активність учасника за останні 28 днів">
-    <div className="profile-constellation-meta"><span>АКТИВНІСТЬ</span><span>ОСТАННІ 28 ДНІВ</span></div>
-    <div className="profile-constellation" role="img" aria-label={`За останні 28 днів: ${total} дописів`}>
-      <svg viewBox="0 0 590 250" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-        <ellipse className="profile-orbit" cx="295" cy="125" rx="248" ry="91"/>
-        <ellipse className="profile-orbit profile-orbit-inner" cx="295" cy="125" rx="168" ry="58" transform="rotate(-13 295 125)"/>
-        {activity.map((point,index)=>index>0&&point.rows.length>0&&activity[index-1].rows.length>0?<line key={point.day} x1={activity[index-1].x} y1={activity[index-1].y} x2={point.x} y2={point.y} className="profile-constellation-link"/>:null)}
+    <div className="profile-constellation-meta"><span>ТВОЯ АКТИВНІСТЬ</span><span>28 ДНІВ</span></div>
+    <div className="profile-constellation" role="img" aria-label={`За останні 28 днів: ${total} дописів, активність у ${active.length} днях`}>
+      <svg viewBox="0 0 590 256" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <ellipse className="profile-orbit" cx="295" cy="128" rx="215" ry="105"/>
+        <ellipse className="profile-orbit profile-orbit-inner" cx="295" cy="128" rx="147" ry="64"/>
+        <path className="profile-constellation-arc" d="M94 78 C155 4 410 0 495 77"/>
+        {active.map((point,index)=>index>0?<line key={point.day} x1={active[index-1].x} y1={active[index-1].y} x2={point.x} y2={point.y} className="profile-constellation-link"/>:null)}
         {activity.map(point=>{
           const intensity=point.rows.length?point.rows.length/maxDay:0;
-          const radius=point.rows.length?2.7+intensity*6.2:1.6;
+          const radius=point.rows.length?3.2+intensity*5.8:2.1;
           return <g key={point.day}>
-            {point.rows.length>0&&<circle cx={point.x} cy={point.y} r={radius*2.2} fill={point.color} opacity={.09+intensity*.1}/>}
-            <circle cx={point.x} cy={point.y} r={radius} fill={point.color} opacity={point.rows.length?.48+intensity*.52:.22}/>
-            {point.rows.length>0&&<circle cx={point.x} cy={point.y} r="1.2" fill="#fff" opacity=".72"/>}
+            {point.rows.length>0&&<circle cx={point.x} cy={point.y} r={radius*2.7} fill={point.color} opacity={.07+intensity*.09}/>}
+            <circle cx={point.x} cy={point.y} r={radius} fill={point.color} opacity={point.rows.length?.62+intensity*.38:.62}/>
+            {point.rows.length>0&&<circle cx={point.x} cy={point.y} r="1.45" fill="#fff" opacity=".82"/>}
             <title>{point.day}: {point.rows.length} дописів</title>
           </g>;
         })}
       </svg>
       <span className="profile-constellation-total"><strong>{total}</strong><small>ДОПИСІВ</small></span>
+      <span className="profile-constellation-caption">{active.length} {active.length===1?'активний день':active.length>1&&active.length<5?'активні дні':'активних днів'}</span>
     </div>
     <div className="profile-topic-signal">
-      {topicCounts.length?<><div className="profile-topic-spectrum" aria-label="Розподіл активності за темами">{topicCounts.map(item=><i key={item.id} style={{width:`${item.count/total*100}%`,'--topic-accent':item.color} as CSSProperties} title={item.label}/>)}</div><div className="profile-topic-legend">{topicCounts.map(item=><span key={item.id}><i style={{'--topic-accent':item.color} as CSSProperties}/>{item.label}</span>)}</div></>:<p className="profile-living-empty">Тут поки тихо. Перший допис стане першою зіркою.</p>}
+      {topicCounts.length?<><div className="profile-topic-spectrum" aria-label="Розподіл активності за темами">{topicCounts.map(item=><i key={item.id} style={{width:`${item.count/total*100}%`,'--topic-accent':item.color} as CSSProperties} title={item.label}/>)}</div><div className="profile-topic-legend">{topicCounts.map(item=><span key={item.id}><i style={{'--topic-accent':item.color} as CSSProperties}/>{item.label}</span>)}</div></>:<p className="profile-living-empty">Поки тихо. Перша активність залишить тут свій слід.</p>}
     </div>
     {latest&&<div className="profile-presence"><span className="profile-section-label">ОСТАННІЙ ДОПИС</span><strong>{kyivInfo(latest.created_at,latest.post_number)}</strong></div>}
   </section>;

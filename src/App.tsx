@@ -98,7 +98,7 @@ export default function App() {
   const offsetRef=useRef(0);
   const moreRef=useRef(true);
 
-  const setNotice=(value:string,isError=false)=>{setStatus(isError?value:'');setError(isError);};
+  const setNotice=(value:string,isError=false)=>{setStatus(value);setError(isError);};
   const navigate=(path:string)=>{const normalized=path==='/-------'?'/animals':path;if(window.location.pathname!==normalized)window.history.pushState({},'',normalized);setRoute(normalized);setStatus('');setError(false);};
   useEffect(()=>{const onPop=()=>{setRoute(window.location.pathname);setStatus('');setError(false);};window.addEventListener('popstate',onPop);return()=>window.removeEventListener('popstate',onPop);},[]);
   useEffect(()=>{if(route==='/-------'){navigate('/animals');return;}const path=route.slice(1);if(route==='/' )setTopic('general');else if(topics.some(t=>t.id===path))setTopic(path);},[route,topics]);

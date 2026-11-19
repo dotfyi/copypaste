@@ -917,3 +917,54 @@ a:focus-visible,
  .account-profile-facts small { font-size:9px; }
  .account-profile-footer { align-items:flex-start; flex-direction:column; }
 }
+
+
+/* Minimal editorial profiles: shared for own and public accounts */
+.profile-panel:has(.account-profile),.profile-panel.public-profile-panel { max-width:680px; margin:0 auto; padding:14px 0 42px; border:0; background:transparent; }
+.account-profile,.public-account-profile { overflow:visible; border:0; border-radius:0; background:transparent; }
+.account-profile-cover { min-height:0; overflow:visible; padding:0 0 22px; color:inherit; background:transparent; }
+.account-profile-cover::before,.account-profile-cover::after,.account-profile-orbit,.account-profile-watermark { display:none; }
+.account-profile-kicker { color:#999; }
+.account-profile-index { color:#aaa; }
+.account-profile-identity { margin:0; gap:15px; }
+.account-profile-avatar { width:54px; height:54px; flex-basis:54px; border:0; border-radius:50%; background:transparent; box-shadow:none; position:relative; }
+.account-profile-avatar::before { position:absolute; inset:0; border:1px solid var(--profile-accent,#b123ae); border-radius:50%; content:""; opacity:.45; }
+.account-profile-avatar span { color:var(--profile-accent,#b123ae); font-size:19px; }
+.account-profile-label { color:#999; }
+.account-profile-identity h1 { margin:4px 0; color:#171717; font-size:30px; letter-spacing:-.065em; }
+.account-profile-role { color:#888; font-size:11px; }
+.account-profile-body,.public-profile-body { padding:0; }
+.account-profile-welcome { align-items:center; padding:20px 0 12px; border-bottom:1px solid #eee; }
+.account-profile-welcome h2 { margin:4px 0 0; font-size:19px; }
+.account-profile-live { color:#888; }
+.account-profile-live i { width:6px; height:6px; box-shadow:none; }
+.account-profile-facts { gap:24px; padding:16px 0 20px; }
+.account-profile-facts>div { min-height:0; padding:0; border:0; border-radius:0; background:transparent; }
+.account-profile-facts strong { margin-top:8px; font-size:14px; }
+.account-profile-facts small { color:#888; }
+.account-profile-permissions { margin:0 0 16px; padding:10px 0; border:0; border-top:1px solid #eee; border-bottom:1px solid #eee; background:transparent; }
+.account-profile-footer { align-items:center; padding-top:15px; border-top:1px solid #eee; }
+.account-profile-footer>span { color:#aaa; }
+.account-profile-footer .profile-logout,.profile-logout { display:inline-flex; min-height:0; align-items:center; gap:6px; margin:0; padding:3px 0; border:0; border-radius:0; background:transparent; color:#777; font:inherit; font-size:11px; cursor:pointer; }
+.account-profile-footer .profile-logout:hover,.profile-logout:hover { border:0; background:transparent; color:#111; text-decoration:underline; text-underline-offset:3px; }
+.account-profile-footer .profile-logout svg { width:12px; height:12px; }
+.public-account-identity { padding:0 0 20px; border-bottom:1px solid #eee; }
+.public-profile-body .account-profile-welcome { padding-top:20px; }
+.public-profile-count { color:#999; font-size:10px; font-variant-numeric:tabular-nums; }
+.public-profile-stats { display:flex; gap:30px; padding:14px 0 17px; }
+.public-profile-stats>div { display:flex; flex-direction:column; gap:3px; padding:0; border:0; border-radius:0; background:transparent; }
+.public-profile-stats strong { font-size:17px; font-weight:600; }
+.public-profile-stats span { color:#999; font-size:10px; }
+.public-profile-section-head { padding:12px 0 9px; border-bottom:1px solid #eee; }
+.public-profile-section-head h2 { font-size:13px; }
+.public-profile-post { padding:15px 0; }
+.public-profile-empty { padding:28px 0; color:#888; font-size:12px; text-align:left; }
+.profile-warning { padding:10px 0; border:0; border-top:1px solid #eee; border-bottom:1px solid #eee; border-radius:0; background:transparent; }
+@media(max-width:560px) {
+ .profile-panel:has(.account-profile),.profile-panel.public-profile-panel { padding:8px 0 30px; }
+ .account-profile-index { top:2px; right:0; }
+ .account-profile-avatar { width:46px; height:46px; flex-basis:46px; }
+ .account-profile-identity h1 { font-size:26px; }
+ .account-profile-facts { gap:16px; }
+ .account-profile-footer { align-items:center; flex-direction:row; }
+}

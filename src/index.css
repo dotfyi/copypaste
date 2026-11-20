@@ -2,6 +2,9 @@
 @import "tw-animate-css";
 @import "./styles/rhea.css";
 
+/* Explicitly include React components when generating Tailwind utilities. */
+@source "./**/*.{js,ts,jsx,tsx}";
+
 :root {
   --radius: 0.5rem;
   --background: #ffffff;

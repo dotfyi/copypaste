@@ -293,36 +293,38 @@ export default function App() {
 
   const canPublish=!!user&&!!profile?.is_registered&&!profile?.is_suspended&&!busy&&!!message.trim()&&message.length<=180;
 
-  return <main className={`app-shell${route==='/profile'||route==='/auth'?' is-profile':''}`}>
-    <header className="app-topbar">
-      <button className="brand" type="button" onClick={()=>navigate('/')} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
-      <nav className="app-nav" aria-label="Навігація">
-        <button className={`app-nav-link${route!=='/profile'&&route!=='/auth'?' active':''}`} type="button" onClick={()=>navigate('/')}><House size={17}/> <span>Головна</span></button>
-        <button className={`app-nav-link${route==='/profile'||route==='/auth'?' active':''}`} type="button" onClick={()=>{navigate(user?'/profile':'/auth');setProfileOpen(true);setAuthStep(user?'idle':'login');}}><UserRound size={17}/> <span>Профіль</span></button>
+  const isProfileRoute = route === '/profile' || route === '/auth';
+  return <main className={`app-shell editorial-shell${isProfileRoute?' is-profile':''}`}>
+    <header className="editorial-topbar">
+      <button className="editorial-wordmark" type="button" onClick={()=>navigate('/')} aria-label="На головну">cp<span>.</span></button>
+      <div className="editorial-topbar-center">НЕЗАЛЕЖНИЙ ПРОСТІР В ІНТЕРНЕТІ</div>
+      <nav className="editorial-nav" aria-label="Навігація">
+        <button className={`editorial-nav-link${!isProfileRoute?' active':''}`} type="button" onClick={()=>navigate('/')}>Головна <span>01</span></button>
+        <button className={`editorial-nav-link${isProfileRoute?' active':''}`} type="button" onClick={()=>{navigate(user?'/profile':'/auth');setProfileOpen(true);setAuthStep(user?'idle':'login');}}>Профіль <span>02</span></button>
       </nav>
     </header>
-    {route!=='/profile'&&route!=='/auth'&&<section className="home-workspace">
-      <aside className="home-sidebar">
-        <div className="home-sidebar-heading">РОБОЧИЙ ПРОСТІР</div>
-        <button type="button" className="home-sidebar-item active"><House size={17}/><span>Головна</span></button>
-        <button type="button" className="home-sidebar-item" onClick={()=>{navigate(user?'/profile':'/auth');setAuthStep(user?'idle':'login');}}><UserRound size={17}/><span>Мій профіль</span></button>
-        <div className="home-sidebar-note">Твій простір без зайвого.</div>
-      </aside>
-      <div className="home-main">
-        <div className="home-eyebrow">COPYPASTE / HOME</div>
-        <h1>Твій простір.</h1>
-        <p>Тут починається copypaste.</p>
-        <div className="home-main-divider"/>
-        <div className="home-bottom-row"><span>НІЧОГО ЗАЙВОГО</span><span>01 — 01</span></div>
+    {route!=='/profile'&&route!=='/auth'&&<section className="editorial-home">
+      <div className="editorial-home-meta"><span>ІНТЕРНЕТ, ЯКИМ ВІН МАЄ БУТИ</span><span>KYIV · UA</span></div>
+      <div className="editorial-home-content">
+        <div className="editorial-kicker"><i/> МІСЦЕ ДЛЯ СВОЇХ ДУМОК</div>
+        <h1>Менше шуму.<br/><span>Більше</span> простору.</h1>
+        <div className="editorial-home-bottom">
+          <p>Невеликий незалежний простір.<br/>Без зайвого інтерфейсу та метушні.</p>
+          <Button className="editorial-enter" onClick={()=>{navigate(user?'/profile':'/auth');setAuthStep(user?'idle':'login');}}>
+            {user?'Відкрити профіль':'Увійти в простір'} <span aria-hidden="true">↗</span>
+          </Button>
+        </div>
       </div>
+      <div className="editorial-home-foot"><span>COPYPASTE®</span><span>ЗРОБЛЕНО ДЛЯ ЛЮДЕЙ, НЕ ДЛЯ АЛГОРИТМІВ</span><span>2026</span></div>
     </section>}
-    {(route==='/profile'||route==='/auth')&&<section className="profile-panel">
+    {(route==='/profile'||route==='/auth')&&<section className="profile-panel editorial-profile">
       {user&&profile?<>
       <div className="account-profile profile-activity-only">
-        <div className="profile-heading">
-          <div><div className="home-eyebrow">ОСОБИСТИЙ ПРОСТІР</div><h1>{profile.hex_login}</h1></div>
-          <Button variant="ghost" size="sm" disabled={busy} onClick={()=>void logout()}>Вийти</Button>
+        <div className="editorial-profile-head">
+          <div><div className="editorial-kicker"><i/> ОСОБИСТИЙ ПРОСТІР</div><h1>{profile.hex_login}</h1></div>
+          <Button variant="outline" size="sm" disabled={busy} onClick={()=>void logout()}>Вийти <span aria-hidden="true">↗</span></Button>
         </div>
+        <div className="editorial-activity-label"><span>АКТИВНІСТЬ</span><span>ЗА РОКАМИ</span></div>
         <ProfileActivity posts={ownProfilePosts}/>
       </div>
       </>:<div className="profile-auth style-rhea">

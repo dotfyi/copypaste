@@ -30,8 +30,7 @@ function Spoiler({children,canReveal}:{children:string;canReveal:boolean}) {
   return <span className="spoiler-wrap"><button type="button" className={`spoiler${revealed?' revealed':''}${canReveal?'':' locked'}`} onClick={()=>{if(canReveal)setRevealed(value=>!value);}} aria-label={canReveal?'Відкрити спойлер':'Прихований текст'}>{children}</button></span>;
 }
 function FormattedText({value,canRevealSpoilers}:{value:string;canRevealSpoilers:boolean}) {
-  const pattern=/(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|\|\|[^|]+\|\||>[^
-]+)/gm;
+  const pattern=/(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|\|\|[^|]+\|\||>[^\n]+)/gm;
   const nodes=[];let last=0;
   for(const match of value.matchAll(pattern)){const token=match[0],index=match.index??0;if(index>last)nodes.push(value.slice(last,index));
     if(token.startsWith('**'))nodes.push(<strong key={index}>{token.slice(2,-2)}</strong>);

@@ -293,17 +293,36 @@ export default function App() {
 
   const canPublish=!!user&&!!profile?.is_registered&&!profile?.is_suspended&&!busy&&!!message.trim()&&message.length<=180;
 
-  return <main className="shell">
-    <header>
+  return <main className={`app-shell${route==='/profile'||route==='/auth'?' is-profile':''}`}>
+    <header className="app-topbar">
       <button className="brand" type="button" onClick={()=>navigate('/')} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
-      <nav className="nav" aria-label="Навігація">
-        <button className={`icon-btn${route==='/profile'||route==='/auth'?' active':''}`} type="button" aria-label="Профіль" title="Профіль" onClick={()=>{navigate(user?'/profile':'/auth');setProfileOpen(true);setAuthStep(user?'idle':'login');}}><UserRound/></button>
+      <nav className="app-nav" aria-label="Навігація">
+        <button className={`app-nav-link${route!=='/profile'&&route!=='/auth'?' active':''}`} type="button" onClick={()=>navigate('/')}><House size={17}/> <span>Головна</span></button>
+        <button className={`app-nav-link${route==='/profile'||route==='/auth'?' active':''}`} type="button" onClick={()=>{navigate(user?'/profile':'/auth');setProfileOpen(true);setAuthStep(user?'idle':'login');}}><UserRound size={17}/> <span>Профіль</span></button>
       </nav>
     </header>
+    {route!=='/profile'&&route!=='/auth'&&<section className="home-workspace">
+      <aside className="home-sidebar">
+        <div className="home-sidebar-heading">РОБОЧИЙ ПРОСТІР</div>
+        <button type="button" className="home-sidebar-item active"><House size={17}/><span>Головна</span></button>
+        <button type="button" className="home-sidebar-item" onClick={()=>{navigate(user?'/profile':'/auth');setAuthStep(user?'idle':'login');}}><UserRound size={17}/><span>Мій профіль</span></button>
+        <div className="home-sidebar-note">Твій простір без зайвого.</div>
+      </aside>
+      <div className="home-main">
+        <div className="home-eyebrow">COPYPASTE / HOME</div>
+        <h1>Твій простір.</h1>
+        <p>Тут починається copypaste.</p>
+        <div className="home-main-divider"/>
+        <div className="home-bottom-row"><span>НІЧОГО ЗАЙВОГО</span><span>01 — 01</span></div>
+      </div>
+    </section>}
     {(route==='/profile'||route==='/auth')&&<section className="profile-panel">
       {user&&profile?<>
       <div className="account-profile profile-activity-only">
-        <div className="profile-activity-tools"><button className="profile-logout" type="button" disabled={busy} onClick={()=>void logout()}>Вийти з акаунта</button></div>
+        <div className="profile-heading">
+          <div><div className="home-eyebrow">ОСОБИСТИЙ ПРОСТІР</div><h1>{profile.hex_login}</h1></div>
+          <Button variant="ghost" size="sm" disabled={busy} onClick={()=>void logout()}>Вийти</Button>
+        </div>
         <ProfileActivity posts={ownProfilePosts}/>
       </div>
       </>:<div className="profile-auth style-rhea">

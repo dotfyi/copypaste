@@ -16,7 +16,7 @@ function labelDate(key: string) {
 }
 
 export default function ProfileActivity({ posts }: { posts: ActivityPost[] }) {
-  const currentYear = new Date().getFullYear();
+  const currentYear = Number(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv', year: 'numeric' }).format(new Date()));
   const years = useMemo(() => {
     const first = posts.length
       ? Math.min(...posts.map(post => Number(kyivDate(post.created_at).slice(0, 4))))

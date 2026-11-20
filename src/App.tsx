@@ -4,6 +4,8 @@ import { AlarmClock, Anchor, Archive, Award, Baby, BadgeCheck, Banknote, Bell, B
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import ProfileActivity from './components/ProfileActivity';
+import PostSocial from './components/PostSocial';
+import DiscussionPage from './components/DiscussionPage';
 
 type Topic = { id: string; label: string; icon: string; color: string };
 type Profile = { hex_login: string; is_admin: boolean; is_moderator: boolean; is_registered: boolean; is_suspended?: boolean };
@@ -23,13 +25,6 @@ const DEFAULT_TOPICS: Topic[] = [
 const ICONS: Record<string, typeof Globe2> = {AlarmClock:AlarmClock,Anchor:Anchor,Archive:Archive,Award:Award,Baby:Baby,BadgeCheck:BadgeCheck,Banknote:Banknote,Bell:Bell,Binary:Binary,Blocks:Blocks,Bot:Bot,Box:Box,Briefcase:Briefcase,Building2:Building2,Calendar:Calendar,Car:Car,Castle:Castle,Check:Check,ChessKnight:ChessKnight,Cloud:Cloud,Crown:Crown,Database:Database,Dog:Dog,DoorOpen:DoorOpen,Feather:Feather,Flag:Flag,Flower:Flower,Footprints:Footprints,Gift:Gift,GraduationCap:GraduationCap,Handshake:Handshake,Headphones:Headphones,Key:Key,Leaf:Leaf,Lock:Lock,Mail:Mail,Mic:Mic,Moon:Moon,Mountain:Mountain,Plane:Plane,Puzzle:Puzzle,QrCode:QrCode,Radio:Radio,Rainbow:Rainbow,Scissors:Scissors,Server:Server,ShieldCheck:ShieldCheck,Ship:Ship,ShoppingCart:ShoppingCart,Snowflake:Snowflake,Swords:Swords,Ticket:Ticket,Trees:Trees,Tv:Tv,Umbrella:Umbrella,Waves:Waves,Wifi:Wifi,Wind:Wind,Activity,Aperture,Atom,AudioLines,Bike,Bird,Book,BookOpen,Bookmark,BriefcaseBusiness,Camera,Cat,ChartNoAxesCombined,CircleHelp,Code,Coffee,Compass,Cpu,Dice5,Dumbbell,Earth,Film,Flame,FlaskConical,Flower2,Gamepad2,Gem,Ghost,Globe2,Hammer,Heart,House,Lightbulb,Map:MapIcon,MessageCircle,Music,Palette,PawPrint,Rocket,School,Search,Shield,ShoppingBag,Smile,Sparkles,Star,Sun,Terminal,Trophy,Users,Video,Wallet,WandSparkles,Wrench,Zap,Newspaper};
 function slugifyTopic(value:string){const map:Record<string,string>={'а':'a','б':'b','в':'v','г':'h','ґ':'g','д':'d','е':'e','є':'ye','ж':'zh','з':'z','и':'y','і':'i','ї':'yi','й':'i','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'kh','ц':'ts','ч':'ch','ш':'sh','щ':'shch','ь':'','ю':'yu','я':'ya'};return value.toLowerCase().split('').map(ch=>map[ch]??ch).join('').replace(/[^a-z0-9_-]+/g,'-').replace(/-+/g,'-').replace(/^[-_]+|[-_]+$/g,'');}
 
-function kyivInfo(value: string, postNumber: number) {
-  const date = new Date(value);
-  const day = new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit',timeZone:'Europe/Kyiv'}).format(date);
-  const weekday = new Intl.DateTimeFormat('uk-UA',{weekday:'short',timeZone:'Europe/Kyiv'}).format(date);
-  const time = new Intl.DateTimeFormat('uk-UA',{hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23',timeZone:'Europe/Kyiv'}).format(date);
-  return `${day} ${weekday.charAt(0).toLocaleUpperCase('uk-UA')}${weekday.slice(1)} ${time} №${postNumber}`;
-}
 
 function Spoiler({children,canReveal}:{children:string;canReveal:boolean}) {
   const [revealed,setRevealed]=useState(false);
@@ -202,6 +197,7 @@ export default function App() {
   },[message]);
 
   const isPublicProfileRoute=/^\/[0-9a-fA-F]{6}$/.test(route);
+  const isDiscussionRoute=route.startsWith('/discussion/');
   useEffect(()=>{
     if(!isPublicProfileRoute){setPublicProfile(null);setPublicProfilePosts([]);return;}
     let cancelled=false;
@@ -355,6 +351,7 @@ export default function App() {
         {profile?.is_admin&&<button className="icon-btn" type="button" aria-label="Панель адміністратора" title="Панель адміністратора" onClick={()=>{setInfoOpen(false);setProfileOpen(false);navigate('/admin');void loadAdminStats();}}><ShieldCheck/></button>}
       </nav>
     </header>
+    {isDiscussionRoute&&<DiscussionPage postId={route.split('/')[2]??''} userId={user?.id??null} topics={topics} onBack={()=>navigate('/')} onLogin={()=>{setProfileOpen(true);setInfoOpen(false);setAuthStep('login');navigate('/auth');}}/>}
     {route==='/info'?<section className="info-panel">
       <div className="info-tabs"><button className={infoTab==='faq'?'selected':''} onClick={()=>setInfoTab('faq')}>FAQ</button><button className={infoTab==='rules'?'selected':''} onClick={()=>setInfoTab('rules')}>Правила</button></div>
       {infoTab==='faq'?<div className="info-content">
@@ -379,7 +376,7 @@ export default function App() {
             <span className="account-profile-avatar" style={{'--profile-accent':publicProfile.hex_login} as CSSProperties} aria-hidden="true"/>
             <div className="account-profile-heading"><h1>{publicProfile.hex_login}</h1><span className="account-profile-role">{publicProfile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:publicProfile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
           </div>
-          <div className="public-profile-body"><ProfileActivity posts={publicProfilePosts} topics={topics}/></div>
+          <div className="public-profile-body"><ProfileActivity posts={publicProfilePosts}/></div>
         </div>
       </>:<div className="public-profile-empty"><h2>Профіль не знайдено</h2><p>Перевір HEX-логін або повернись до стрічки.</p><button className="profile-logout" type="button" onClick={()=>navigate('/')}>На головну</button></div>}
     </section>}
@@ -392,7 +389,7 @@ export default function App() {
           <button className="profile-logout profile-logout-top" type="button" disabled={busy} onClick={()=>void logout()}>Вийти</button>
         </div>
         <div className="public-profile-body">
-          <ProfileActivity posts={ownProfilePosts} topics={topics}/>
+          <ProfileActivity posts={ownProfilePosts}/>
           {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
         </div>
       </div>
@@ -422,11 +419,7 @@ export default function App() {
       <section aria-label="Усі повідомлення">
         <div className="topics">{topics.map(item=>{const Icon=(ICONS as any)[item.icon]??(LucideIcons as any)[item.icon]??MessageCircle;return <button key={item.id} type="button" className={`topic-btn${topic===item.id?' active':''}`} style={{'--topic-color':item.color} as CSSProperties} onClick={()=>updateTopic(item.id)}><Icon/>{item.label}</button>;})}</div>
         <div id="feed" aria-live="polite">
-          {posts.length===0&&!loading?<div className="empty-state"><MessageCircle/><p>Тут поки тихо</p><span>Залиш першу думку в цьому розділі</span></div>:posts.map(post=><article className="post" key={post.id}>
-            <div className="meta"><div className="identity"><span className="swatch" style={{backgroundColor:post.profile?.hex_login??'#aaa'}}/><button type="button" className="hex profile-user-link" onClick={()=>{if(post.profile?.hex_login)navigate('/'+post.profile.hex_login.replace(/^#/,'').toLowerCase());}}>{post.profile?.hex_login?.toLowerCase()??'#??????'}</button>{post.profile?.is_moderator&&post.profile.moderator_topics?.includes(post.topic)&&(()=>{const topicIconName=topics.find(t=>t.id===post.topic)?.icon??'';const TopicIcon=ICONS[topicIconName]??(LucideIcons as any)[topicIconName]??MessageCircle;return <TopicIcon className="moderator-topic-icon" aria-label="Модератор розділу"/>})()}</div><time dateTime={post.created_at}>{kyivInfo(post.created_at,post.post_number)}</time>
-              {(profile?.is_admin||(profile?.is_moderator&&moderatorTopics.includes(post.topic)))&&<button className="moderate-delete" type="button" aria-label="Видалити повідомлення" onClick={async()=>{try{await adminAction('delete_post',{postId:post.id});await loadPosts(true);}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}><Trash2/></button>}
-            </div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered}/></p>
-          </article>)}
+          {posts.length===0&&!loading?<div className="empty-state"><MessageCircle/><p>Тут поки тихо</p><span>Залиш першу думку в цьому розділі</span></div>:posts.map(post=>{const topicInfo=topics.find(item=>item.id===post.topic);const TopicIcon=topicInfo?((ICONS as any)[topicInfo.icon]??(LucideIcons as any)[topicInfo.icon]??MessageCircle):MessageCircle;return <article className="post" key={post.id}><div className="meta post-meta"><div className="identity"><span className="swatch" style={{backgroundColor:post.profile?.hex_login??'#aaa'}}/><button type="button" className="hex profile-user-link" onClick={()=>{if(post.profile?.hex_login)navigate('/'+post.profile.hex_login.replace(/^#/,'').toLowerCase());}}>{post.profile?.hex_login?.toLowerCase()??'#??????'}</button>{post.profile?.is_moderator&&post.profile.moderator_topics?.includes(post.topic)&&<TopicIcon className="moderator-topic-icon" aria-label="Модератор розділу"/>}<span className="post-topic-label">{topicInfo?.label??post.topic}</span></div><time dateTime={post.created_at}>№ {post.post_number} · {new Intl.DateTimeFormat('uk-UA',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Europe/Kyiv'}).format(new Date(post.created_at))}</time>{(profile?.is_admin||(profile?.is_moderator&&moderatorTopics.includes(post.topic)))&&<button className="moderate-delete" type="button" aria-label="Видалити повідомлення" onClick={async()=>{try{await adminAction('delete_post',{postId:post.id});await loadPosts(true);}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}><Trash2/></button>}</div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered}/></p><PostSocial postId={post.id} userId={user?.id??null} onOpenDiscussion={()=>navigate('/discussion/'+post.id)} onLogin={()=>{setProfileOpen(true);setInfoOpen(false);setAuthStep('login');navigate('/auth');}}/></article>})
           {loading&&posts.length===0&&<div className="empty">Завантажуємо потік…</div>}
         </div>
         <div ref={sentinelRef} id="sentinel"/>

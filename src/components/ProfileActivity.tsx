@@ -1,97 +1,137 @@
-import type { CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 
 type ActivityPost = { id: string; created_at: string; topic: string };
-type ActivityTopic = { id: string; label: string; color: string };
-const TZ = 'Europe/Kyiv';
-const dateFormat = new Intl.DateTimeFormat('uk-UA', { day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ });
-const monthFormat = new Intl.DateTimeFormat('uk-UA', { month: 'long', year: 'numeric', timeZone: TZ });
-const shortMonthFormat = new Intl.DateTimeFormat('uk-UA', { month: 'short', timeZone: TZ });
-const hourFormat = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hourCycle: 'h23', timeZone: TZ });
-function dayKey(value: string) {
-  const p = new Intl.DateTimeFormat('en-US', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(value));
-  const get = (type: string) => p.find(x => x.type === type)?.value ?? '00';
-  return get('year')+'-'+get('month')+'-'+get('day');
-}
-function dateFromKey(key: string) { const [y,m,d]=key.split('-').map(Number); return new Date(Date.UTC(y,m-1,d,12)); }
-function plural(value:number, one:string, few:string, many:string) {
-  const n=value%100; if(n>=11&&n<=14)return many;
-  switch(value%10){case 1:return one;case 2:case 3:case 4:return few;default:return many;}
-}
-function ProfileActivity({posts,topics}:{posts:ActivityPost[];topics:ActivityTopic[]}) {
-  const days = new Map<string, ActivityPost[]>();
-  const topicCounts = new Map<string,number>();
-  const months = new Map<string,number>();
-  const hours = [0,0,0,0];
-  for(const post of posts){
-    const key=dayKey(post.created_at);
-    days.set(key,[...(days.get(key)??[]),post]);
-    topicCounts.set(post.topic,(topicCounts.get(post.topic)??0)+1);
-    const monthKey=key.slice(0,7);
-    months.set(monthKey,(months.get(monthKey)??0)+1);
-    const hour=Number(hourFormat.format(new Date(post.created_at)));
-    hours[hour<6?3:hour<12?0:hour<18?1:2]++;
-  }
-  const activeDays=[...days.keys()].sort();
-  let longest=0,streak=0,previous:number|null=null;
-  for(const key of activeDays){
-    const [y,m,d]=key.split('-').map(Number), current=Date.UTC(y,m-1,d);
-    streak=previous!==null&&current-previous===86400000?streak+1:1;
-    longest=Math.max(longest,streak); previous=current;
-  }
-  const leadingTopic=[...topicCounts.entries()].sort((a,b)=>b[1]-a[1])[0];
-  const topTopic=leadingTopic?topics.find(t=>t.id===leadingTopic[0]):null;
-  const maxTopic=Math.max(1,...topics.map(t=>topicCounts.get(t.id)??0));
-  const first=posts.length?posts.reduce((a,b)=>Date.parse(a.created_at)<Date.parse(b.created_at)?a:b):null;
-  const last=posts.length?posts.reduce((a,b)=>Date.parse(a.created_at)>Date.parse(b.created_at)?a:b):null;
-  const busiest=[...days.entries()].sort((a,b)=>b[1].length-a[1].length)[0];
-  const busiestMonth=[...months.entries()].sort((a,b)=>b[1]-a[1])[0];
-  const topHour=hours.indexOf(Math.max(...hours));
-  const timeLabels=['ранком','удень','увечері','вночі'];
-  const calendarEnd=new Date();
-  const calendarStart=new Date(calendarEnd); calendarStart.setDate(calendarStart.getDate()-181);
-  const calendarCells=Array.from({length:182},(_,i)=>{const d=new Date(calendarStart);d.setDate(d.getDate()+i);const key=dayKey(d.toISOString());return {key,count:days.get(key)?.length??0};});
-  const monthlyBars=Array.from({length:12},(_,i)=>{const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-(11-i));const key=dayKey(d.toISOString()).slice(0,7);return {key,label:shortMonthFormat.format(d),count:months.get(key)??0};});
-  const maxMonth=Math.max(1,...monthlyBars.map(x=>x.count));
-  const achievements=[
-    {title:'Перший крок',detail:'Опубліковано перше повідомлення',done:posts.length>=1,progress:Math.min(posts.length,1),goal:1},
-    {title:'Власний голос',detail:'10 повідомлень у спільноті',done:posts.length>=10,progress:Math.min(posts.length,10),goal:10},
-    {title:'Постійний учасник',detail:'50 повідомлень',done:posts.length>=50,progress:Math.min(posts.length,50),goal:50},
-    {title:'Сто думок',detail:'100 повідомлень',done:posts.length>=100,progress:Math.min(posts.length,100),goal:100},
-    {title:'Ритм',detail:'7 активних днів поспіль',done:longest>=7,progress:Math.min(longest,7),goal:7},
-    {title:'Мандрівник тем',detail:'Публікації у 3 різних темах',done:topicCounts.size>=3,progress:Math.min(topicCounts.size,3),goal:3},
-    {title:'Широкий інтерес',detail:'Публікації у 5 різних темах',done:topicCounts.size>=5,progress:Math.min(topicCounts.size,5),goal:5},
-    {title:'Регулярність',detail:'10 різних активних днів',done:activeDays.length>=10,progress:Math.min(activeDays.length,10),goal:10}
-  ];
-  const unlocked=achievements.filter(x=>x.done).length;
-  const milestones=[
-    ...(first?[{date:new Date(first.created_at),title:'Перше повідомлення',detail:'Початок історії профілю'}]:[]),
-    ...(busiestMonth?[{date:dateFromKey(busiestMonth[0]+'-01'),title:'Найактивніший місяць',detail:monthFormat.format(dateFromKey(busiestMonth[0]+'-01'))+' · '+busiestMonth[1]+' повідомлень'}]:[]),
-    ...(last&&(!first||last.id!==first.id)?[{date:new Date(last.created_at),title:'Остання активність',detail:dateFormat.format(new Date(last.created_at))}]:[])
-  ].sort((a,b)=>a.date.getTime()-b.date.getTime());
-  return <section className="profile-activity profile-activity-clean" aria-label="Активність профілю">
-    <section className="pa-section pa-achievements">
-      <header className="pa-heading"><div><span>01 / ДОСЯГНЕННЯ</span><h2>Твої відзнаки</h2></div><strong>{unlocked}<small> / {achievements.length}</small></strong></header>
-      <div className="pa-achievement-grid">{achievements.map((item,index)=><article className={item.done?'is-earned':''} key={item.title}><div className="pa-achievement-mark">{item.done?'✓':String(index+1).padStart(2,'0')}</div><div className="pa-achievement-copy"><strong>{item.title}</strong><span>{item.detail}</span>{!item.done&&<i><b style={{width:(item.progress/item.goal*100)+'%'}}/></i>}</div></article>)}</div>
+
+const kyivParts = (value: string) => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Kyiv', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date(value));
+  const get = (type: string) => parts.find(part => part.type === type)?.value ?? '';
+  return { year: Number(get('year')), key: get('year') + '-' + get('month') + '-' + get('day') };
+};
+const hourKyiv = (value: string) => Number(new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/Kyiv', hour: '2-digit', hourCycle: 'h23',
+}).format(new Date(value)));
+const weekdayKyiv = (value: string) => {
+  const day = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Kyiv', weekday: 'short' }).format(new Date(value));
+  return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(day);
+};
+const dateLabel = (key: string) => new Intl.DateTimeFormat('uk-UA', {
+  timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric',
+}).format(new Date(key + 'T12:00:00Z'));
+
+export default function ProfileActivity({ posts }: { posts: ActivityPost[] }) {
+  const currentYear = new Date().getFullYear();
+  const years = useMemo(() => {
+    if (!posts.length) return [currentYear];
+    const first = Math.min(...posts.map(post => kyivParts(post.created_at).year));
+    return Array.from({ length: currentYear - first + 1 }, (_, index) => first + index).reverse();
+  }, [posts, currentYear]);
+  const [year, setYear] = useState(currentYear);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+
+  const stats = useMemo(() => {
+    const days = new Map<string, number>();
+    const hours = Array(24).fill(0) as number[];
+    const weekdays = Array(7).fill(0) as number[];
+    for (const post of posts) {
+      const { key } = kyivParts(post.created_at);
+      days.set(key, (days.get(key) ?? 0) + 1);
+      hours[hourKyiv(post.created_at)] += 1;
+      weekdays[weekdayKyiv(post.created_at)] += 1;
+    }
+    const active = [...days.keys()].sort();
+    let longest = 0, streak = 0, previous = '';
+    for (const key of active) {
+      const current = new Date(key + 'T12:00:00Z');
+      const prior = previous ? new Date(previous + 'T12:00:00Z') : null;
+      const consecutive = !!prior && current.getTime() - prior.getTime() === 86400000;
+      streak = consecutive ? streak + 1 : 1;
+      longest = Math.max(longest, streak);
+      previous = key;
+    }
+    const maxHour = Math.max(0, ...hours);
+    const maxWeekday = Math.max(0, ...weekdays);
+    return {
+      days, hours, weekdays, activeDays: active.length, longest,
+      peakHour: maxHour ? hours.indexOf(maxHour) : -1,
+      peakWeekday: maxWeekday ? weekdays.indexOf(maxWeekday) : -1,
+      average: active.length ? posts.length / active.length : 0,
+      first: active[0] ?? null, last: active[active.length - 1] ?? null,
+    };
+  }, [posts]);
+
+  const calendar = useMemo(() => {
+    const jan1 = new Date(Date.UTC(year, 0, 1));
+    const mondayOffset = (jan1.getUTCDay() + 6) % 7;
+    const start = new Date(Date.UTC(year, 0, 1 - mondayOffset));
+    return Array.from({ length: 371 }, (_, index) => {
+      const date = new Date(start);
+      date.setUTCDate(start.getUTCDate() + index);
+      const key = date.toISOString().slice(0, 10);
+      const inYear = date.getUTCFullYear() === year;
+      return { key, count: inYear ? stats.days.get(key) ?? 0 : 0, inYear };
+    });
+  }, [year, stats.days]);
+
+  const months = Array.from({ length: 12 }, (_, index) =>
+    new Intl.DateTimeFormat('uk-UA', { month: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(year, index, 1)))
+  );
+  const hourMax = Math.max(1, ...stats.hours);
+  const weekdayMax = Math.max(1, ...stats.weekdays);
+  const selectedCount = selectedDay ? stats.days.get(selectedDay) ?? 0 : 0;
+  const minYear = years[years.length - 1] ?? currentYear;
+
+  return <section className="profile-activity profile-rhythm" aria-label="Ритм активності профілю">
+    <div className="rhythm-intro">
+      <span className="rhythm-eyebrow">ІСТОРІЯ ПРИСУТНОСТІ</span>
+      <div className="rhythm-total"><strong>{posts.length.toLocaleString('uk-UA')}</strong><span>повідомлень за весь час</span></div>
+      <p>{stats.first ? 'Від ' + dateLabel(stats.first) + ' до ' + dateLabel(stats.last!) : 'Тут починатиметься твоя історія в Copypaste.'}</p>
+    </div>
+
+    <section className="rhythm-section">
+      <div className="rhythm-section-head">
+        <div><span>01 / КАЛЕНДАР</span><h2>Ритм по днях</h2></div>
+        <div className="rhythm-year-control">
+          <button type="button" aria-label="Попередній рік" disabled={year <= minYear} onClick={() => { setYear(value => Math.max(minYear, value - 1)); setSelectedDay(null); }}>‹</button>
+          <select aria-label="Рік активності" value={year} onChange={event => { setYear(Number(event.target.value)); setSelectedDay(null); }}>
+            {years.map(item => <option key={item} value={item}>{item}</option>)}
+          </select>
+          <button type="button" aria-label="Наступний рік" disabled={year >= currentYear} onClick={() => { setYear(value => Math.min(currentYear, value + 1)); setSelectedDay(null); }}>›</button>
+        </div>
+      </div>
+      <div className="rhythm-month-labels">{months.map((month, index) => <span key={index}>{month}</span>)}</div>
+      <div className="rhythm-calendar" role="group" aria-label={'Активність за ' + year}>
+        {calendar.map(cell => <button key={cell.key} type="button"
+          className={'rhythm-day level-' + (cell.count === 0 ? 0 : cell.count === 1 ? 1 : cell.count <= 3 ? 2 : cell.count <= 6 ? 3 : 4) + (!cell.inYear ? ' out-year' : '') + (selectedDay === cell.key ? ' selected' : '')}
+          title={cell.inYear ? dateLabel(cell.key) + ' · ' + cell.count + ' повідомлень' : ''}
+          disabled={!cell.inYear}
+          aria-label={cell.inYear ? dateLabel(cell.key) + ': ' + cell.count + ' повідомлень' : undefined}
+          onClick={() => setSelectedDay(cell.key === selectedDay ? null : cell.key)} />)}
+      </div>
+      <div className="rhythm-calendar-foot">
+        <span>Менше</span><i className="level-0"/><i className="level-1"/><i className="level-2"/><i className="level-3"/><i className="level-4"/><span>Більше</span>
+      </div>
+      {selectedDay && <div className="rhythm-day-detail"><strong>{dateLabel(selectedDay)}</strong><span>{selectedCount} {selectedCount === 1 ? 'повідомлення' : 'повідомлень'}</span></div>}
     </section>
-    <section className="pa-section">
-      <header className="pa-heading"><div><span>02 / ІНТЕРЕСИ</span><h2>Тематичний фокус</h2></div><small>{posts.length} повідомлень</small></header>
-      <div className="pa-topic-layout"><div className="pa-topic-lead"><strong>{topTopic?.label??'Поки без теми'}</strong><span>{leadingTopic?Math.round(leadingTopic[1]/Math.max(1,posts.length)*100)+'% усіх повідомлень':'Перші повідомлення покажуть твої інтереси'}</span></div><div className="pa-topic-list">{topics.map(topic=>{const count=topicCounts.get(topic.id)??0;return <div key={topic.id} className={count===0?'is-empty':''}><span>{topic.label}</span><small>{count}</small><i><b style={{width:(count/maxTopic*100)+'%','--pa-topic':topic.color} as CSSProperties}/></i></div>;})}</div></div>
+
+    <section className="rhythm-section">
+      <div className="rhythm-section-head"><div><span>02 / ЧАС</span><h2>Коли ти тут</h2></div><small>За місцевим часом Києва</small></div>
+      <div className="rhythm-hour-chart">{stats.hours.map((count, index) => <div key={index} title={index.toString().padStart(2, '0') + ':00 · ' + count} className="rhythm-hour-column"><i style={{ height: (count / hourMax * 100) + '%' }}/><span>{index % 3 === 0 ? String(index).padStart(2, '0') : ''}</span></div>)}</div>
+      <div className="rhythm-section-head rhythm-week-head"><div><span>03 / ТИЖДЕНЬ</span><h2>Дні активності</h2></div></div>
+      <div className="rhythm-week-chart">{['Пн','Вт','Ср','Чт','Пт','Сб','Нд'].map((label, index) => <div key={label}><i style={{ height: (stats.weekdays[(index + 1) % 7] / weekdayMax * 100) + '%' }}/><span>{label}</span><small>{stats.weekdays[(index + 1) % 7]}</small></div>)}</div>
     </section>
-    <section className="pa-section">
-      <header className="pa-heading"><div><span>03 / РИТМ</span><h2>Ритм активності</h2></div><small>Останні 6 місяців</small></header>
-      <div className="pa-calendar">{calendarCells.map(cell=><i key={cell.key} title={cell.key+': '+cell.count} className={'level-'+(cell.count===0?0:cell.count===1?1:cell.count<=3?2:cell.count<=6?3:4)}/>)}</div>
-      <div className="pa-legend"><span>Менше</span><i/><i/><i/><i/><span>Більше</span></div>
-      <div className="pa-rhythm-summary"><div><strong>{activeDays.length}</strong><span>активних днів</span></div><div><strong>{longest}</strong><span>днів — найдовша серія</span></div><div><strong>{posts.length?timeLabels[topHour]:'—'}</strong><span>найчастіший час</span></div><div><strong>{busiest?.[1].length??0}</strong><span>повідомлень за день-рекорд</span></div></div>
-    </section>
-    <section className="pa-section">
-      <header className="pa-heading"><div><span>04 / ХРОНОЛОГІЯ</span><h2>Історія профілю</h2></div><small>Ключові моменти</small></header>
-      {milestones.length?<div className="pa-timeline">{milestones.map((item,index)=><article className={index===milestones.length-1?'is-latest':''} key={item.title}><i/><div><time>{dateFormat.format(item.date)}</time><strong>{item.title}</strong><span>{item.detail}</span></div></article>)}</div>:<p className="pa-empty">Тут з’явиться історія твоїх перших кроків і важливих моментів.</p>}
-    </section>
-    <section className="pa-section">
-      <header className="pa-heading"><div><span>05 / ПІДСУМОК</span><h2>Загальна активність</h2></div><small>Останні 12 місяців</small></header>
-      <div className="pa-total"><strong>{posts.length.toLocaleString('uk-UA')}</strong><span>{plural(posts.length,'повідомлення','повідомлення','повідомлень')} за весь час</span>{busiestMonth&&<small>Найактивніший місяць — {monthFormat.format(dateFromKey(busiestMonth[0]+'-01'))}</small>}</div>
-      <div className="pa-month-bars">{monthlyBars.map(item=><div key={item.key}><span>{item.count||''}</span><i><b style={{height:(item.count/maxMonth*100)+'%'}}/></i><small>{item.label}</small></div>)}</div>
+
+    <section className="rhythm-section">
+      <div className="rhythm-section-head"><div><span>04 / ПОКАЗНИКИ</span><h2>Твій ритм</h2></div></div>
+      <div className="rhythm-stat-grid">
+        <div><strong>{stats.activeDays.toLocaleString('uk-UA')}</strong><span>активних днів</span></div>
+        <div><strong>{stats.longest}</strong><span>днів — найдовша серія</span></div>
+        <div><strong>{stats.average.toFixed(1).replace('.', ',')}</strong><span>повідомлень за активний день</span></div>
+        <div><strong>{stats.peakHour >= 0 ? String(stats.peakHour).padStart(2, '0') + ':00' : '—'}</strong><span>найактивніша година</span></div>
+        <div><strong>{stats.peakWeekday >= 0 ? ['Нд','Пн','Вт','Ср','Чт','Пт','Сб'][stats.peakWeekday] : '—'}</strong><span>найактивніший день тижня</span></div>
+        <div><strong>{stats.last ? dateLabel(stats.last) : '—'}</strong><span>останній день активності</span></div>
+      </div>
     </section>
   </section>;
 }
-export default ProfileActivity;

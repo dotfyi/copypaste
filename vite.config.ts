@@ -1,7 +1,18 @@
-import { defineConfig } from 'vite';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   publicDir: false,
-  build: { outDir: 'public', emptyOutDir: true, sourcemap: false }
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  build: { outDir: 'public', emptyOutDir: true, sourcemap: false },
 });

@@ -637,7 +637,13 @@
   }
 
   .cn-command-list {
-    @apply no-scrollbar max-h-72 scroll-py-1 outline-none;
+    @apply max-h-72 scroll-py-1 outline-none;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   .cn-command-empty {
@@ -1080,7 +1086,13 @@
   }
 
   .cn-sidebar-content {
-    @apply no-scrollbar gap-2 [--radius:var(--radius-xl)];
+    @apply gap-2 [--radius:var(--radius-xl)];
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   .cn-sidebar-footer {

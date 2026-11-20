@@ -1,9 +1,10 @@
-@import "tailwindcss" theme, utilities;
+@import "tailwindcss";
 @import "tw-animate-css";
 @import "./styles/rhea.css";
 
-/* Explicitly include React components when generating Tailwind utilities. */
-@source "./**/*.{js,ts,jsx,tsx}";
+/* Scan the actual React source tree and keep the auth layout utilities explicit. */
+@source "../src";
+@source inline("flex flex-col gap-1 gap-2 gap-3 gap-4 items-start justify-between mx-auto w-full max-w-md border border-border border-t bg-card bg-muted shadow-none text-xl tracking-tight text-sm text-xs leading-relaxed break-all rounded-2xl px-3 py-3 font-mono pt-4");
 
 :root {
   --radius: 0.5rem;

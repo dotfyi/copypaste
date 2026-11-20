@@ -1,6 +1,0 @@
-name = "copypaste"
-compatibility_date = "2026-11-18"
-
-[assets]
-directory = "./public"
-not_found_handling = "single-page-application"

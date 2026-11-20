@@ -297,7 +297,7 @@ export default function App() {
     <header>
       <button className="brand" type="button" onClick={()=>navigate('/')} aria-label="На головну"><strong>copy</strong><span>paste</span></button>
       <nav className="nav" aria-label="Навігація">
-        <button className={`icon-btn${profileOpen?' active':''}`} type="button" aria-label="Профіль" title="Профіль" onClick={()=>{navigate(user?'/profile':'/auth');setProfileOpen(true);setAuthStep(user?'idle':'login');}}><UserRound/></button>
+        <button className={`icon-btn${route==='/profile'||route==='/auth'?' active':''}`} type="button" aria-label="Профіль" title="Профіль" onClick={()=>{navigate(user?'/profile':'/auth');setProfileOpen(true);setAuthStep(user?'idle':'login');}}><UserRound/></button>
       </nav>
     </header>
     {(route==='/profile'||route==='/auth')&&<section className="profile-panel">

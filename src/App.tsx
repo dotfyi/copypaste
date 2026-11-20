@@ -30,7 +30,8 @@ function Spoiler({children,canReveal}:{children:string;canReveal:boolean}) {
   return <span className="spoiler-wrap"><button type="button" className={`spoiler${revealed?' revealed':''}${canReveal?'':' locked'}`} onClick={()=>{if(canReveal)setRevealed(value=>!value);}} aria-label={canReveal?'Відкрити спойлер':'Прихований текст'}>{children}</button></span>;
 }
 function FormattedText({value,canRevealSpoilers}:{value:string;canRevealSpoilers:boolean}) {
-  const pattern=/(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|\|\|[^|]+\|\||>[^\n]+)/gm;
+  const pattern=/(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|\|\|[^|]+\|\||>[^
+]+)/gm;
   const nodes=[];let last=0;
   for(const match of value.matchAll(pattern)){const token=match[0],index=match.index??0;if(index>last)nodes.push(value.slice(last,index));
     if(token.startsWith('**'))nodes.push(<strong key={index}>{token.slice(2,-2)}</strong>);
@@ -320,7 +321,8 @@ export default function App() {
       <nav className="nav" aria-label="Навігація">
         <button className={`icon-btn${profileOpen?' active':''}`} type="button" aria-label="Профіль" title="Профіль" onClick={()=>{navigate(user?'/profile':'/auth');setProfileOpen(true);setAuthStep(user?'idle':'login');}}><UserRound/></button>
       </nav>
-    </header>\n    {(route==='/profile'||route==='/auth')&&<section className="profile-panel">
+    </header>
+    {(route==='/profile'||route==='/auth')&&<section className="profile-panel">
       {user&&profile?<>
       <div className="account-profile">
         <div className="account-profile-identity public-account-identity" style={{'--profile-accent':profile.hex_login} as CSSProperties}>
@@ -337,4 +339,6 @@ export default function App() {
         {authStep==='idle'?<div className="auth-choice"><button type="button" className="auth-link" onClick={()=>setAuthStep('login')}>Авторизуватись</button><button type="button" className="auth-link" onClick={()=>setAuthStep('registration')}>Зареєструватися</button></div>:authStep==='login'?<><input className="auth-key-input" type="password" autoComplete="current-password" value={loginKey} onChange={e=>setLoginKey(e.target.value)} placeholder="Секретний ключ"/><div className="auth-actions"><button type="button" className="auth-link muted" onClick={()=>{setAuthStep('idle');setLoginKey('');}}>Назад</button><button type="button" className="auth-link" disabled={busy||!loginKey.trim()} onClick={async()=>{await runAuthCommand(loginKey);setLoginKey('');}}>Увійти</button></div><p className="auth-switch">Ще немає акаунта? <button type="button" className="auth-link" onClick={()=>{setAuthStep('registration');setLoginKey('');}}>Зареєструватися</button></p></>:authStep==='registration'?<><label className="rules-check"><input type="checkbox" checked={rulesAccepted} onChange={e=>setRulesAccepted(e.target.checked)}/><span>Створюючи акаунт, ти погоджуєшся дотримуватися правил спільноти.</span></label><div className="auth-actions"><button type="button" className="auth-link muted" onClick={()=>setAuthStep('idle')}>Назад</button><button type="button" className="auth-link" disabled={busy||!rulesAccepted} onClick={()=>void beginRegistration()}>Створити акаунт</button></div></>:<><div className="secret-key">{registration?.secretKey}</div><div className="auth-actions auth-key-actions"><button type="button" className="auth-link copy-auth-key" onClick={()=>void navigator.clipboard.writeText(registration?.secretKey??'')}><Copy/> Скопіювати ключ</button><button type="button" className="auth-link" disabled={busy} onClick={()=>void continueRegistration()}>Продовжити</button></div><p className="auth-warning">Цей ключ неможливо відновити. Він єдиний спосіб увійти в акаунт — збережи його в надійному місці.</p></>}
       </div>}
       {status&&<div className={`status${error?' error':''}`}>{status}</div>}
-    </section>}}\n  </main>;\n}\n
+    </section>}
+  </main>;
+}

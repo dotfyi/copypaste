@@ -1,4 +1,5 @@
 @import "tailwindcss" theme, utilities;
+@import "./styles/rhea.css";
 
 :root {
   --radius: 0.5rem;

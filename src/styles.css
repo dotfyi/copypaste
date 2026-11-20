@@ -2401,3 +2401,6 @@ a:focus-visible,
   .forum-reply-composer { position:fixed; left:0; right:0; bottom:0; z-index:30; margin:0; padding:10px 16px calc(10px + env(safe-area-inset-bottom)); border-top:1px solid #ddd; background:#fff; }
   .forum-reply-guest { position:fixed; left:0; right:0; bottom:0; z-index:30; margin:0; padding:13px 16px calc(13px + env(safe-area-inset-bottom)); border-top:1px solid #ddd; background:#fff; }
 }
+
+.forum-topic-social .post-social-actions > button:last-child { display:none; }
+.forum-topic-social .post-social-actions { gap:0; }

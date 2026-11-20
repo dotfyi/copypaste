@@ -169,31 +169,6 @@ export default function App() {
   },[]);
 
 
-  const isPublicProfileRoute=/^\/[0-9a-fA-F]{6}$/.test(route);
-  const isDiscussionRoute=route.startsWith('/discussion/');
-  useEffect(()=>{
-    if(!isPublicProfileRoute){setPublicProfile(null);setPublicProfilePosts([]);return;}
-    let cancelled=false;
-    setPublicProfileLoading(true);
-    const login='#'+route.slice(1).toUpperCase();
-    void (async()=>{
-      try{
-        const {data:person,error:personError}=await supabase.from('copypaste_profiles').select('id,hex_login,is_admin,is_moderator,is_registered,is_suspended').eq('hex_login',login).eq('is_registered',true).maybeSingle();
-        if(personError)throw personError;
-        if(!person){if(!cancelled){setPublicProfile(null);setPublicProfilePosts([]);}return;}
-        const rows: {id:string;created_at:string;topic:string}[] = [];
-        for(let start=0;;start+=1000){
-          const {data,error:postsError}=await supabase.from('copypaste_posts').select('id,created_at,topic').eq('author_id',person.id).order('created_at',{ascending:false}).range(start,start+999);
-          if(postsError)throw postsError;
-          rows.push(...(data??[]));
-          if((data??[]).length<1000)break;
-        }
-        if(!cancelled){setPublicProfile(person as Profile&{id:string});setPublicProfilePosts(rows as unknown as Post[]);}
-      }catch(cause){console.error('Public profile load failed:',cause);if(!cancelled){setPublicProfile(null);setPublicProfilePosts([]);}}
-      finally{if(!cancelled)setPublicProfileLoading(false);}
-    })();
-    return()=>{cancelled=true;};
-  },[route,isPublicProfileRoute]);
   useEffect(()=>{
     if(!user?.id||!(route==='/profile'||route==='/auth')){setOwnProfilePosts([]);return;}
     let cancelled=false;
@@ -211,7 +186,6 @@ export default function App() {
     })();
     return()=>{cancelled=true;};
   },[route,user?.id]);
-  const isFeedRoute=route==='/'||topics.some(t=>route==='/'+t.id);
   function updateTopic(next:string){if(next===topic&&route===(next==='general'?'/':`/${next}`))return;offsetRef.current=0;moreRef.current=true;setHasMore(false);setPosts([]);setTopic(next);navigate(next==='general'?'/':`/${next}`);}
 
   async function runAuthCommand(key:string){

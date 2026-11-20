@@ -158,7 +158,9 @@ export default function App() {
     finally{loadingRef.current=false;setLoading(false);}
   },[topic]);
 
-      useEffect(()=>{
+      useEffect(()=>{void (async()=>{try{await ensureIdentity();setNotice('');}catch(e){console.error(e);setNotice('Не вдалося перевірити авторизацію. Онови сторінку та спробуй ще раз.',true);}})();},[ensureIdentity]);
+
+  useEffect(()=>{
     const {data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{
       if(!session){setUser(null);setProfile(null);}
     });

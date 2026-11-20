@@ -2490,3 +2490,15 @@ a:focus-visible,
 .profile-activity-tools { display:flex; justify-content:flex-end; margin:0 0 8px; }
 .profile-activity-tools .profile-logout { padding:0; border:0; background:transparent; color:#888; font-size:10px; cursor:pointer; }
 .profile-activity-tools .profile-logout:hover { color:#111; }
+
+
+/* Keep the interface unfilled: transparent surfaces, monochrome borders. */
+.cn-card,
+.cn-input,
+.secret-key {
+  background: transparent !important;
+}
+
+.cn-card {
+  box-shadow: none !important;
+}

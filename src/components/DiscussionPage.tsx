@@ -223,34 +223,36 @@ export default function DiscussionPage({ postId, userId, topics, onBack, onLogin
     </article>;
   }
 
-  if (loading) return <section className="discussion-page"><button className="discussion-back" onClick={onBack}><ArrowLeft/>Стрічка</button><p className="discussion-loading">Завантажуємо обговорення…</p></section>;
-  if (!post) return <section className="discussion-page"><button className="discussion-back" onClick={onBack}><ArrowLeft/>Стрічка</button><p className="discussion-loading">Повідомлення не знайдено.</p></section>;
+  if (loading) return <section className="discussion-page compact-discussion"><button className="discussion-back" onClick={onBack}><ArrowLeft/> Усі теми</button><p className="discussion-loading">Завантажуємо обговорення…</p></section>;
+  if (!post) return <section className="discussion-page compact-discussion"><button className="discussion-back" onClick={onBack}><ArrowLeft/> Усі теми</button><p className="discussion-loading">Тему не знайдено.</p></section>;
 
-  return <section className="discussion-page">
-    <button className="discussion-back" type="button" onClick={onBack}><ArrowLeft/>До стрічки</button>
-    <article className="discussion-original">
-      <div className="meta post-meta">
-        <div className="identity"><span className="swatch" style={{ backgroundColor: post.profile?.hex_login ?? '#aaa' }}/><strong className="hex">{post.profile?.hex_login?.toLowerCase() ?? '#??????'}</strong>
+  return <section className="discussion-page compact-discussion">
+    <button className="discussion-back" type="button" onClick={onBack}><ArrowLeft/> Усі теми</button>
+    <div className="forum-breadcrumb">{topic?.label ?? post.topic} <span>/</span> ТЕМА №{post.post_number}</div>
+    <article className="forum-thread-head">
+      <div className="forum-thread-meta">
+        <div className="forum-thread-author">
+          <span className="forum-author-dot" style={{ backgroundColor: post.profile?.hex_login ?? '#aaa' }}/>
+          <strong>{post.profile?.hex_login?.toLowerCase() ?? '#??????'}</strong>
           {post.profile?.is_moderator && post.profile.moderator_topics?.includes(post.topic) && <TopicIcon className="moderator-topic-icon" aria-label="Модератор розділу"/>}
-          <span className="post-topic-label">{topic?.label ?? post.topic}</span>
         </div>
         <time>№ {post.post_number} · {formatTime(post.created_at)}</time>
       </div>
-      <p className="message"><InlineText value={post.content}/></p>
-      <PostSocial postId={post.id} userId={userId} onOpenDiscussion={() => document.querySelector('.discussion-heading')?.scrollIntoView({ behavior: 'smooth' })} onLogin={onLogin}/>
+      <div className="forum-thread-content"><InlineText value={post.content}/></div>
+      <PostSocial postId={post.id} userId={userId} onOpenDiscussion={() => document.querySelector('.forum-replies-toolbar')?.scrollIntoView({ behavior: 'smooth' })} onLogin={onLogin}/>
     </article>
-
-    <div className="discussion-heading">
-      <h2>Обговорення</h2><span>{comments.length} {comments.length === 1 ? 'коментар' : 'коментарів'}</span>
+    <div className="forum-replies-toolbar">
+      <div><h2>Відповіді</h2><span>{comments.length} повідомлень</span></div>
+      <span className="forum-sort-label">НАЙНОВІШІ ↓</span>
     </div>
     {error && <p className="discussion-error" role="status">{error}</p>}
-    <div className="discussion-list">
-      {roots.length ? roots.map(comment => renderComment(comment)) : <p className="discussion-empty">Поки немає коментарів. Почни розмову.</p>}
+    <div className="discussion-list forum-replies-list">
+      {roots.length ? roots.map(comment => renderComment(comment)) : <p className="discussion-empty">Поки немає відповідей. Почни обговорення.</p>}
     </div>
-    {userId ? <form className="discussion-composer" onSubmit={submitComment}>
+    {userId ? <form className="discussion-composer forum-reply-composer" onSubmit={submitComment}>
       {replyTo && <div className="discussion-replying"><span>Відповідь для {replyTo.profile?.hex_login ?? '#??????'}</span><button type="button" aria-label="Скасувати відповідь" onClick={() => setReplyTo(null)}><X/></button></div>}
-      <textarea ref={composerRef} value={draft} onChange={event => setDraft(event.target.value)} placeholder="Написати коментар…" maxLength={1000} rows={1}/>
-      <button type="submit" disabled={busy || !draft.trim()} aria-label="Надіслати коментар"><Send/></button>
-    </form> : <div className="discussion-guest"><span>Увійди, щоб залишити коментар або реакцію.</span><button type="button" onClick={onLogin}>Увійти</button></div>}
+      <textarea ref={composerRef} value={draft} onChange={event => setDraft(event.target.value)} placeholder="Написати відповідь…" maxLength={1000} rows={1}/>
+      <button type="submit" disabled={busy || !draft.trim()} aria-label="Надіслати відповідь"><Send/></button>
+    </form> : <div className="discussion-guest forum-reply-guest"><span>Увійди, щоб відповідати в обговоренні.</span><button type="button" onClick={onLogin}>Увійти</button></div>}
   </section>;
 }

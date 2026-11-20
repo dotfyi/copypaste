@@ -4,8 +4,6 @@ import { AlarmClock, Anchor, Archive, Award, Baby, BadgeCheck, Banknote, Bell, B
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import ProfileActivity from './components/ProfileActivity';
-import PostSocial from './components/PostSocial';
-import DiscussionPage from './components/DiscussionPage';
 
 type Topic = { id: string; label: string; icon: string; color: string };
 type Profile = { hex_login: string; is_admin: boolean; is_moderator: boolean; is_registered: boolean; is_suspended?: boolean };
@@ -102,10 +100,8 @@ export default function App() {
   const setNotice=(value:string,isError=false)=>{setStatus(value);setError(isError);};
   const navigate=(path:string)=>{const normalized=path==='/-------'?'/animals':path;if(window.location.pathname!==normalized)window.history.pushState({},'',normalized);setRoute(normalized);setStatus('');setError(false);};
   useEffect(()=>{const onPop=()=>{setRoute(window.location.pathname);setStatus('');setError(false);};window.addEventListener('popstate',onPop);return()=>window.removeEventListener('popstate',onPop);},[]);
-  useEffect(()=>{if(route==='/-------'){navigate('/animals');return;}const path=route==='/'?'general':route.slice(1);if((route==='/'||topics.some(t=>t.id===path))&&path!==topic){setPosts([]);offsetRef.current=0;moreRef.current=true;setHasMore(false);loadingRef.current=false;setTopic(path);}},[route,topics,topic]);
-  useEffect(()=>{if(route==='/auth'&&!user)setAuthStep(step=>step==='registration'||step==='key-ready'?step:'login');},[route,user]);
-  useEffect(()=>{if(route==='/admin'&&profile?.is_admin)void loadAdminStats();},[route,profile?.is_admin]);
-
+    useEffect(()=>{if(route==='/auth'&&!user)setAuthStep(step=>step==='registration'||step==='key-ready'?step:'login');},[route,user]);
+  
   const ensureIdentity=useCallback(async()=>{
     const {data,error}=await supabase.auth.getSession();
     if(error)throw error;
@@ -162,62 +158,13 @@ export default function App() {
     finally{loadingRef.current=false;setLoading(false);}
   },[topic]);
 
-  useEffect(()=>{void (async()=>{try{await ensureIdentity();setNotice('');}catch(e){console.error(e);setNotice('Не вдалося перевірити авторизацію. Онови сторінку та спробуй ще раз.',true);}})();void loadTopics();},[ensureIdentity,loadTopics]);
-  useEffect(()=>{const routeTopic=route==='/'?'general':route.slice(1);const feedRoute=route==='/'||topics.some(t=>t.id===routeTopic);if(feedRoute&&routeTopic===topic)void loadPosts(true);},[user,topic,loadPosts,route,topics]);
-  useEffect(()=>{
+      useEffect(()=>{
     const {data:listener}=supabase.auth.onAuthStateChange((_event,session)=>{
       if(!session){setUser(null);setProfile(null);}
     });
     return()=>listener.subscription.unsubscribe();
   },[]);
 
-
-  useEffect(()=>{
-    const channel=supabase.channel('copypaste-live-feed').on('postgres_changes',{event:'INSERT',schema:'public',table:'copypaste_posts'},payload=>{
-      if((payload.new as {topic?:string}).topic===topic)void loadPosts(true);
-    }).subscribe();
-    return()=>{void supabase.removeChannel(channel);};
-  },[topic,loadPosts]);
-  useEffect(()=>{
-    const feedVisible=route==='/'||topics.some(item=>route==='/'+item.id);
-    if(!feedVisible)return;
-    const channel=supabase.channel('copypaste-live-social')
-      .on('postgres_changes',{event:'*',schema:'public',table:'copypaste_post_reactions'},()=>void loadPosts(true))
-      .on('postgres_changes',{event:'*',schema:'public',table:'copypaste_comments'},()=>void loadPosts(true))
-      .subscribe();
-    return()=>{void supabase.removeChannel(channel);};
-  },[route,topics,loadPosts]);
-
-  useEffect(()=>{
-    const target=sentinelRef.current;if(!target)return;
-    const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)&&moreRef.current&&!loadingRef.current)void loadPosts(false);},{rootMargin:'500px'});
-    observer.observe(target);return()=>observer.disconnect();
-  },[loadPosts]);
-  useEffect(()=>{
-    const login=accountLogin.trim().replace(/^#/, '');
-    if(!login){setLoginAvailability('idle');return;}
-    if(!/^[a-fA-F0-9]{6}$/.test(login)){setLoginAvailability('invalid');return;}
-    setLoginAvailability('checking');
-    const timer=window.setTimeout(async()=>{
-      const {data,error}=await supabase.from('copypaste_profiles').select('id').eq('hex_login','#'+login.toUpperCase()).maybeSingle();
-      setLoginAvailability(error?'idle':data?'taken':'free');
-    },250);
-    return()=>window.clearTimeout(timer);
-  },[accountLogin]);
-
-  useEffect(()=>{
-    const el=composerRef.current;if(!el)return;
-    const style=getComputedStyle(el);
-    const line=Number.parseFloat(style.lineHeight)||24;
-    const verticalPadding=(Number.parseFloat(style.paddingTop)||0)+(Number.parseFloat(style.paddingBottom)||0);
-    const minHeight=line+verticalPadding;
-    const maxHeight=line*5+verticalPadding;
-    el.style.height=`${minHeight}px`;
-    const contentHeight=el.scrollHeight;
-    const next=Math.max(minHeight,Math.min(contentHeight,maxHeight));
-    el.style.height=`${next}px`;
-    el.style.overflowY=contentHeight>maxHeight?'auto':'hidden';
-  },[message]);
 
   const isPublicProfileRoute=/^\/[0-9a-fA-F]{6}$/.test(route);
   const isDiscussionRoute=route.startsWith('/discussion/');

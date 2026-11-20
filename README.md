@@ -31,6 +31,12 @@ An independent identity and social network built around the **CP/1** protocol. T
 
 The protocol is designed for independent relays, but this first deployment is **one reference relay backed by one D1 database**. It is not yet a replicated peer-to-peer network. Multi-relay publish/read, relay discovery, event synchronization, abuse controls and encrypted direct messages are future protocol milestones. No Nostr compatibility is claimed.
 
+## Live reference relay
+
+- Web app: https://copypaste-network.dotfyi.workers.dev/
+- Relay info: https://copypaste-network.dotfyi.workers.dev/api/v1/relay/info
+- Protocol: https://copypaste-network.dotfyi.workers.dev/protocol
+
 ## Deploy
 
 Worker name: `copypaste-network`

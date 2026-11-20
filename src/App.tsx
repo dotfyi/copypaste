@@ -307,7 +307,7 @@ export default function App() {
         <ProfileActivity posts={ownProfilePosts}/>
       </div>
       </>:<div className="profile-auth style-rhea">
-        <Card className="mx-auto w-full max-w-md border-border bg-card shadow-none">
+        <Card className="mx-auto w-full max-w-md border border-border bg-card shadow-none">
           {authStep==='idle'?<>
             <CardHeader className="gap-1">
               <CardTitle className="text-xl tracking-tight">Твій простір у copypaste</CardTitle>

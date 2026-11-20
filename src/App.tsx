@@ -4,6 +4,11 @@ import { AlarmClock, Anchor, Archive, Award, Baby, BadgeCheck, Banknote, Bell, B
 import type { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import ProfileActivity from './components/ProfileActivity';
+import { Button } from './components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './components/ui/card';
+import { Checkbox } from './components/ui/checkbox';
+import { Input } from './components/ui/input';
+import { Label } from './components/ui/label';
 
 type Topic = { id: string; label: string; icon: string; color: string };
 type Profile = { hex_login: string; is_admin: boolean; is_moderator: boolean; is_registered: boolean; is_suspended?: boolean };
@@ -301,8 +306,63 @@ export default function App() {
         <div className="profile-activity-tools"><button className="profile-logout" type="button" disabled={busy} onClick={()=>void logout()}>Вийти з акаунта</button></div>
         <ProfileActivity posts={ownProfilePosts}/>
       </div>
-      </>:<div className="profile-auth">
-        {authStep==='idle'?<div className="auth-choice"><button type="button" className="auth-link" onClick={()=>setAuthStep('login')}>Авторизуватись</button><button type="button" className="auth-link" onClick={()=>setAuthStep('registration')}>Зареєструватися</button></div>:authStep==='login'?<><input className="auth-key-input" type="password" autoComplete="current-password" value={loginKey} onChange={e=>setLoginKey(e.target.value)} placeholder="Секретний ключ"/><div className="auth-actions"><button type="button" className="auth-link muted" onClick={()=>{setAuthStep('idle');setLoginKey('');}}>Назад</button><button type="button" className="auth-link" disabled={busy||!loginKey.trim()} onClick={async()=>{await runAuthCommand(loginKey);setLoginKey('');}}>Увійти</button></div><p className="auth-switch">Ще немає акаунта? <button type="button" className="auth-link" onClick={()=>{setAuthStep('registration');setLoginKey('');}}>Зареєструватися</button></p></>:authStep==='registration'?<><label className="rules-check"><input type="checkbox" checked={rulesAccepted} onChange={e=>setRulesAccepted(e.target.checked)}/><span>Створюючи акаунт, ти погоджуєшся дотримуватися правил спільноти.</span></label><div className="auth-actions"><button type="button" className="auth-link muted" onClick={()=>setAuthStep('idle')}>Назад</button><button type="button" className="auth-link" disabled={busy||!rulesAccepted} onClick={()=>void beginRegistration()}>Створити акаунт</button></div></>:<><div className="secret-key">{registration?.secretKey}</div><div className="auth-actions auth-key-actions"><button type="button" className="auth-link copy-auth-key" onClick={()=>void navigator.clipboard.writeText(registration?.secretKey??'')}><Copy/> Скопіювати ключ</button><button type="button" className="auth-link" disabled={busy} onClick={()=>void continueRegistration()}>Продовжити</button></div><p className="auth-warning">Цей ключ неможливо відновити. Він єдиний спосіб увійти в акаунт — збережи його в надійному місці.</p></>}
+      </>:<div className="profile-auth style-rhea">
+        <Card className="mx-auto w-full max-w-md border-border bg-card shadow-none">
+          {authStep==='idle'?<>
+            <CardHeader className="gap-1">
+              <CardTitle className="text-xl tracking-tight">Твій простір у copypaste</CardTitle>
+              <CardDescription>Увійди за секретним ключем або створи новий акаунт.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              <Button className="w-full" onClick={()=>setAuthStep('login')}>Авторизуватись</Button>
+              <Button className="w-full" variant="outline" onClick={()=>setAuthStep('registration')}>Зареєструватися</Button>
+            </CardContent>
+          </>:authStep==='login'?<>
+            <CardHeader className="gap-1">
+              <CardTitle className="text-xl tracking-tight">Вхід</CardTitle>
+              <CardDescription>Введи секретний ключ, щоб відкрити свій профіль.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <Label htmlFor="auth-secret-key">Секретний ключ</Label>
+              <Input id="auth-secret-key" type="password" autoComplete="current-password" value={loginKey} onChange={e=>setLoginKey(e.target.value)} placeholder="Встав секретний ключ" />
+              <Button className="w-full" disabled={busy||!loginKey.trim()} onClick={async()=>{await runAuthCommand(loginKey);setLoginKey('');}}>{busy?'Перевіряємо…':'Увійти'}</Button>
+            </CardContent>
+            <CardFooter className="justify-between gap-3 border-t border-border pt-4">
+              <Button type="button" variant="ghost" onClick={()=>{setAuthStep('idle');setLoginKey('');}}>Назад</Button>
+              <Button type="button" variant="link" onClick={()=>{setAuthStep('registration');setLoginKey('');}}>Створити акаунт</Button>
+            </CardFooter>
+          </>:authStep==='registration'?<>
+            <CardHeader className="gap-1">
+              <CardTitle className="text-xl tracking-tight">Реєстрація</CardTitle>
+              <CardDescription>Новий акаунт створюється без пошти та пароля — збережи секретний ключ.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex items-start gap-3">
+                <Checkbox id="auth-rules" checked={rulesAccepted} onCheckedChange={checked=>setRulesAccepted(checked===true)} />
+                <Label htmlFor="auth-rules" className="text-sm leading-relaxed">Створюючи акаунт, ти погоджуєшся дотримуватися правил спільноти.</Label>
+              </div>
+              <Button className="w-full" disabled={busy||!rulesAccepted} onClick={()=>void beginRegistration()}>{busy?'Створюємо…':'Створити акаунт'}</Button>
+            </CardContent>
+            <CardFooter className="border-t border-border pt-4">
+              <Button type="button" variant="ghost" onClick={()=>setAuthStep('idle')}>Назад</Button>
+            </CardFooter>
+          </>:<>
+            <CardHeader className="gap-1">
+              <CardTitle className="text-xl tracking-tight">Твій секретний ключ</CardTitle>
+              <CardDescription>Збережи його зараз. Це єдиний спосіб повернутися до акаунта.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <div className="break-all rounded-2xl border border-border bg-muted px-3 py-3 font-mono text-sm" role="text">{registration?.secretKey}</div>
+              <Button type="button" variant="outline" className="w-full" onClick={()=>void navigator.clipboard.writeText(registration?.secretKey??'')}>
+                <Copy data-icon="inline-start" /> Скопіювати ключ
+              </Button>
+              <p className="text-muted-foreground text-xs leading-relaxed">Цей ключ неможливо відновити. Він єдиний спосіб увійти в акаунт — збережи його в надійному місці.</p>
+            </CardContent>
+            <CardFooter className="border-t border-border pt-4">
+              <Button className="w-full" disabled={busy} onClick={()=>void continueRegistration()}>{busy?'Завершуємо…':'Продовжити'}</Button>
+            </CardFooter>
+          </>}
+        </Card>
       </div>}
       {status&&<div className={`status${error?' error':''}`}>{status}</div>}
     </section>}

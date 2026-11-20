@@ -50,6 +50,7 @@ export default function App() {
   const [user,setUser]=useState<User|null>(null);
   const [profile,setProfile]=useState<Profile|null>(null);
   const [posts,setPosts]=useState<Post[]>([]);
+  const [postSocialSummaries,setPostSocialSummaries]=useState<Record<string,{reactions:{user_id:string;reaction:'heart'|'like'|'laugh'|'idea'}[];comments:number}>>({});
   const [topics,setTopics]=useState<Topic[]>(DEFAULT_TOPICS);
   const [topic,setTopic]=useState('general');
   const [message,setMessage]=useState('');
@@ -141,6 +142,18 @@ export default function App() {
         for(const scope of scopes??[])byUser.set(scope.user_id,[...(byUser.get(scope.user_id)??[]),scope.topic_id]);
         rows=rows.map(row=>({...row,profile:row.profile?{...row.profile,moderator_topics:byUser.get(row.author_id)??[]}:row.profile}));
       }
+      const socialSummary:Record<string,{reactions:{user_id:string;reaction:'heart'|'like'|'laugh'|'idea'}[];comments:number}>={};
+      const postIds=rows.map(row=>row.id);
+      if(postIds.length){
+        const [reactionResult,commentResult]=await Promise.all([
+          supabase.from('copypaste_post_reactions').select('post_id,user_id,reaction').in('post_id',postIds),
+          supabase.from('copypaste_comments').select('post_id').in('post_id',postIds)
+        ]);
+        for(const id of postIds)socialSummary[id]={reactions:[],comments:0};
+        if(!reactionResult.error)for(const reaction of reactionResult.data??[])socialSummary[reaction.post_id]?.reactions.push({user_id:reaction.user_id,reaction:reaction.reaction});
+        if(!commentResult.error)for(const comment of commentResult.data??[])if(socialSummary[comment.post_id])socialSummary[comment.post_id].comments+=1;
+      }
+      setPostSocialSummaries(current=>reset?socialSummary:{...current,...socialSummary});
       setPosts(current=>reset?rows:[...current,...rows]);
       offsetRef.current=start+rows.length;
       moreRef.current=rows.length===PAGE_SIZE&&offsetRef.current<(count??0);
@@ -165,6 +178,16 @@ export default function App() {
     }).subscribe();
     return()=>{void supabase.removeChannel(channel);};
   },[topic,loadPosts]);
+  useEffect(()=>{
+    const feedVisible=route==='/'||topics.some(item=>route==='/'+item.id);
+    if(!feedVisible)return;
+    const channel=supabase.channel('copypaste-live-social')
+      .on('postgres_changes',{event:'*',schema:'public',table:'copypaste_post_reactions'},()=>void loadPosts(true))
+      .on('postgres_changes',{event:'*',schema:'public',table:'copypaste_comments'},()=>void loadPosts(true))
+      .subscribe();
+    return()=>{void supabase.removeChannel(channel);};
+  },[route,topics,loadPosts]);
+
   useEffect(()=>{
     const target=sentinelRef.current;if(!target)return;
     const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)&&moreRef.current&&!loadingRef.current)void loadPosts(false);},{rootMargin:'500px'});
@@ -419,7 +442,7 @@ export default function App() {
       <section aria-label="Усі повідомлення">
         <div className="topics">{topics.map(item=>{const Icon=(ICONS as any)[item.icon]??(LucideIcons as any)[item.icon]??MessageCircle;return <button key={item.id} type="button" className={`topic-btn${topic===item.id?' active':''}`} style={{'--topic-color':item.color} as CSSProperties} onClick={()=>updateTopic(item.id)}><Icon/>{item.label}</button>;})}</div>
         <div id="feed" aria-live="polite">
-          {posts.length===0&&!loading?<div className="empty-state"><MessageCircle/><p>Тут поки тихо</p><span>Залиш першу думку в цьому розділі</span></div>:posts.map(post=>{const topicInfo=topics.find(item=>item.id===post.topic);const TopicIcon=topicInfo?((ICONS as any)[topicInfo.icon]??(LucideIcons as any)[topicInfo.icon]??MessageCircle):MessageCircle;return <article className="post" key={post.id}><div className="meta post-meta"><div className="identity"><span className="swatch" style={{backgroundColor:post.profile?.hex_login??'#aaa'}}/><button type="button" className="hex profile-user-link" onClick={()=>{if(post.profile?.hex_login)navigate('/'+post.profile.hex_login.replace(/^#/,'').toLowerCase());}}>{post.profile?.hex_login?.toLowerCase()??'#??????'}</button>{post.profile?.is_moderator&&post.profile.moderator_topics?.includes(post.topic)&&<TopicIcon className="moderator-topic-icon" aria-label="Модератор розділу"/>}<span className="post-topic-label">{topicInfo?.label??post.topic}</span></div><time dateTime={post.created_at}>№ {post.post_number} · {new Intl.DateTimeFormat('uk-UA',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Europe/Kyiv'}).format(new Date(post.created_at))}</time>{(profile?.is_admin||(profile?.is_moderator&&moderatorTopics.includes(post.topic)))&&<button className="moderate-delete" type="button" aria-label="Видалити повідомлення" onClick={async()=>{try{await adminAction('delete_post',{postId:post.id});await loadPosts(true);}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}><Trash2/></button>}</div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered}/></p><PostSocial postId={post.id} userId={user?.id??null} onOpenDiscussion={()=>navigate('/discussion/'+post.id)} onLogin={()=>{setProfileOpen(true);setInfoOpen(false);setAuthStep('login');navigate('/auth');}}/></article>})}
+          {posts.length===0&&!loading?<div className="empty-state"><MessageCircle/><p>Тут поки тихо</p><span>Залиш першу думку в цьому розділі</span></div>:posts.map(post=>{const topicInfo=topics.find(item=>item.id===post.topic);const TopicIcon=topicInfo?((ICONS as any)[topicInfo.icon]??(LucideIcons as any)[topicInfo.icon]??MessageCircle):MessageCircle;return <article className="post" key={post.id}><div className="meta post-meta"><div className="identity"><span className="swatch" style={{backgroundColor:post.profile?.hex_login??'#aaa'}}/><button type="button" className="hex profile-user-link" onClick={()=>{if(post.profile?.hex_login)navigate('/'+post.profile.hex_login.replace(/^#/,'').toLowerCase());}}>{post.profile?.hex_login?.toLowerCase()??'#??????'}</button>{post.profile?.is_moderator&&post.profile.moderator_topics?.includes(post.topic)&&<TopicIcon className="moderator-topic-icon" aria-label="Модератор розділу"/>}<span className="post-topic-label">{topicInfo?.label??post.topic}</span></div><time dateTime={post.created_at}>№ {post.post_number} · {new Intl.DateTimeFormat('uk-UA',{hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Europe/Kyiv'}).format(new Date(post.created_at))}</time>{(profile?.is_admin||(profile?.is_moderator&&moderatorTopics.includes(post.topic)))&&<button className="moderate-delete" type="button" aria-label="Видалити повідомлення" onClick={async()=>{try{await adminAction('delete_post',{postId:post.id});await loadPosts(true);}catch(e){setNotice(e instanceof Error?e.message:'Помилка',true);}}}><Trash2/></button>}</div><p className="message"><FormattedText value={post.content} canRevealSpoilers={!!user&&!!profile?.is_registered}/></p><PostSocial postId={post.id} userId={user?.id??null} preloaded={postSocialSummaries[post.id]} onOpenDiscussion={()=>navigate('/discussion/'+post.id)} onLogin={()=>{setProfileOpen(true);setInfoOpen(false);setAuthStep('login');navigate('/auth');}}/></article>})}
           {loading&&posts.length===0&&<div className="empty">Завантажуємо потік…</div>}
         </div>
         <div ref={sentinelRef} id="sentinel"/>

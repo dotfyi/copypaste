@@ -8,17 +8,18 @@ const choices = [
   { id: 'laugh', emoji: '😂', label: 'Смішно' },
   { id: 'idea', emoji: '💡', label: 'Цікаво' },
 ] as const;
-
 type Reaction = typeof choices[number]['id'];
+type SocialSummary = { reactions: { user_id: string; reaction: Reaction }[]; comments: number };
 
-export default function PostSocial({ postId, userId, onOpenDiscussion, onLogin }: {
+export default function PostSocial({ postId, userId, onOpenDiscussion, onLogin, preloaded }: {
   postId: string;
   userId: string | null;
   onOpenDiscussion: () => void;
   onLogin: () => void;
+  preloaded?: SocialSummary;
 }) {
-  const [rows, setRows] = useState<{ user_id: string; reaction: Reaction }[]>([]);
-  const [commentCount, setCommentCount] = useState(0);
+  const [rows, setRows] = useState<{ user_id: string; reaction: Reaction }[]>(preloaded?.reactions ?? []);
+  const [commentCount, setCommentCount] = useState(preloaded?.comments ?? 0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
@@ -30,14 +31,12 @@ export default function PostSocial({ postId, userId, onOpenDiscussion, onLogin }
     if (!commentResult.error) setCommentCount(commentResult.count ?? 0);
   }, [postId]);
 
-  useEffect(() => { void load(); }, [load]);
   useEffect(() => {
-    const channel = supabase.channel('post-social-' + postId)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'copypaste_post_reactions', filter: 'post_id=eq.' + postId }, () => void load())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'copypaste_comments', filter: 'post_id=eq.' + postId }, () => void load())
-      .subscribe();
-    return () => { void supabase.removeChannel(channel); };
-  }, [postId, load]);
+    if (preloaded) {
+      setRows(preloaded.reactions);
+      setCommentCount(preloaded.comments);
+    } else void load();
+  }, [preloaded, load]);
 
   const selected = rows.find(row => row.user_id === userId)?.reaction ?? null;
   const total = rows.length;

@@ -324,16 +324,9 @@ export default function App() {
     </header>
     {(route==='/profile'||route==='/auth')&&<section className="profile-panel">
       {user&&profile?<>
-      <div className="account-profile">
-        <div className="account-profile-identity public-account-identity" style={{'--profile-accent':profile.hex_login} as CSSProperties}>
-          <span className="account-profile-avatar" style={{'--profile-accent':profile.hex_login} as CSSProperties} aria-hidden="true"/>
-          <div className="account-profile-heading"><h1>{profile.hex_login}</h1><span className="account-profile-role">{profile.is_admin?<><ShieldCheck aria-hidden="true"/>Адміністратор</>:profile.is_moderator?'Модератор':'Учасник спільноти'}</span></div>
-          <button className="profile-logout profile-logout-top" type="button" disabled={busy} onClick={()=>void logout()}>Вийти</button>
-        </div>
-        <div className="public-profile-body">
-          <ProfileActivity posts={ownProfilePosts}/>
-          {user?.email?.startsWith('passkey-')&&<p className="profile-warning">Цей акаунт раніше використовував Passkey. Секретний ключ для входу ще не налаштований — не виходь з акаунта, доки не додамо ключ.</p>}
-        </div>
+      <div className="account-profile profile-activity-only">
+        <div className="profile-activity-tools"><button className="profile-logout" type="button" disabled={busy} onClick={()=>void logout()}>Вийти з акаунта</button></div>
+        <ProfileActivity posts={ownProfilePosts}/>
       </div>
       </>:<div className="profile-auth">
         {authStep==='idle'?<div className="auth-choice"><button type="button" className="auth-link" onClick={()=>setAuthStep('login')}>Авторизуватись</button><button type="button" className="auth-link" onClick={()=>setAuthStep('registration')}>Зареєструватися</button></div>:authStep==='login'?<><input className="auth-key-input" type="password" autoComplete="current-password" value={loginKey} onChange={e=>setLoginKey(e.target.value)} placeholder="Секретний ключ"/><div className="auth-actions"><button type="button" className="auth-link muted" onClick={()=>{setAuthStep('idle');setLoginKey('');}}>Назад</button><button type="button" className="auth-link" disabled={busy||!loginKey.trim()} onClick={async()=>{await runAuthCommand(loginKey);setLoginKey('');}}>Увійти</button></div><p className="auth-switch">Ще немає акаунта? <button type="button" className="auth-link" onClick={()=>{setAuthStep('registration');setLoginKey('');}}>Зареєструватися</button></p></>:authStep==='registration'?<><label className="rules-check"><input type="checkbox" checked={rulesAccepted} onChange={e=>setRulesAccepted(e.target.checked)}/><span>Створюючи акаунт, ти погоджуєшся дотримуватися правил спільноти.</span></label><div className="auth-actions"><button type="button" className="auth-link muted" onClick={()=>setAuthStep('idle')}>Назад</button><button type="button" className="auth-link" disabled={busy||!rulesAccepted} onClick={()=>void beginRegistration()}>Створити акаунт</button></div></>:<><div className="secret-key">{registration?.secretKey}</div><div className="auth-actions auth-key-actions"><button type="button" className="auth-link copy-auth-key" onClick={()=>void navigator.clipboard.writeText(registration?.secretKey??'')}><Copy/> Скопіювати ключ</button><button type="button" className="auth-link" disabled={busy} onClick={()=>void continueRegistration()}>Продовжити</button></div><p className="auth-warning">Цей ключ неможливо відновити. Він єдиний спосіб увійти в акаунт — збережи його в надійному місці.</p></>}
